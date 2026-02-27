@@ -15,10 +15,13 @@ COPY packages/client ./packages/client
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Build shared first, then client
+# Build shared first
+RUN rm -f packages/shared/tsconfig.tsbuildinfo packages/client/tsconfig.tsbuildinfo
+RUN pnpm --filter shared build
+
+# Build client with Vite
 ARG VITE_SERVER_URL
 ENV VITE_SERVER_URL=$VITE_SERVER_URL
-RUN pnpm --filter shared build
 RUN pnpm --filter client build
 
 # Production stage - serve static files

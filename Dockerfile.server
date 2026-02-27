@@ -15,9 +15,10 @@ COPY packages/server ./packages/server
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Build shared first, then server
-RUN pnpm --filter shared build
-RUN pnpm --filter server build
+# Build using TypeScript build mode (handles project references)
+WORKDIR /app/packages/server
+RUN rm -f ../shared/tsconfig.tsbuildinfo tsconfig.tsbuildinfo
+RUN npx tsc -b
 
 WORKDIR /app/packages/server
 
