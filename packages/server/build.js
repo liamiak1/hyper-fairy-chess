@@ -8,7 +8,16 @@ await esbuild.build({
   format: 'esm',
   outfile: 'dist/index.js',
   sourcemap: true,
-  packages: 'external', // Don't bundle node_modules
+  // Bundle workspace packages, externalize node_modules
+  external: [
+    'express',
+    'socket.io',
+    'cors',
+    'http',
+    'path',
+    'fs',
+    'url',
+  ],
 });
 
 console.log('Server built successfully!');
