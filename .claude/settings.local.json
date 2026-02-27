@@ -12,7 +12,9 @@
       "Bash(/c/Program Files/nodejs/npx tsc --noEmit)",
       "Bash(echo:*)",
       "Bash(npx pnpm run build)",
-      "Bash(/c/Program Files/nodejs/npx.cmd tsc --noEmit)"
+      "Bash(/c/Program Files/nodejs/npx.cmd tsc --noEmit)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
