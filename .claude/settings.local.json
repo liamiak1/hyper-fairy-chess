@@ -14,7 +14,8 @@
       "Bash(npx pnpm run build)",
       "Bash(/c/Program Files/nodejs/npx.cmd tsc --noEmit)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git push)"
     ]
   }
 }
