@@ -1,0 +1,105 @@
+/* Game container */
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.game-title {
+  font-size: 2rem;
+  margin: 0;
+  color: #f0f0f0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.game-main {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  width: 100%;
+  justify-content: center;
+}
+
+.board-wrapper {
+  width: 100%;
+  max-width: 500px;
+  flex-shrink: 0;
+}
+
+/* Game controls */
+.game-controls {
+  display: flex;
+  gap: 12px;
+}
+
+.btn {
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background-color: #4a5568;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6578;
+}
+
+.btn-danger {
+  background-color: #c53030;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #d54040;
+}
+
+/* Move history */
+.move-history {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 16px;
+  width: 100%;
+  max-width: 500px;
+}
+
+.move-history h3 {
+  margin: 0 0 12px 0;
+  font-size: 1rem;
+  color: #a0aec0;
+}
+
+.moves-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-family: monospace;
+  font-size: 0.9rem;
+}
+
+.move {
+  color: #e2e8f0;
+}
+
+.move-number {
+  color: #718096;
+  margin-right: 4px;
+}

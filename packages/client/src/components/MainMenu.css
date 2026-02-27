@@ -1,0 +1,124 @@
+/* Main Menu Styles */
+
+.main-menu {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+}
+
+.menu-card {
+  text-align: center;
+  max-width: 480px;
+  width: 100%;
+}
+
+.game-logo {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 12px 0;
+  text-shadow: 0 4px 20px rgba(108, 92, 231, 0.3);
+}
+
+.tagline {
+  color: #888;
+  font-size: 1rem;
+  margin: 0 0 48px 0;
+}
+
+.menu-options {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 48px;
+}
+
+.menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  padding: 20px 24px;
+  border: 2px solid transparent;
+  border-radius: 16px;
+  background: #242442;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.menu-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.menu-btn.primary {
+  border-color: #6c5ce7;
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.15) 0%, rgba(108, 92, 231, 0.05) 100%);
+}
+
+.menu-btn.primary:hover {
+  border-color: #a855f7;
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.25) 0%, rgba(108, 92, 231, 0.1) 100%);
+}
+
+.menu-btn.online {
+  border-color: #00b894;
+  background: linear-gradient(135deg, rgba(0, 184, 148, 0.15) 0%, rgba(0, 184, 148, 0.05) 100%);
+}
+
+.menu-btn.online:hover {
+  border-color: #55efc4;
+  background: linear-gradient(135deg, rgba(0, 184, 148, 0.25) 0%, rgba(0, 184, 148, 0.1) 100%);
+}
+
+.btn-icon {
+  font-size: 2rem;
+  width: 48px;
+  text-align: center;
+}
+
+.btn-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.btn-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.btn-desc {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.menu-footer {
+  color: #555;
+  font-size: 0.85rem;
+}
+
+/* Subtle animated background effect */
+.main-menu::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(circle at 20% 80%, rgba(108, 92, 231, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(0, 184, 148, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.menu-card {
+  position: relative;
+  z-index: 1;
+}

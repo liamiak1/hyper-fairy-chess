@@ -1,0 +1,170 @@
+/* Online Game Container Styles */
+
+.online-game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: #1a1a2e;
+  color: #fff;
+}
+
+.online-game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 800px;
+  margin-bottom: 20px;
+}
+
+.online-game-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.room-info {
+  padding: 8px 16px;
+  background: rgba(108, 92, 231, 0.2);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #b0b0c0;
+  font-family: monospace;
+}
+
+.online-game-main {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.online-game-main .board-wrapper {
+  flex-shrink: 0;
+}
+
+.online-game-controls {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.online-game-controls .btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.online-game-controls .btn-secondary {
+  background: #3a3a5c;
+  color: #fff;
+}
+
+.online-game-controls .btn-secondary:hover {
+  background: #4a4a6c;
+}
+
+.online-game-controls .btn-danger {
+  background: #f44336;
+  color: #fff;
+}
+
+.online-game-controls .btn-danger:hover {
+  background: #d32f2f;
+}
+
+.btn-leave {
+  margin-top: 24px;
+  padding: 12px 24px;
+  background: transparent;
+  border: 2px solid #444;
+  border-radius: 8px;
+  color: #888;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-leave:hover {
+  border-color: #f44336;
+  color: #f44336;
+}
+
+.online-game-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #1a1a2e;
+  color: #888;
+  font-size: 1.2rem;
+}
+
+/* Move history in online mode */
+.online-game-container .move-history {
+  width: 100%;
+  max-width: 600px;
+  margin-top: 20px;
+  padding: 16px;
+  background: #242442;
+  border-radius: 12px;
+}
+
+.online-game-container .move-history h3 {
+  margin: 0 0 12px 0;
+  font-size: 0.9rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.online-game-container .moves-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-family: monospace;
+  font-size: 0.9rem;
+}
+
+.online-game-container .move {
+  color: #b0b0c0;
+}
+
+.online-game-container .move-number {
+  color: #666;
+  margin-right: 4px;
+}
+
+/* Connection status indicator */
+.connection-indicator {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.connection-indicator.connected {
+  background: rgba(76, 175, 80, 0.2);
+  color: #81c784;
+}
+
+.connection-indicator.disconnected {
+  background: rgba(244, 67, 54, 0.2);
+  color: #ef5350;
+}
+
+.connection-indicator .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}

@@ -1,0 +1,195 @@
+/* Waiting Room Styles */
+
+.waiting-room {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+.waiting-card {
+  background: #242442;
+  border-radius: 16px;
+  padding: 32px;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.waiting-card h2 {
+  margin: 0 0 24px 0;
+  text-align: center;
+  color: #fff;
+  font-size: 1.5rem;
+}
+
+.waiting-card h3 {
+  margin: 0 0 16px 0;
+  color: #b0b0c0;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.room-code-display {
+  text-align: center;
+  margin-bottom: 28px;
+  padding: 24px;
+  background: #1a1a2e;
+  border-radius: 12px;
+}
+
+.room-code-display .label {
+  display: block;
+  color: #888;
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+}
+
+.room-code-display .code {
+  font-size: 2.5rem;
+  font-weight: 700;
+  font-family: monospace;
+  letter-spacing: 0.2em;
+  color: #6c5ce7;
+  margin-bottom: 16px;
+}
+
+.copy-btn {
+  padding: 8px 20px;
+  background: rgba(108, 92, 231, 0.2);
+  border: 1px solid #6c5ce7;
+  border-radius: 6px;
+  color: #6c5ce7;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copy-btn:hover {
+  background: rgba(108, 92, 231, 0.3);
+}
+
+.game-settings {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+}
+
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.setting-row:last-child {
+  border-bottom: none;
+}
+
+.setting-label {
+  color: #888;
+}
+
+.setting-value {
+  color: #fff;
+  font-weight: 500;
+}
+
+.players-section {
+  margin-bottom: 24px;
+}
+
+.player-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.player-slot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #1a1a2e;
+  border-radius: 8px;
+  border: 2px solid transparent;
+}
+
+.player-slot.you {
+  border-color: #6c5ce7;
+}
+
+.player-color {
+  font-size: 1.5rem;
+}
+
+.player-color.white {
+  color: #fff;
+}
+
+.player-color.black {
+  color: #333;
+  text-shadow: 0 0 2px #fff;
+}
+
+.player-name {
+  flex: 1;
+  color: #fff;
+  font-weight: 500;
+}
+
+.player-slot:not(.you) .player-name {
+  color: #888;
+}
+
+.you-badge {
+  padding: 4px 8px;
+  background: #6c5ce7;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: #fff;
+  font-weight: 600;
+}
+
+.waiting-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  margin-bottom: 20px;
+  background: rgba(255, 193, 7, 0.1);
+  border-radius: 8px;
+  color: #ffc107;
+  font-size: 0.9rem;
+}
+
+.waiting-indicator .spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.leave-btn {
+  width: 100%;
+  padding: 14px;
+  background: transparent;
+  border: 2px solid #444;
+  border-radius: 8px;
+  color: #888;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.leave-btn:hover {
+  border-color: #f44336;
+  color: #f44336;
+}

@@ -1,0 +1,387 @@
+/* Online Draft UI Styles */
+
+.online-draft-ui {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #1a1a2e;
+  color: #fff;
+}
+
+/* Header */
+.draft-header-online {
+  padding: 20px 24px;
+  background: #242442;
+  border-bottom: 1px solid #3a3a5c;
+}
+
+.draft-header-online .draft-title {
+  margin: 0 0 12px 0;
+  font-size: 1.3rem;
+}
+
+.draft-title.white {
+  color: #fff;
+}
+
+.draft-title.black {
+  color: #a0a0b0;
+}
+
+.draft-status-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 16px;
+}
+
+.timer {
+  font-size: 1.8rem;
+  font-weight: 700;
+  font-family: monospace;
+  color: #6c5ce7;
+  padding: 8px 16px;
+  background: rgba(108, 92, 231, 0.15);
+  border-radius: 8px;
+}
+
+.timer.warning {
+  color: #f44336;
+  background: rgba(244, 67, 54, 0.15);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.opponent-status {
+  font-size: 0.9rem;
+}
+
+.opponent-status .ready {
+  color: #4caf50;
+}
+
+.opponent-status .waiting {
+  color: #888;
+}
+
+.draft-stats {
+  display: flex;
+  gap: 24px;
+}
+
+.draft-stats .stat {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.draft-stats .stat-value {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.draft-stats .stat-label {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.draft-stats .budget-stat .stat-value {
+  color: #6c5ce7;
+}
+
+/* Content */
+.draft-content {
+  flex: 1;
+  display: flex;
+  gap: 24px;
+  padding: 24px;
+  overflow: hidden;
+}
+
+.available-pieces {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 12px;
+}
+
+.available-pieces h3 {
+  margin: 0 0 16px 0;
+  color: #b0b0c0;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.tier-section {
+  margin-bottom: 24px;
+}
+
+.tier-section h4 {
+  margin: 0 0 12px 0;
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.piece-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.piece-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  background: #2a2a4a;
+  border: 2px solid #3a3a5c;
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+}
+
+.piece-btn:hover:not(.disabled) {
+  border-color: #6c5ce7;
+  background: #353560;
+}
+
+.piece-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.piece-btn .piece-symbol {
+  font-size: 1.8rem;
+  margin-bottom: 4px;
+}
+
+.piece-btn .piece-name {
+  font-size: 0.75rem;
+  color: #b0b0c0;
+}
+
+.piece-btn .piece-cost {
+  font-size: 0.7rem;
+  color: #6c5ce7;
+  margin-top: 2px;
+}
+
+.piece-btn .piece-count {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: #6c5ce7;
+  color: #fff;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* Your Army */
+.your-army {
+  width: 280px;
+  background: #242442;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.your-army h3 {
+  margin: 0 0 16px 0;
+  color: #b0b0c0;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.army-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.army-piece {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #1a1a2e;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.army-piece.mandatory {
+  border: 1px dashed #444;
+}
+
+.army-piece .piece-symbol {
+  font-size: 1.4rem;
+}
+
+.army-piece .piece-name {
+  flex: 1;
+  font-size: 0.9rem;
+}
+
+.army-piece .piece-info {
+  color: #666;
+  font-size: 0.8rem;
+}
+
+.army-piece .piece-cost {
+  color: #6c5ce7;
+  font-size: 0.8rem;
+}
+
+.army-piece .remove-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: rgba(244, 67, 54, 0.2);
+  color: #f44336;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.army-piece .remove-btn:hover {
+  background: rgba(244, 67, 54, 0.4);
+}
+
+.army-empty {
+  color: #666;
+  text-align: center;
+  padding: 24px;
+  font-size: 0.9rem;
+}
+
+/* Footer */
+.draft-footer {
+  padding: 20px 24px;
+  background: #242442;
+  border-top: 1px solid #3a3a5c;
+}
+
+.lock-in-btn {
+  width: 100%;
+  padding: 16px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #6c5ce7 0%, #a855f7 100%);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lock-in-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(108, 92, 231, 0.4);
+}
+
+.lock-in-btn.locked {
+  background: #4caf50;
+  cursor: default;
+}
+
+.lock-in-btn:disabled {
+  opacity: 0.7;
+}
+
+/* Reveal screen */
+.online-draft-reveal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px;
+  background: #1a1a2e;
+  color: #fff;
+}
+
+.online-draft-reveal h2 {
+  font-size: 2rem;
+  margin: 0 0 40px 0;
+  color: #6c5ce7;
+}
+
+.reveal-armies {
+  display: flex;
+  gap: 40px;
+  margin-bottom: 40px;
+}
+
+.reveal-army {
+  background: #242442;
+  border-radius: 16px;
+  padding: 24px;
+  min-width: 280px;
+}
+
+.reveal-army.you {
+  border: 2px solid #6c5ce7;
+}
+
+.reveal-army h3 {
+  margin: 0 0 20px 0;
+  color: #fff;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reveal-army .you-badge {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  background: #6c5ce7;
+  border-radius: 4px;
+}
+
+.reveal-piece-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reveal-piece {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #1a1a2e;
+  border-radius: 8px;
+}
+
+.reveal-piece .piece-symbol {
+  font-size: 1.4rem;
+}
+
+.reveal-piece .piece-name {
+  font-size: 0.9rem;
+}
+
+.transition-notice {
+  color: #888;
+  font-size: 1rem;
+  animation: fadeInOut 2s ease-in-out infinite;
+}
+
+@keyframes fadeInOut {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}

@@ -1,0 +1,38 @@
+2633,Victory,Points
+Tier 1,,
+Pawn,10,10
+Shogi Pawn,12,12
+Peasant,13,13
+Boxer,25,25
+Soldier,34,34
+Fool,27,27
+,,
+Tier 2,,
+Catapult,2,2
+Chamberlain,18,18
+Lancer,8,8
+Herald,0,32
+Knight,31,31
+Courtesan,22,22
+Thief,29,29
+Bishop,34,34
+Pontiff,47,47
+Inquisitor,0,80
+Rook,50,50
+Dragon Horse,56,56
+Chameleon,67,67
+Dragon,64,64
+Coordinator,69,69
+Long Leaper,78,78
+Immobilizer,45,160
+,,
+Tier 3,,
+King,0,0
+Withdrawer,34,34
+Jester,0,-15
+Queen,95,95
+Fairy Queen,130,130
+Regent,155,155
+,,
+Other,,
+Mercenary,0,5

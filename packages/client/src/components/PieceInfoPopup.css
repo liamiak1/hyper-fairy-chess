@@ -1,0 +1,127 @@
+/* Piece Info Popup - right-click on pieces to see details */
+
+.piece-info-popup {
+  position: fixed;
+  background: #1a202c;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 12px 16px;
+  min-width: 220px;
+  max-width: 300px;
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  color: #e2e8f0;
+}
+
+.piece-info-popup::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 20px;
+  width: 12px;
+  height: 12px;
+  background: #1a202c;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  transform: rotate(45deg);
+}
+
+.piece-info-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.piece-info-symbol {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.piece-info-symbol.white {
+  color: #fff;
+  -webkit-text-stroke: 1px #333;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.piece-info-symbol.black {
+  color: #333;
+  -webkit-text-stroke: 1px #000;
+}
+
+.piece-info-title {
+  flex: 1;
+}
+
+.piece-info-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.piece-info-tier {
+  font-size: 0.75rem;
+  color: #a0aec0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.piece-info-stats {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.piece-info-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.piece-info-stat-value {
+  font-weight: 600;
+  color: #63b3ed;
+}
+
+.piece-info-stat-label {
+  font-size: 0.8rem;
+  color: #a0aec0;
+}
+
+.piece-info-description {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #cbd5e0;
+  margin-bottom: 8px;
+}
+
+.piece-info-traits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.piece-info-trait {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #a0aec0;
+}
+
+.piece-info-trait.positive {
+  background: rgba(72, 187, 120, 0.2);
+  color: #68d391;
+}
+
+.piece-info-trait.negative {
+  background: rgba(245, 101, 101, 0.2);
+  color: #fc8181;
+}
+
+.piece-info-trait.special {
+  background: rgba(99, 179, 237, 0.2);
+  color: #90cdf4;
+}

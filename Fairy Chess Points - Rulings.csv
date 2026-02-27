@@ -1,0 +1,21 @@
+Long leapers cannot jump over jesters or fools
+"Chamelons, if next to any freezing enemy (inquisitor, immobilzer, etc) will freeze the enemy unit, but will not freeze other things around them (including friendly units when next to an enemy herald)"
+"The fool: moves and takes like a shogi pawn, but cannot be taken (like a jester): can only promote to jester"
+Immobilizers (et al) can immobilize jesters/fools
+Shogi pawns do not come with any drops
+"En Passant can be done by Pawns, Peasants, and Shogi pawns, including against each other (except Shogi pawns, which can't move twice)"
+Shogi pawns do not move twice first turn
+"Freezing the enemy king (with a herald, inquisitor, or immobilizer) does not result in stalemate, so long as they have other moves"
+"Castling: Move an unmoved king or regent 2 squares toward the unmoved rook or dragon, then move the rook ro dragon to the other side of the king (may not move if they started adjacent); cannot castle from, into, or through check)"
+"Chameleons can move like knights to take knights and farie queens, and bounce off corners to take pontiffs, and generally take like what they take (including en passant)"
+Chameleons do not freeze friendly heralds
+"Chamberlains may take both on the squares they can jump to, and the squares they can capture (but may only move to capture squares to capture)"
+"Regents transform on a loss of any queen-type piece, one of which you must take"
+Jesters cannot be frozen
+"fools cannot be jumped over; everything else can.  If jumping as a knight or knight like thing, both paths must be blocked to stop the jump"
+"Chamberlains and kings can swap to get out of check and, if the chamberlain can move, out of immobilization"
+"Phantom kings cannot swap with fools, but can with jesters"
+Coordinators only take when they move; moving the king does not trigger taking squares that line up with coordinators
+Phantom Kings can move pawn-type pieces to the back.  This does not count as a pawn moving
+"If a pawn-type piece has not moved, and it can move two squares on it's first move, it can, so long as it is in the first or second rank (i.e. if a phantom king moves it to the third rank, it can no longer move twice)"
+"Mercenary starts on A5 if picked as white, or h4 if picked as black"

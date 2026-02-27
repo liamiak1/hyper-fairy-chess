@@ -1,0 +1,200 @@
+/* Board container with labels */
+.board-container {
+  display: grid;
+  grid-template-columns: auto minmax(0, 560px) auto;
+  grid-template-rows: minmax(0, 560px) auto;
+  gap: 4px;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Turn indicator - subtle background glow */
+.board-container.white-turn {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.03) 50%, transparent 100%);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.1), inset 0 0 30px rgba(255, 255, 255, 0.05);
+}
+
+.board-container.black-turn {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.1) 50%, transparent 100%);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3), inset 0 0 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Main board grid */
+.board {
+  display: grid;
+  border: 2px solid #333;
+  grid-column: 2;
+  grid-row: 1;
+  aspect-ratio: 1;
+  width: 100%;
+  max-width: 560px;
+}
+
+/* Square styling */
+.square {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.15s ease;
+  aspect-ratio: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.square.light {
+  background-color: #f0d9b5;
+}
+
+.square.dark {
+  background-color: #b58863;
+}
+
+.square:hover {
+  filter: brightness(1.1);
+}
+
+.square.selected {
+  background-color: #829769 !important;
+}
+
+.square.valid-move {
+  background-color: #aad576 !important;
+}
+
+.square.last-move {
+  background-color: #cdd26a !important;
+}
+
+/* Piece styling */
+.piece {
+  font-size: 1.8em;
+  font-weight: bold;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  user-select: none;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  transition: transform 0.1s ease;
+}
+
+.piece.white {
+  color: #fff;
+  -webkit-text-stroke: 1px #333;
+}
+
+.piece.black {
+  color: #333;
+  -webkit-text-stroke: 1px #000;
+}
+
+.piece.frozen {
+  opacity: 0.6;
+  filter: saturate(0.5);
+}
+
+.piece:hover {
+  transform: scale(1.1);
+}
+
+/* Capturable piece indicator (displacement capture) */
+.piece.piece-capturable {
+  animation: pulse-capture 1s ease-in-out infinite;
+}
+
+.square.capturable {
+  background-color: #e86464 !important;
+  box-shadow: inset 0 0 0 3px #cc3333;
+}
+
+@keyframes pulse-capture {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+/* Special capture target indicator (coordinator, boxer, withdrawer, thief) */
+.square.special-capture-target {
+  background-color: #ff9933 !important;
+  box-shadow: inset 0 0 0 3px #cc6600;
+}
+
+.piece.piece-special-capture {
+  animation: pulse-special-capture 0.8s ease-in-out infinite;
+}
+
+@keyframes pulse-special-capture {
+  0%, 100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.1);
+    filter: brightness(1.3);
+  }
+}
+
+/* Move indicator dot */
+.move-indicator {
+  width: 30%;
+  height: 30%;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Placement indicator */
+.square.valid-placement {
+  background-color: #b3d9ff !important;
+}
+
+.placement-indicator {
+  width: 50%;
+  height: 50%;
+  border: 3px dashed rgba(0, 100, 200, 0.5);
+  border-radius: 8px;
+}
+
+/* File labels (a-h) */
+.file-labels {
+  display: grid;
+  grid-column: 2;
+  grid-row: 2;
+  text-align: center;
+}
+
+/* Rank labels (1-8) */
+.rank-labels {
+  display: grid;
+  grid-column: 1;
+  grid-row: 1;
+  align-items: center;
+  padding-right: 8px;
+}
+
+.label {
+  font-size: 0.9em;
+  color: #666;
+  font-weight: 500;
+}
+
+/* Demo wrapper */
+.board-demo {
+  padding: 20px;
+  text-align: center;
+}
+
+.board-demo h2 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.board-demo .info {
+  margin-top: 16px;
+  color: #666;
+  font-size: 0.9em;
+}

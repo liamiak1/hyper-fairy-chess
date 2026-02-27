@@ -1,0 +1,5 @@
+-When placing in a multiplayer game, the pieces disappear off the available pieces screen, but do not show up on the board - also, all the possible options (for all piece types) are shown as options. However, something is happening, as attempting to place a piece where one already has results in it not being placed (though one can place a piece in the wrong square type)
+-Separately, it would be good to allow both sides to see the unplaces pieces of both sides during placement
+-Idea for later - room option to set up armies before providing information (no neither side sees how the other is set until both are locked in, in which case they could do so independently)
+-Both sides should have their pieces at the bottom of the board when not hot seating
+-Idea for later - folks with accounts should be able to save armies (i.e. piece configurations) and select them on the select pieces screen (then allowing modifications as usual)

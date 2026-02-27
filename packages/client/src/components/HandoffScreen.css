@@ -1,0 +1,65 @@
+/* Handoff Screen styles */
+
+.handoff-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+}
+
+.handoff-content {
+  text-align: center;
+  max-width: 500px;
+}
+
+.handoff-title {
+  font-size: 2.5rem;
+  margin: 0 0 24px 0;
+  color: #f0f0f0;
+}
+
+.handoff-message {
+  font-size: 1.3rem;
+  color: #e2e8f0;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+.handoff-message strong.white {
+  color: #f0f0f0;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.handoff-message strong.black {
+  color: #a0aec0;
+}
+
+.handoff-warning {
+  font-size: 1rem;
+  color: #fc8181;
+  margin: 0 0 32px 0;
+  font-style: italic;
+}
+
+.ready-btn {
+  padding: 16px 48px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background: #4a7c59;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ready-btn:hover {
+  background: #5a8c69;
+  transform: translateY(-2px);
+}
+
+.ready-btn:active {
+  transform: translateY(0);
+}
