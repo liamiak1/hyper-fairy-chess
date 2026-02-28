@@ -190,6 +190,7 @@ export interface PiecePlacedMessage extends ServerMessage {
   };
   nextPlacer: PlayerColor;
   placementState: PlacementState;
+  gameState: GameState; // Board state with placed pieces
 }
 
 export interface PlacementErrorMessage extends ServerMessage {

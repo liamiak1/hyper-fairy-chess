@@ -473,6 +473,9 @@ export class GameRoom {
     };
 
     this.gameState.board.pieces.push(placedPiece);
+    // Update positionMap to track occupied squares
+    const posKey = `${position.file}${position.rank}`;
+    this.gameState.board.positionMap.set(posKey, placedPiece.id);
     piecesToPlace.splice(pieceIndex, 1);
 
     this.placementState.currentPlacer =
@@ -487,6 +490,7 @@ export class GameRoom {
       position,
       nextPlacer: this.placementState.currentPlacer,
       placementState: this.placementState,
+      gameState: this.gameState,
     } as PiecePlacedMessage);
 
     if (isPlacementComplete(this.placementState)) {

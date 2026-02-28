@@ -5,8 +5,8 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useOnlineGame } from '../hooks/useOnlineGame';
-import type { Position, PlayerColor, PieceType, PieceInstance, File, Rank, GameResult } from '@hyper-fairy-chess/shared';
-import { BOARD_CONFIGS } from '@hyper-fairy-chess/shared';
+import type { Position, PlayerColor, PieceType, PieceInstance, GameResult } from '@hyper-fairy-chess/shared';
+import { BOARD_CONFIGS, getPlacementZones, getValidPlacementSquares, createBoardState } from '@hyper-fairy-chess/shared';
 import { PIECE_BY_ID } from '../game/pieces/pieceDefinitions';
 import { OnlineLobby } from './OnlineLobby';
 import { WaitingRoom } from './WaitingRoom';
@@ -152,28 +152,23 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
       setSelectedPieceToPlace(null);
     };
 
-    // Calculate valid placement squares based on player color
+    // Calculate valid placement squares using proper zone logic
     const boardSize = state.settings!.boardSize;
     const boardConfig = BOARD_CONFIGS[boardSize];
-    const numFiles = boardConfig.files;
-    const numRanks = boardConfig.ranks;
-    const validPlacementSquares: Position[] = [];
+    let validPlacementSquares: Position[] = [];
     if (isMyTurn && selectedPieceToPlace) {
-      const startRank = state.playerColor === 'white' ? 1 : numRanks;
-      const endRank = state.playerColor === 'white' ? 2 : numRanks - 1;
-      const fileChars = 'abcdefghij'.slice(0, numFiles);
-
-      for (const file of fileChars) {
-        for (let rank = Math.min(startRank, endRank); rank <= Math.max(startRank, endRank); rank++) {
-          // Check if position is empty
-          const occupied = state.gameState?.board.pieces.some(
-            p => p.position && p.position.file === file && p.position.rank === rank
-          );
-          if (!occupied) {
-            validPlacementSquares.push({ file: file as File, rank: rank as Rank });
-          }
-        }
-      }
+      const zones = getPlacementZones(boardSize, state.playerColor!);
+      // Create a board state with proper positionMap for the placement logic
+      const board = state.gameState?.board || createBoardState(
+        { files: boardConfig.files, ranks: boardConfig.ranks },
+        []
+      );
+      validPlacementSquares = getValidPlacementSquares(
+        board,
+        selectedPieceToPlace,
+        zones,
+        { ranks: boardConfig.ranks }
+      );
     }
 
     return (

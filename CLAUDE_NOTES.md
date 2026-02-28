@@ -24,22 +24,23 @@ cd /c/claude/hyper_fairy_chess/packages/server && npx pnpm run build
 
 ## Deployment (Railway)
 
-### Current Status
+### Live URLs
+- **Client**: https://comfortable-harmony-production.up.railway.app/
 - **Server**: https://hyper-fairy-chess-production.up.railway.app/
   - Health check: https://hyper-fairy-chess-production.up.railway.app/health
   - Stats: https://hyper-fairy-chess-production.up.railway.app/stats
-- **Client**: NOT YET DEPLOYED
 
 ### Server Deployment Settings
 - **Dockerfile Path**: `Dockerfile.server`
 - **Root Directory**: (empty/default)
-- No environment variables needed (CORS_ORIGIN defaults to *)
+- **Environment Variables**:
+  - `CORS_ORIGIN=https://comfortable-harmony-production.up.railway.app`
 
-### Client Deployment (TODO)
-1. Create new service in same Railway project
-2. Set Dockerfile Path: `Dockerfile.client`
-3. Set environment variable: `VITE_SERVER_URL=https://hyper-fairy-chess-production.up.railway.app`
-4. Generate public domain
+### Client Deployment Settings
+- **Dockerfile Path**: `Dockerfile.client`
+- **Root Directory**: (empty/default)
+- **Environment Variables**:
+  - `VITE_SERVER_URL=https://hyper-fairy-chess-production.up.railway.app`
 
 ### Key Files for Deployment
 - `Dockerfile.server` - Server build with esbuild bundling

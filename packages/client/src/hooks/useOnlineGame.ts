@@ -187,6 +187,7 @@ export function useOnlineGame() {
         setState(prev => ({
           ...prev,
           placementState: message.placementState,
+          gameState: message.gameState,
         }));
         break;
 
