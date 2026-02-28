@@ -26,6 +26,7 @@ interface BoardProps {
   onSquareHover?: (position: Position | null) => void;
   currentTurn?: PlayerColor;
   onPieceRightClick?: (pieceTypeId: string, color: PlayerColor, x: number, y: number) => void;
+  flipped?: boolean;
 }
 
 const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'] as const;
@@ -44,10 +45,15 @@ export function Board({
   onSquareHover,
   currentTurn,
   onPieceRightClick,
+  flipped = false,
 }: BoardProps) {
   const config = BOARD_CONFIGS[size];
-  const files = FILES.slice(0, config.files);
-  const ranks = Array.from({ length: config.ranks }, (_, i) => config.ranks - i);
+  const baseFiles = FILES.slice(0, config.files);
+  const baseRanks = Array.from({ length: config.ranks }, (_, i) => config.ranks - i);
+
+  // Flip board for black player (reverse both files and ranks)
+  const files = flipped ? [...baseFiles].reverse() : baseFiles;
+  const ranks = flipped ? [...baseRanks].reverse() : baseRanks;
 
   // Create position -> piece lookup
   const pieceMap = new Map<string, PieceInstance>();

@@ -211,6 +211,7 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
               specialCaptureTargets={[]}
               currentTurn={state.playerColor!}
               onPieceRightClick={handlePieceRightClick}
+              flipped={state.playerColor === 'black'}
             />
           </div>
 
@@ -354,6 +355,7 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
               onSquareHover={setHoveredMove}
               currentTurn={state.gameState.currentTurn}
               onPieceRightClick={handlePieceRightClick}
+              flipped={state.playerColor === 'black'}
             />
           </div>
         </div>
