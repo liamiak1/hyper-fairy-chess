@@ -6,7 +6,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useOnlineGame } from '../hooks/useOnlineGame';
 import type { Position, PlayerColor, PieceType, PieceInstance, GameResult } from '@hyper-fairy-chess/shared';
-import { BOARD_CONFIGS, getPlacementZones, getValidPlacementSquares } from '@hyper-fairy-chess/shared';
+import { BOARD_CONFIGS, getPlacementZones, getValidPlacementSquares, generateLegalMoves } from '@hyper-fairy-chess/shared';
 import { PIECE_BY_ID } from '../game/pieces/pieceDefinitions';
 import { OnlineLobby } from './OnlineLobby';
 import { WaitingRoom } from './WaitingRoom';
@@ -284,10 +284,33 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
       }
     };
 
-    // Calculate valid moves for selected piece (simplified - server validates)
-    const validMoves: Position[] = [];
-    // In a full implementation, we'd calculate moves client-side for preview
-    // For now, highlight all possible destinations
+    // Calculate valid moves for selected piece
+    let validMoves: Position[] = [];
+    if (selectedSquare && isMyTurn) {
+      const selectedPiece = state.gameState.board.pieces.find(
+        p => p.position && p.position.file === selectedSquare.file &&
+             p.position.rank === selectedSquare.rank &&
+             p.owner === state.playerColor
+      );
+      if (selectedPiece) {
+        try {
+          // Ensure board has proper positionMap
+          let board = state.gameState.board;
+          if (!(board.positionMap instanceof Map)) {
+            const positionMap = new Map<string, string>();
+            for (const piece of board.pieces) {
+              if (piece.position) {
+                positionMap.set(`${piece.position.file}${piece.position.rank}`, piece.id);
+              }
+            }
+            board = { ...board, positionMap };
+          }
+          validMoves = generateLegalMoves(board, selectedPiece, state.gameState.enPassantTarget);
+        } catch (err) {
+          console.error('Error calculating valid moves:', err);
+        }
+      }
+    }
 
     const lastMove = state.gameState.moveHistory.length > 0
       ? state.gameState.moveHistory[state.gameState.moveHistory.length - 1]
