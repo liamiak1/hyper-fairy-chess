@@ -1504,6 +1504,65 @@ function canChameleonCaptureWithSpecial(
       }
     }
 
+    case 'bounce': {
+      // Chameleon can capture via bounce movement (like Pontiff)
+      const enemyKey = `${enemy.position.file}${enemy.position.rank}`;
+      const startKey = `${chameleon.position.file}${chameleon.position.rank}`;
+
+      // Start in all 4 diagonal directions
+      const diagonalDirs = getDirectionVectors('diagonal');
+
+      for (const startDir of diagonalDirs) {
+        let currentPos = chameleon.position;
+        let dx = startDir.dx;
+        let dy = startDir.dy;
+        const pathVisited = new Set<string>([startKey]);
+
+        // Follow the path with bounces
+        for (let steps = 0; steps < 50; steps++) {
+          let nextPos = offsetPosition(currentPos, dx, dy, board.dimensions);
+
+          // Handle bouncing
+          if (!nextPos) {
+            const testX = offsetPosition(currentPos, dx, 0, board.dimensions);
+            const testY = offsetPosition(currentPos, 0, dy, board.dimensions);
+
+            if (!testX && !testY) {
+              dx = -dx;
+              dy = -dy;
+            } else if (!testX) {
+              dx = -dx;
+            } else {
+              dy = -dy;
+            }
+
+            nextPos = offsetPosition(currentPos, dx, dy, board.dimensions);
+            if (!nextPos) break;
+          }
+
+          const posKey = `${nextPos.file}${nextPos.rank}`;
+
+          // Check for cycle
+          if (pathVisited.has(posKey)) break;
+          pathVisited.add(posKey);
+
+          // Check if we reached the enemy
+          if (posKey === enemyKey) {
+            return true; // Can capture via bounce!
+          }
+
+          // Check for friendly piece - can't pass through
+          if (hasFriendlyPiece(board, nextPos, chameleon.owner)) break;
+
+          // Check for other enemy piece - can't pass through
+          if (hasEnemyPiece(board, nextPos, chameleon.owner)) break;
+
+          currentPos = nextPos;
+        }
+      }
+      return false;
+    }
+
     default:
       return false;
   }
