@@ -33,6 +33,7 @@ import {
   PlacementState,
   createPlacementStateFromDrafts,
   isPlacementComplete,
+  getNextPlacer,
 } from '@hyper-fairy-chess/shared';
 import {
   createBoardState,
@@ -479,8 +480,11 @@ export class GameRoom {
     this.gameState.board.positionMap.set(posKey, placedPiece.id);
     piecesToPlace.splice(pieceIndex, 1);
 
-    this.placementState.currentPlacer =
-      this.placementState.currentPlacer === 'white' ? 'black' : 'white';
+    // Use getNextPlacer which handles the case when one player runs out of pieces
+    this.placementState.currentPlacer = getNextPlacer(
+      this.placementState,
+      this.placementState.currentPlacer
+    );
 
     this.lastActivity = Date.now();
 
