@@ -286,12 +286,14 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
 
     // Calculate valid moves for selected piece
     let validMoves: Position[] = [];
+    console.log('Move calc:', { selectedSquare, isMyTurn, playerColor: state.playerColor, currentTurn: state.gameState.currentTurn });
     if (selectedSquare && isMyTurn) {
       const selectedPiece = state.gameState.board.pieces.find(
         p => p.position && p.position.file === selectedSquare.file &&
              p.position.rank === selectedSquare.rank &&
              p.owner === state.playerColor
       );
+      console.log('Selected piece:', selectedPiece);
       if (selectedPiece) {
         try {
           // Always reconstruct board with proper positionMap (Maps don't survive JSON serialization)
@@ -306,6 +308,7 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
             positionMap,
           };
           validMoves = generateLegalMoves(board, selectedPiece, state.gameState.enPassantTarget);
+          console.log('Generated moves:', validMoves);
         } catch (err) {
           console.error('Error calculating valid moves:', err);
         }
