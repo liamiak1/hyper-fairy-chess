@@ -6,7 +6,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useOnlineGame } from '../hooks/useOnlineGame';
 import type { Position, PlayerColor, PieceType, PieceInstance, GameResult } from '@hyper-fairy-chess/shared';
-import { BOARD_CONFIGS, getPlacementZones, getValidPlacementSquares, createBoardState } from '@hyper-fairy-chess/shared';
+import { BOARD_CONFIGS, getPlacementZones, getValidPlacementSquares } from '@hyper-fairy-chess/shared';
 import { PIECE_BY_ID } from '../game/pieces/pieceDefinitions';
 import { OnlineLobby } from './OnlineLobby';
 import { WaitingRoom } from './WaitingRoom';
@@ -156,19 +156,35 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
     const boardSize = state.settings!.boardSize;
     const boardConfig = BOARD_CONFIGS[boardSize];
     let validPlacementSquares: Position[] = [];
-    if (isMyTurn && selectedPieceToPlace) {
-      const zones = getPlacementZones(boardSize, state.playerColor!);
-      // Create a board state with proper positionMap for the placement logic
-      const board = state.gameState?.board || createBoardState(
-        { files: boardConfig.files, ranks: boardConfig.ranks },
-        []
-      );
-      validPlacementSquares = getValidPlacementSquares(
-        board,
-        selectedPieceToPlace,
-        zones,
-        { ranks: boardConfig.ranks }
-      );
+    if (isMyTurn && selectedPieceToPlace && state.playerColor) {
+      try {
+        const zones = getPlacementZones(boardSize, state.playerColor);
+        // Get board from gameState, ensuring positionMap is a proper Map
+        let board = state.gameState?.board;
+        if (!board || !(board.positionMap instanceof Map)) {
+          // Reconstruct board with proper Map if needed
+          const pieces = board?.pieces || [];
+          const positionMap = new Map<string, string>();
+          for (const piece of pieces) {
+            if (piece.position) {
+              positionMap.set(`${piece.position.file}${piece.position.rank}`, piece.id);
+            }
+          }
+          board = {
+            pieces,
+            positionMap,
+            dimensions: { files: boardConfig.files, ranks: boardConfig.ranks },
+          };
+        }
+        validPlacementSquares = getValidPlacementSquares(
+          board,
+          selectedPieceToPlace,
+          zones,
+          { ranks: boardConfig.ranks }
+        );
+      } catch (err) {
+        console.error('Error calculating placement squares:', err);
+      }
     }
 
     return (
