@@ -394,6 +394,7 @@ export class GameRoom {
       type: 'PLACEMENT_START',
       timestamp: Date.now(),
       placementState: this.placementState,
+      gameState: this.gameState!,
     } as PlacementStartMessage);
   }
 

@@ -169,6 +169,7 @@ export interface DraftTimeoutMessage extends ServerMessage {
 export interface PlacementStartMessage extends ServerMessage {
   type: 'PLACEMENT_START';
   placementState: PlacementState;
+  gameState: GameState; // Initial empty board state
 }
 
 // Client -> Server

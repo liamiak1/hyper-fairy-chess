@@ -15,7 +15,32 @@ import type {
   ServerToClientMessage,
   GameState,
   Position,
+  BoardState,
 } from '@hyper-fairy-chess/shared';
+
+/**
+ * Reconstruct gameState after receiving over socket.io
+ * Maps don't serialize to JSON properly, so we rebuild positionMap from pieces
+ */
+function reconstructGameState(gameState: GameState): GameState {
+  const positionMap = new Map<string, string>();
+  for (const piece of gameState.board.pieces) {
+    if (piece.position) {
+      const key = `${piece.position.file}${piece.position.rank}`;
+      positionMap.set(key, piece.id);
+    }
+  }
+
+  const reconstructedBoard: BoardState = {
+    ...gameState.board,
+    positionMap,
+  };
+
+  return {
+    ...gameState,
+    board: reconstructedBoard,
+  };
+}
 
 export interface OnlineGameState {
   // Connection
@@ -180,6 +205,7 @@ export function useOnlineGame() {
           ...prev,
           phase: 'placement',
           placementState: message.placementState,
+          gameState: reconstructGameState(message.gameState),
         }));
         break;
 
@@ -187,7 +213,7 @@ export function useOnlineGame() {
         setState(prev => ({
           ...prev,
           placementState: message.placementState,
-          gameState: message.gameState,
+          gameState: reconstructGameState(message.gameState),
         }));
         break;
 
@@ -203,14 +229,14 @@ export function useOnlineGame() {
         setState(prev => ({
           ...prev,
           phase: 'playing',
-          gameState: message.gameState,
+          gameState: reconstructGameState(message.gameState),
         }));
         break;
 
       case 'MOVE_MADE':
         setState(prev => ({
           ...prev,
-          gameState: message.gameState,
+          gameState: reconstructGameState(message.gameState),
         }));
         break;
 
@@ -218,7 +244,7 @@ export function useOnlineGame() {
         setState(prev => ({
           ...prev,
           error: message.reason,
-          gameState: message.correctState,
+          gameState: reconstructGameState(message.correctState),
         }));
         break;
 
@@ -226,7 +252,7 @@ export function useOnlineGame() {
         setState(prev => ({
           ...prev,
           phase: 'ended',
-          gameState: message.finalState,
+          gameState: reconstructGameState(message.finalState),
         }));
         break;
 
@@ -254,7 +280,7 @@ export function useOnlineGame() {
           phase: message.phase,
           settings: message.settings,
           players: message.players,
-          gameState: message.gameState || prev.gameState,
+          gameState: message.gameState ? reconstructGameState(message.gameState) : prev.gameState,
           placementState: message.placementState || prev.placementState,
           whiteDraft: message.whiteDraft || prev.whiteDraft,
           blackDraft: message.blackDraft || prev.blackDraft,
