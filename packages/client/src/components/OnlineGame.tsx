@@ -294,17 +294,17 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
       );
       if (selectedPiece) {
         try {
-          // Ensure board has proper positionMap
-          let board = state.gameState.board;
-          if (!(board.positionMap instanceof Map)) {
-            const positionMap = new Map<string, string>();
-            for (const piece of board.pieces) {
-              if (piece.position) {
-                positionMap.set(`${piece.position.file}${piece.position.rank}`, piece.id);
-              }
+          // Always reconstruct board with proper positionMap (Maps don't survive JSON serialization)
+          const positionMap = new Map<string, string>();
+          for (const piece of state.gameState.board.pieces) {
+            if (piece.position) {
+              positionMap.set(`${piece.position.file}${piece.position.rank}`, piece.id);
             }
-            board = { ...board, positionMap };
           }
+          const board = {
+            ...state.gameState.board,
+            positionMap,
+          };
           validMoves = generateLegalMoves(board, selectedPiece, state.gameState.enPassantTarget);
         } catch (err) {
           console.error('Error calculating valid moves:', err);
