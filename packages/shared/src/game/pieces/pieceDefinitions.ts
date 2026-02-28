@@ -160,7 +160,7 @@ export const FOOL: PieceType = {
   cost: 27,
   victoryPoints: 27,
   symbol: '🃏',
-  description: 'Cannot capture or be captured. Cannot be jumped over. Moves forward one square only.',
+  description: 'Cannot be captured. Cannot be jumped over. Moves and captures forward one square only.',
   isRoyal: false,
   isMandatory: false,
   canCastle: false,
@@ -172,7 +172,7 @@ export const FOOL: PieceType = {
     leaps: [],
     special: ['shogi-pawn'], // Moves like Shogi Pawn
   },
-  captureType: 'none', // Cannot capture!
+  captureType: 'standard', // Can capture by replacement
 };
 
 // =============================================================================
