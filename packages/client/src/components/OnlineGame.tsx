@@ -197,6 +197,17 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
           <div className="room-info">Room: {state.roomCode}</div>
         </div>
 
+        {state.opponentStatus === 'disconnected' && (
+          <div className="opponent-notification warning">
+            Opponent disconnected. Waiting for them to reconnect...
+          </div>
+        )}
+        {state.opponentStatus === 'left' && (
+          <div className="opponent-notification error">
+            Opponent has left the game.
+          </div>
+        )}
+
         <div className="online-game-main">
           <div className="board-wrapper">
             <Board
@@ -330,6 +341,17 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
           </h2>
           <div className="room-info">Room: {state.roomCode}</div>
         </div>
+
+        {state.opponentStatus === 'disconnected' && (
+          <div className="opponent-notification warning">
+            Opponent disconnected. Waiting for them to reconnect...
+          </div>
+        )}
+        {state.opponentStatus === 'left' && (
+          <div className="opponent-notification error">
+            Opponent has left the game.
+          </div>
+        )}
 
         <GameInfo
           currentTurn={state.gameState.currentTurn}

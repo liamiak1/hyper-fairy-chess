@@ -70,6 +70,9 @@ export interface OnlineGameState {
 
   // Errors
   error: string | null;
+
+  // Opponent status notification
+  opponentStatus: 'connected' | 'disconnected' | 'left' | null;
 }
 
 const initialState: OnlineGameState = {
@@ -89,6 +92,7 @@ const initialState: OnlineGameState = {
   placementState: null,
   gameState: null,
   error: null,
+  opponentStatus: null,
 };
 
 export function useOnlineGame() {
@@ -155,6 +159,7 @@ export function useOnlineGame() {
         setState(prev => ({
           ...prev,
           players: prev.players.filter(p => p.id !== message.playerId),
+          opponentStatus: message.playerId !== prev.playerId ? 'left' : prev.opponentStatus,
         }));
         break;
 
@@ -262,6 +267,7 @@ export function useOnlineGame() {
           players: prev.players.map(p =>
             p.id === message.playerId ? { ...p, connected: false } : p
           ),
+          opponentStatus: message.playerId !== prev.playerId ? 'disconnected' : prev.opponentStatus,
         }));
         break;
 
@@ -271,6 +277,7 @@ export function useOnlineGame() {
           players: prev.players.map(p =>
             p.id === message.playerId ? { ...p, connected: true } : p
           ),
+          opponentStatus: message.playerId !== prev.playerId ? 'connected' : prev.opponentStatus,
         }));
         break;
 
