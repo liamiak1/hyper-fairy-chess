@@ -75,6 +75,7 @@ export class GameRoom {
   // Timers
   private countdownTimer: ReturnType<typeof setInterval> | null = null;
   private draftTimer: ReturnType<typeof setTimeout> | null = null;
+  private draftTickTimer: ReturnType<typeof setInterval> | null = null;
   private disconnectTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
 
   // Socket.io server reference
@@ -268,6 +269,18 @@ export class GameRoom {
       timeLimit: timeLimit,
     });
 
+    // Send periodic countdown updates every second
+    this.draftTickTimer = setInterval(() => {
+      if (this.draftDeadline) {
+        const remaining = Math.max(0, Math.ceil((this.draftDeadline - Date.now()) / 1000));
+        this.broadcast({
+          type: 'DRAFT_COUNTDOWN',
+          timestamp: Date.now(),
+          timeRemaining: remaining,
+        });
+      }
+    }, 1000);
+
     this.draftTimer = setTimeout(() => {
       this.handleDraftTimeout();
     }, timeLimit * 1000);
@@ -326,6 +339,10 @@ export class GameRoom {
     if (this.draftTimer) {
       clearTimeout(this.draftTimer);
       this.draftTimer = null;
+    }
+    if (this.draftTickTimer) {
+      clearInterval(this.draftTickTimer);
+      this.draftTickTimer = null;
     }
 
     this.broadcast({
@@ -723,6 +740,7 @@ export class GameRoom {
   cleanup(): void {
     if (this.countdownTimer) clearInterval(this.countdownTimer);
     if (this.draftTimer) clearTimeout(this.draftTimer);
+    if (this.draftTickTimer) clearInterval(this.draftTickTimer);
     for (const timer of this.disconnectTimers.values()) {
       clearTimeout(timer);
     }
