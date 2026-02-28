@@ -8,30 +8,38 @@ import './PlacementUI.css';
 
 interface PlacementUIProps {
   piecesToPlace: PieceInstance[];
+  opponentPiecesToPlace?: PieceInstance[];
   selectedPiece: PieceInstance | null;
   onSelectPiece: (piece: PieceInstance) => void;
   currentPlacer: PlayerColor;
+  playerColor?: PlayerColor;
   whitePiecesRemaining: number;
   blackPiecesRemaining: number;
 }
 
 export function PlacementUI({
   piecesToPlace,
+  opponentPiecesToPlace = [],
   selectedPiece,
   onSelectPiece,
   currentPlacer,
+  playerColor,
   whitePiecesRemaining,
   blackPiecesRemaining,
 }: PlacementUIProps) {
   // Group pieces by tier
   const piecesByTier = groupPiecesByTier(piecesToPlace);
+  const opponentPiecesByTier = groupPiecesByTier(opponentPiecesToPlace);
+  const showOpponentPieces = opponentPiecesToPlace.length > 0;
 
   return (
     <div className="placement-ui">
       <div className="placement-header">
         <h3>Placement Phase</h3>
         <div className={`placer-indicator ${currentPlacer}`}>
-          {currentPlacer === 'white' ? 'White' : 'Black'}'s turn to place
+          {playerColor
+            ? (currentPlacer === playerColor ? 'Your' : "Opponent's")
+            : (currentPlacer === 'white' ? "White's" : "Black's")} turn to place
         </div>
       </div>
 
@@ -44,57 +52,91 @@ export function PlacementUI({
         Select a piece, then click on the board to place it
       </div>
 
-      <div className="pieces-to-place">
-        {/* Royalty tier */}
-        {piecesByTier.royalty.length > 0 && (
-          <div className="tier-group">
-            <h4>Royalty</h4>
-            <div className="piece-list">
-              {piecesByTier.royalty.map((piece) => (
-                <PieceButton
-                  key={piece.id}
-                  piece={piece}
-                  isSelected={selectedPiece?.id === piece.id}
-                  onClick={() => onSelectPiece(piece)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
+      {/* Your pieces */}
+      <div className="pieces-section your-pieces">
+        <h4 className="section-title">Your Pieces</h4>
+        <div className="pieces-to-place">
+          <PieceTierGroup
+            tier="Royalty"
+            pieces={piecesByTier.royalty}
+            selectedPiece={selectedPiece}
+            onSelectPiece={onSelectPiece}
+            isInteractive={true}
+          />
+          <PieceTierGroup
+            tier="Pieces"
+            pieces={piecesByTier.piece}
+            selectedPiece={selectedPiece}
+            onSelectPiece={onSelectPiece}
+            isInteractive={true}
+          />
+          <PieceTierGroup
+            tier="Pawns"
+            pieces={piecesByTier.pawn}
+            selectedPiece={selectedPiece}
+            onSelectPiece={onSelectPiece}
+            isInteractive={true}
+          />
+        </div>
+      </div>
 
-        {/* Pieces tier */}
-        {piecesByTier.piece.length > 0 && (
-          <div className="tier-group">
-            <h4>Pieces</h4>
-            <div className="piece-list">
-              {piecesByTier.piece.map((piece) => (
-                <PieceButton
-                  key={piece.id}
-                  piece={piece}
-                  isSelected={selectedPiece?.id === piece.id}
-                  onClick={() => onSelectPiece(piece)}
-                />
-              ))}
-            </div>
+      {/* Opponent's pieces (only in multiplayer) */}
+      {showOpponentPieces && (
+        <div className="pieces-section opponent-pieces">
+          <h4 className="section-title">Opponent's Pieces</h4>
+          <div className="pieces-to-place">
+            <PieceTierGroup
+              tier="Royalty"
+              pieces={opponentPiecesByTier.royalty}
+              selectedPiece={null}
+              onSelectPiece={() => {}}
+              isInteractive={false}
+            />
+            <PieceTierGroup
+              tier="Pieces"
+              pieces={opponentPiecesByTier.piece}
+              selectedPiece={null}
+              onSelectPiece={() => {}}
+              isInteractive={false}
+            />
+            <PieceTierGroup
+              tier="Pawns"
+              pieces={opponentPiecesByTier.pawn}
+              selectedPiece={null}
+              onSelectPiece={() => {}}
+              isInteractive={false}
+            />
           </div>
-        )}
+        </div>
+      )}
+    </div>
+  );
+}
 
-        {/* Pawns tier */}
-        {piecesByTier.pawn.length > 0 && (
-          <div className="tier-group">
-            <h4>Pawns</h4>
-            <div className="piece-list">
-              {piecesByTier.pawn.map((piece) => (
-                <PieceButton
-                  key={piece.id}
-                  piece={piece}
-                  isSelected={selectedPiece?.id === piece.id}
-                  onClick={() => onSelectPiece(piece)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
+interface PieceTierGroupProps {
+  tier: string;
+  pieces: PieceInstance[];
+  selectedPiece: PieceInstance | null;
+  onSelectPiece: (piece: PieceInstance) => void;
+  isInteractive: boolean;
+}
+
+function PieceTierGroup({ tier, pieces, selectedPiece, onSelectPiece, isInteractive }: PieceTierGroupProps) {
+  if (pieces.length === 0) return null;
+
+  return (
+    <div className="tier-group">
+      <h4>{tier}</h4>
+      <div className="piece-list">
+        {pieces.map((piece) => (
+          <PieceButton
+            key={piece.id}
+            piece={piece}
+            isSelected={selectedPiece?.id === piece.id}
+            onClick={() => isInteractive && onSelectPiece(piece)}
+            isInteractive={isInteractive}
+          />
+        ))}
       </div>
     </div>
   );
@@ -104,16 +146,18 @@ interface PieceButtonProps {
   piece: PieceInstance;
   isSelected: boolean;
   onClick: () => void;
+  isInteractive?: boolean;
 }
 
-function PieceButton({ piece, isSelected, onClick }: PieceButtonProps) {
+function PieceButton({ piece, isSelected, onClick, isInteractive = true }: PieceButtonProps) {
   const pieceType = PIECE_BY_ID[piece.typeId];
   if (!pieceType) return null;
 
   return (
     <button
-      className={`piece-button ${piece.owner} ${isSelected ? 'selected' : ''}`}
+      className={`piece-button ${piece.owner} ${isSelected ? 'selected' : ''} ${!isInteractive ? 'non-interactive' : ''}`}
       onClick={onClick}
+      disabled={!isInteractive}
       title={`${pieceType.name}${pieceType.description ? '\n' + pieceType.description : ''}`}
     >
       <span className="piece-symbol">{pieceType.symbol}</span>

@@ -118,3 +118,37 @@
   font-size: 1.6em;
   font-weight: bold;
 }
+
+/* Section styling */
+.pieces-section {
+  margin-bottom: 16px;
+}
+
+.pieces-section .section-title {
+  margin: 0 0 8px 0;
+  font-size: 1em;
+  color: #333;
+  font-weight: bold;
+}
+
+.pieces-section.opponent-pieces {
+  opacity: 0.7;
+  border-top: 1px solid #ccc;
+  padding-top: 12px;
+  margin-top: 16px;
+}
+
+.pieces-section.opponent-pieces .section-title {
+  color: #666;
+}
+
+/* Non-interactive piece buttons */
+.piece-button.non-interactive {
+  cursor: default;
+  opacity: 0.8;
+}
+
+.piece-button.non-interactive:hover {
+  transform: none;
+  border-color: #ccc;
+}

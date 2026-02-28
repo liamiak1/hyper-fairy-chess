@@ -145,6 +145,9 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
     const myPieces = state.playerColor === 'white'
       ? state.placementState.whitePiecesToPlace
       : state.placementState.blackPiecesToPlace;
+    const opponentPieces = state.playerColor === 'white'
+      ? state.placementState.blackPiecesToPlace
+      : state.placementState.whitePiecesToPlace;
 
     const handlePlacementClick = (position: Position) => {
       if (!isMyTurn || !selectedPieceToPlace) return;
@@ -213,9 +216,11 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
 
           <PlacementUI
             piecesToPlace={myPieces}
+            opponentPiecesToPlace={opponentPieces}
             selectedPiece={selectedPieceToPlace}
             onSelectPiece={isMyTurn ? setSelectedPieceToPlace : () => {}}
             currentPlacer={state.placementState.currentPlacer}
+            playerColor={state.playerColor!}
             whitePiecesRemaining={state.placementState.whitePiecesToPlace.length}
             blackPiecesRemaining={state.placementState.blackPiecesToPlace.length}
           />
