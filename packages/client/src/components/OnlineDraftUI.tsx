@@ -13,6 +13,8 @@ import type {
 import type { PlayerDraft } from '../game/rules/draft';
 import {
   createEmptyDraft,
+  addPieceToDraft,
+  removePieceFromDraft,
   canAddPiece,
   getSlotLimits,
   getPieceCountInDraft,
@@ -74,59 +76,14 @@ export function OnlineDraftUI({
 
   const handleAddPiece = (pieceType: PieceType) => {
     if (isLocked) return;
-
-    setDraft(current => {
-      const existing = current.selections.find(s => s.pieceTypeId === pieceType.id);
-      const tier = pieceType.tier;
-      const newSlotsUsed = { ...current.slotsUsed };
-      if (tier === 'pawn' || tier === 'piece' || tier === 'royalty') {
-        newSlotsUsed[tier] = current.slotsUsed[tier] + 1;
-      }
-
-      return {
-        ...current,
-        budgetSpent: current.budgetSpent + pieceType.cost,
-        slotsUsed: newSlotsUsed,
-        selections: existing
-          ? current.selections.map(s =>
-              s.pieceTypeId === pieceType.id
-                ? { ...s, count: s.count + 1 }
-                : s
-            )
-          : [...current.selections, { pieceTypeId: pieceType.id, count: 1 }],
-      };
-    });
+    // Use proper addPieceToDraft which handles replacesKing correctly
+    setDraft(current => addPieceToDraft(current, pieceType));
   };
 
   const handleRemovePiece = (pieceTypeId: string) => {
     if (isLocked) return;
-
-    const pieceType = PIECE_BY_ID[pieceTypeId];
-    if (!pieceType) return;
-
-    setDraft(current => {
-      const existing = current.selections.find(s => s.pieceTypeId === pieceTypeId);
-      if (!existing) return current;
-
-      const tier = pieceType.tier;
-      const newSlotsUsed = { ...current.slotsUsed };
-      if (tier === 'pawn' || tier === 'piece' || tier === 'royalty') {
-        newSlotsUsed[tier] = current.slotsUsed[tier] - 1;
-      }
-
-      return {
-        ...current,
-        budgetSpent: current.budgetSpent - pieceType.cost,
-        slotsUsed: newSlotsUsed,
-        selections: existing.count > 1
-          ? current.selections.map(s =>
-              s.pieceTypeId === pieceTypeId
-                ? { ...s, count: s.count - 1 }
-                : s
-            )
-          : current.selections.filter(s => s.pieceTypeId !== pieceTypeId),
-      };
-    });
+    // Use proper removePieceFromDraft which handles replacesKing correctly
+    setDraft(current => removePieceFromDraft(current, pieceTypeId));
   };
 
   const handleLockIn = () => {
@@ -389,15 +346,23 @@ interface DraftRevealArmyProps {
 }
 
 function DraftRevealArmy({ title, draft, isYou }: DraftRevealArmyProps) {
+  // Check if any piece in draft replaces the King
+  const hasKingReplacerInDraft = draft.some(pick => {
+    const pieceType = PIECE_BY_ID[pick.pieceTypeId];
+    return pieceType?.replacesKing === true;
+  });
+
   return (
     <div className={`reveal-army ${isYou ? 'you' : ''}`}>
       <h3>{title} {isYou && <span className="you-badge">(You)</span>}</h3>
       <div className="reveal-piece-list">
-        {/* Always show King */}
-        <div className="reveal-piece">
-          <span className="piece-symbol">♔</span>
-          <span className="piece-name">King</span>
-        </div>
+        {/* Only show King if no king-replacing piece was drafted */}
+        {!hasKingReplacerInDraft && (
+          <div className="reveal-piece">
+            <span className="piece-symbol">♔</span>
+            <span className="piece-name">King</span>
+          </div>
+        )}
 
         {draft.map((pick) => {
           const pieceType = PIECE_BY_ID[pick.pieceTypeId];
