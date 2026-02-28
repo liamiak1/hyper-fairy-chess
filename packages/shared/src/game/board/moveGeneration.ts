@@ -1706,6 +1706,11 @@ export function getAttackedSquares(
         // Pontiff attacks with bouncing diagonal moves
         attacked.push(...generateBounceMoves(board, piece));
         break;
+
+      case 'nightrider':
+        // Nightrider attacks with repeated knight moves
+        attacked.push(...generateNightriderMoves(board, piece));
+        break;
     }
   }
 
