@@ -15,6 +15,7 @@ import { Board } from './Board';
 import { GameInfo } from './GameInfo';
 import { PromotionDialog } from './PromotionDialog';
 import { PlacementUI } from './PlacementUI';
+import { OpponentPiecesPanel } from './OpponentPiecesPanel';
 import { PieceInfoPopup } from './PieceInfoPopup';
 import './OnlineGame.css';
 
@@ -208,7 +209,13 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
           </div>
         )}
 
-        <div className="online-game-main">
+        <div className="online-game-main placement-layout">
+          <OpponentPiecesPanel
+            pieces={opponentPieces}
+            opponentColor={state.playerColor === 'white' ? 'black' : 'white'}
+            piecesRemaining={opponentPieces.length}
+          />
+
           <div className="board-wrapper">
             <Board
               size={boardSize}
@@ -228,7 +235,6 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
 
           <PlacementUI
             piecesToPlace={myPieces}
-            opponentPiecesToPlace={opponentPieces}
             selectedPiece={selectedPieceToPlace}
             onSelectPiece={isMyTurn ? setSelectedPieceToPlace : () => {}}
             currentPlacer={state.placementState.currentPlacer}

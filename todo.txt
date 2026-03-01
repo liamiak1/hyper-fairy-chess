@@ -5,3 +5,6 @@
 -Idea for later - folks with accounts should be able to save armies (i.e. piece configurations) and select them on the select pieces screen (then allowing modifications as usual)
 -nightriders do not trigger check
 -Fools should be able to take
+-Chameleons can't bounce-take pontiffs
+-If one drafts a regent first, one cannot get any other royals
+-In the join game screen, the name and room code fields are overrunning the right side of the frame. 

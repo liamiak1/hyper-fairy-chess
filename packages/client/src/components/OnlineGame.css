@@ -40,6 +40,12 @@
   margin-bottom: 24px;
 }
 
+/* Three-column layout for placement phase */
+.online-game-main.placement-layout {
+  justify-content: center;
+  align-items: stretch;
+}
+
 .online-game-main .board-wrapper {
   flex-shrink: 0;
 }

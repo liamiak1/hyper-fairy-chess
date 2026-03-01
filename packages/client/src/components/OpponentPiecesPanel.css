@@ -1,0 +1,90 @@
+/* Opponent Pieces Panel */
+
+.opponent-pieces-panel {
+  background: #242442;
+  border-radius: 12px;
+  padding: 16px;
+  min-width: 140px;
+  max-width: 180px;
+}
+
+.opponent-pieces-panel .panel-header {
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.opponent-pieces-panel .panel-header h4 {
+  margin: 0 0 4px 0;
+  font-size: 0.9rem;
+  color: #b0b0c0;
+}
+
+.opponent-pieces-panel .pieces-count {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.opponent-pieces-panel .pieces-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.opponent-pieces-panel .tier-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.opponent-pieces-panel .tier-label {
+  font-size: 0.7rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.opponent-pieces-panel .piece-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.opponent-pieces-panel .piece-chip {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 1.2rem;
+  background: #1a1a2e;
+  border: 1px solid #3a3a5c;
+}
+
+.opponent-pieces-panel .piece-chip.white {
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.opponent-pieces-panel .piece-chip.black {
+  color: #1a1a2e;
+  text-shadow: 0 0 1px rgba(255, 255, 255, 0.3);
+  background: #b0b0c0;
+}
+
+.opponent-pieces-panel .all-placed {
+  text-align: center;
+  color: #666;
+  font-size: 0.85rem;
+  font-style: italic;
+  padding: 20px 0;
+}
+
+/* Color accent based on opponent color */
+.opponent-pieces-panel.white .panel-header h4 {
+  color: #e0e0e0;
+}
+
+.opponent-pieces-panel.black .panel-header h4 {
+  color: #888;
+}

@@ -8,7 +8,6 @@ import './PlacementUI.css';
 
 interface PlacementUIProps {
   piecesToPlace: PieceInstance[];
-  opponentPiecesToPlace?: PieceInstance[];
   selectedPiece: PieceInstance | null;
   onSelectPiece: (piece: PieceInstance) => void;
   currentPlacer: PlayerColor;
@@ -19,7 +18,6 @@ interface PlacementUIProps {
 
 export function PlacementUI({
   piecesToPlace,
-  opponentPiecesToPlace = [],
   selectedPiece,
   onSelectPiece,
   currentPlacer,
@@ -29,8 +27,6 @@ export function PlacementUI({
 }: PlacementUIProps) {
   // Group pieces by tier
   const piecesByTier = groupPiecesByTier(piecesToPlace);
-  const opponentPiecesByTier = groupPiecesByTier(opponentPiecesToPlace);
-  const showOpponentPieces = opponentPiecesToPlace.length > 0;
 
   return (
     <div className="placement-ui">
@@ -79,36 +75,6 @@ export function PlacementUI({
           />
         </div>
       </div>
-
-      {/* Opponent's pieces (only in multiplayer) */}
-      {showOpponentPieces && (
-        <div className="pieces-section opponent-pieces">
-          <h4 className="section-title">Opponent's Pieces</h4>
-          <div className="pieces-to-place">
-            <PieceTierGroup
-              tier="Royalty"
-              pieces={opponentPiecesByTier.royalty}
-              selectedPiece={null}
-              onSelectPiece={() => {}}
-              isInteractive={false}
-            />
-            <PieceTierGroup
-              tier="Pieces"
-              pieces={opponentPiecesByTier.piece}
-              selectedPiece={null}
-              onSelectPiece={() => {}}
-              isInteractive={false}
-            />
-            <PieceTierGroup
-              tier="Pawns"
-              pieces={opponentPiecesByTier.pawn}
-              selectedPiece={null}
-              onSelectPiece={() => {}}
-              isInteractive={false}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -15,7 +15,10 @@
       "Bash(/c/Program Files/nodejs/npx.cmd tsc --noEmit)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push)"
+      "Bash(git push)",
+      "WebFetch(domain:hyper-fairy-chess-production.up.railway.app)",
+      "Bash(npx pnpm install:*)",
+      "Bash(\"/c/Program Files/nodejs/npx.cmd\" pnpm run build)"
     ]
   }
 }
