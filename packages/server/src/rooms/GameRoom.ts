@@ -38,6 +38,7 @@ import {
 import {
   createBoardState,
   getPieceAt,
+  hashPosition,
 } from '@hyper-fairy-chess/shared';
 import {
   generateLegalMoves,
@@ -537,6 +538,14 @@ export class GameRoom {
 
     if (this.gameState) {
       this.gameState.phase = 'play';
+
+      // Record the initial position for threefold repetition detection
+      const initialHash = hashPosition(
+        this.gameState.board,
+        this.gameState.currentTurn,
+        this.gameState.enPassantTarget
+      );
+      this.gameState.positionHistory = [initialHash];
     }
 
     this.broadcast({

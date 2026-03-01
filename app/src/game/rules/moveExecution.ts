@@ -871,14 +871,19 @@ export function createInitialGameState(
     '10x10': { files: 10, ranks: 10 },
   }[boardSize];
 
+  const board: BoardState = {
+    dimensions,
+    pieces,
+    positionMap: createPositionMap(pieces),
+  };
+
+  // Calculate initial position hash for threefold repetition detection
+  const initialHash = hashPosition(board, 'white', null);
+
   return {
     phase: 'play',
     boardSize,
-    board: {
-      dimensions,
-      pieces,
-      positionMap: createPositionMap(pieces),
-    },
+    board,
     players: {
       white: { color: 'white', budget: pointBudget, remainingBudget: 0, victoryPoints: 0 },
       black: { color: 'black', budget: pointBudget, remainingBudget: 0, victoryPoints: 0 },
@@ -892,7 +897,7 @@ export function createInitialGameState(
     moveHistory: [],
     enPassantTarget: null,
     halfmoveClock: 0,
-    positionHistory: [],
+    positionHistory: [initialHash],
     result: null,
   };
 }
