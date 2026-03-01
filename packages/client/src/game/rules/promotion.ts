@@ -85,6 +85,9 @@ export function getPromotionOptions(gameState: GameState): PieceType[] {
     // Exclude kings (royal mandatory pieces)
     if (pt.isRoyal && pt.isMandatory) return false;
 
+    // Exclude king-replacing pieces (Regent, Phantom King)
+    if (pt.replacesKing) return false;
+
     // Exclude non-capturing pieces (Immobilizer, Herald, Inquisitor, Jester)
     if (pt.captureType === 'none') return false;
 
