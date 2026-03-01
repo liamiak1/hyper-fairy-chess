@@ -456,3 +456,57 @@ export function canCaptureByDisplacement(piece: PieceInstance): boolean {
   const nonDisplacementCaptures = ['coordinator', 'boxer', 'withdrawal', 'thief', 'long-leap', 'none'];
   return !nonDisplacementCaptures.includes(pieceType.captureType);
 }
+
+// =============================================================================
+// Position Hashing (for threefold repetition detection)
+// =============================================================================
+
+/**
+ * Create a unique hash string for a board position.
+ * Used for threefold repetition detection.
+ *
+ * The hash includes:
+ * - All piece positions and types (sorted for consistency)
+ * - Current turn
+ * - Castling rights (which castle-capable pieces haven't moved)
+ * - En passant target square
+ */
+export function hashPosition(
+  board: BoardState,
+  currentTurn: PlayerColor,
+  enPassantTarget: Position | null
+): string {
+  const parts: string[] = [];
+
+  // Sort pieces by position for consistent hashing
+  const sortedPieces = board.pieces
+    .filter(p => p.position !== null)
+    .sort((a, b) => {
+      const posA = positionToString(a.position!);
+      const posB = positionToString(b.position!);
+      return posA.localeCompare(posB);
+    });
+
+  // Add each piece: position:type:owner:hasMoved(for castling pieces)
+  for (const piece of sortedPieces) {
+    const pieceType = PIECE_BY_ID[piece.typeId];
+    const pos = positionToString(piece.position!);
+
+    // Include hasMoved for pieces that can castle (affects castling rights)
+    if (pieceType?.canCastle) {
+      parts.push(`${pos}:${piece.typeId}:${piece.owner}:${piece.hasMoved ? 'm' : 'u'}`);
+    } else {
+      parts.push(`${pos}:${piece.typeId}:${piece.owner}`);
+    }
+  }
+
+  // Add current turn
+  parts.push(`turn:${currentTurn}`);
+
+  // Add en passant target (only if it exists and is capturable)
+  if (enPassantTarget) {
+    parts.push(`ep:${positionToString(enPassantTarget)}`);
+  }
+
+  return parts.join('|');
+}

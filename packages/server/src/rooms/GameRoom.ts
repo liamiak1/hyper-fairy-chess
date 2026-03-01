@@ -46,6 +46,7 @@ import {
 } from '@hyper-fairy-chess/shared';
 import {
   getGameResult,
+  createDrawAgreementResult,
 } from '@hyper-fairy-chess/shared';
 
 interface RoomPlayer extends PlayerInfo {
@@ -77,6 +78,9 @@ export class GameRoom {
   private draftTimer: ReturnType<typeof setTimeout> | null = null;
   private draftTickTimer: ReturnType<typeof setInterval> | null = null;
   private disconnectTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
+
+  // Draw offer state
+  private drawOffer: PlayerColor | null = null;
 
   // Socket.io server reference
   private io: Server | null = null;
@@ -440,6 +444,8 @@ export class GameRoom {
       moveHistory: [],
       enPassantTarget: null,
       result: null,
+      halfmoveClock: 0,
+      positionHistory: [],
     };
   }
 
@@ -598,6 +604,9 @@ export class GameRoom {
     this.gameState = newGameState;
     this.lastActivity = Date.now();
 
+    // Clear any pending draw offer when a move is made
+    this.drawOffer = null;
+
     this.broadcast({
       type: 'MOVE_MADE',
       timestamp: Date.now(),
@@ -657,6 +666,62 @@ export class GameRoom {
       result: this.gameState.result,
       finalState: this.gameState,
     } as GameOverMessage);
+  }
+
+  // =========================================================================
+  // Draw Handling
+  // =========================================================================
+
+  handleOfferDraw(playerId: string): void {
+    const player = this.players.get(playerId);
+    if (!player || !player.color || !this.gameState) return;
+
+    // Can't offer draw if game is over
+    if (this.gameState.result || this.phase !== 'playing') return;
+
+    // Can't offer if you already have a pending offer
+    if (this.drawOffer === player.color) return;
+
+    this.drawOffer = player.color;
+
+    this.broadcast({
+      type: 'DRAW_OFFERED',
+      timestamp: Date.now(),
+      by: player.color,
+    });
+  }
+
+  handleRespondDraw(playerId: string, accept: boolean): void {
+    const player = this.players.get(playerId);
+    if (!player || !player.color || !this.gameState) return;
+
+    // Can't respond if no draw offer pending
+    if (!this.drawOffer) return;
+
+    // Can't respond to your own offer
+    if (this.drawOffer === player.color) return;
+
+    if (accept) {
+      // Game ends in draw by agreement
+      this.gameState.result = createDrawAgreementResult();
+      this.phase = 'ended';
+      this.drawOffer = null;
+
+      this.broadcast({
+        type: 'GAME_OVER',
+        timestamp: Date.now(),
+        result: this.gameState.result,
+        finalState: this.gameState,
+      } as GameOverMessage);
+    } else {
+      // Draw declined
+      this.drawOffer = null;
+
+      this.broadcast({
+        type: 'DRAW_DECLINED',
+        timestamp: Date.now(),
+      });
+    }
   }
 
   // =========================================================================

@@ -38,6 +38,26 @@ export function getGameResult(gameState: GameState): GameResult | null {
   // If result is already set (resignation, timeout, etc.), return it
   if (gameState.result) return gameState.result;
 
+  // Check for 50-move rule (100 half-moves without pawn move or capture)
+  if (gameState.halfmoveClock >= 100) {
+    return {
+      type: 'draw-fifty-move',
+      winner: null,
+      whiteVP: calculateVictoryPoints(gameState.board, 'white'),
+      blackVP: calculateVictoryPoints(gameState.board, 'black'),
+    };
+  }
+
+  // Check for threefold repetition
+  if (isThreefoldRepetition(gameState)) {
+    return {
+      type: 'draw-repetition',
+      winner: null,
+      whiteVP: calculateVictoryPoints(gameState.board, 'white'),
+      blackVP: calculateVictoryPoints(gameState.board, 'black'),
+    };
+  }
+
   // FAILSAFE: Check if a king was captured (should not happen in normal play)
   // This handles edge cases where check detection might have bugs
   if (isKingCaptured(gameState.board, 'white')) {
@@ -148,6 +168,61 @@ export function isDraw(gameState: GameState): boolean {
 }
 
 // =============================================================================
+// Draw Rule Detection
+// =============================================================================
+
+/**
+ * Check for threefold repetition (same position occurred 3+ times)
+ */
+export function isThreefoldRepetition(gameState: GameState): boolean {
+  if (gameState.positionHistory.length < 3) return false;
+
+  // Get the current position hash (last entry in history)
+  const currentHash = gameState.positionHistory[gameState.positionHistory.length - 1];
+  if (!currentHash) return false;
+
+  // Count occurrences of the current position
+  let count = 0;
+  for (const hash of gameState.positionHistory) {
+    if (hash === currentHash) {
+      count++;
+      if (count >= 3) return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Check if 50-move rule draw is approaching (within 1 move)
+ * Returns true when halfmoveClock >= 98 (1 full move = 2 half-moves away)
+ */
+export function isNearFiftyMoveRule(gameState: GameState): boolean {
+  return gameState.halfmoveClock >= 98;
+}
+
+/**
+ * Check if threefold repetition is approaching (position seen 2 times)
+ */
+export function isNearThreefoldRepetition(gameState: GameState): boolean {
+  if (gameState.positionHistory.length < 2) return false;
+
+  // Get the current position hash
+  const currentHash = gameState.positionHistory[gameState.positionHistory.length - 1];
+  if (!currentHash) return false;
+
+  // Count occurrences - return true if we've seen this position exactly 2 times
+  let count = 0;
+  for (const hash of gameState.positionHistory) {
+    if (hash === currentHash) {
+      count++;
+    }
+  }
+
+  return count === 2;
+}
+
+// =============================================================================
 // Victory Points Calculation
 // =============================================================================
 
@@ -226,6 +301,30 @@ export function createDrawAgreementResult(board: BoardState): GameResult {
 }
 
 /**
+ * Create a 50-move rule draw result
+ */
+export function createFiftyMoveDrawResult(board: BoardState): GameResult {
+  return {
+    type: 'draw-fifty-move',
+    winner: null,
+    whiteVP: calculateVictoryPoints(board, 'white'),
+    blackVP: calculateVictoryPoints(board, 'black'),
+  };
+}
+
+/**
+ * Create a threefold repetition draw result
+ */
+export function createRepetitionDrawResult(board: BoardState): GameResult {
+  return {
+    type: 'draw-repetition',
+    winner: null,
+    whiteVP: calculateVictoryPoints(board, 'white'),
+    blackVP: calculateVictoryPoints(board, 'black'),
+  };
+}
+
+/**
  * Get a human-readable description of the game result
  */
 export function getResultDescription(result: GameResult): string {
@@ -250,6 +349,12 @@ export function getResultDescription(result: GameResult): string {
 
     case 'draw-agreement':
       return 'Draw by agreement.';
+
+    case 'draw-fifty-move':
+      return 'Draw by 50-move rule.';
+
+    case 'draw-repetition':
+      return 'Draw by threefold repetition.';
 
     default:
       return 'Game over.';

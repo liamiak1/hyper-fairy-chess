@@ -6,7 +6,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useOnlineGame } from '../hooks/useOnlineGame';
 import type { Position, PlayerColor, PieceType, PieceInstance, GameResult } from '@hyper-fairy-chess/shared';
-import { BOARD_CONFIGS, getPlacementZones, getValidPlacementSquares, generateLegalMoves, isPromotionMove, getPromotionOptionsForPiece } from '@hyper-fairy-chess/shared';
+import { BOARD_CONFIGS, getPlacementZones, getValidPlacementSquares, generateLegalMoves, isPromotionMove, getPromotionOptionsForPiece, isNearFiftyMoveRule, isNearThreefoldRepetition } from '@hyper-fairy-chess/shared';
 import { PIECE_BY_ID } from '../game/pieces/pieceDefinitions';
 import { OnlineLobby } from './OnlineLobby';
 import { WaitingRoom } from './WaitingRoom';
@@ -53,6 +53,10 @@ function getResultDescription(result: GameResult): string {
       return 'Draw by agreement.';
     case 'draw-vp-tie':
       return `Draw by VP tie (${result.whiteVP} - ${result.blackVP}).`;
+    case 'draw-fifty-move':
+      return 'Draw by fifty-move rule.';
+    case 'draw-repetition':
+      return 'Draw by threefold repetition.';
     default:
       return 'Game over.';
   }
@@ -371,6 +375,33 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
           </div>
         )}
 
+        {/* Draw offer notification */}
+        {state.drawOfferedBy && state.drawOfferedBy !== state.playerColor && (
+          <div className="draw-offer-notification">
+            <span>Your opponent offers a draw</span>
+            <div className="draw-offer-buttons">
+              <button className="btn btn-success" onClick={() => actions.respondDraw(true)}>
+                Accept
+              </button>
+              <button className="btn btn-danger" onClick={() => actions.respondDraw(false)}>
+                Decline
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Draw warning banners */}
+        {!isGameOver && isNearFiftyMoveRule(state.gameState) && (
+          <div className="draw-warning-banner">
+            Fifty-move rule approaching! (1 move away from automatic draw)
+          </div>
+        )}
+        {!isGameOver && isNearThreefoldRepetition(state.gameState) && (
+          <div className="draw-warning-banner">
+            Threefold repetition approaching! (Position has occurred twice)
+          </div>
+        )}
+
         <GameInfo
           currentTurn={state.gameState.currentTurn}
           isCheck={state.gameState.inCheck !== null}
@@ -424,9 +455,18 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
 
         <div className="online-game-controls">
           {!isGameOver && (
-            <button className="btn btn-danger" onClick={actions.resign}>
-              Resign
-            </button>
+            <>
+              <button className="btn btn-danger" onClick={actions.resign}>
+                Resign
+              </button>
+              <button
+                className="btn btn-draw"
+                onClick={actions.offerDraw}
+                disabled={state.drawOfferedBy === state.playerColor}
+              >
+                {state.drawOfferedBy === state.playerColor ? 'Draw Offered' : 'Offer Draw'}
+              </button>
+            </>
           )}
           <button className="btn btn-secondary" onClick={actions.leaveRoom}>
             Leave Game

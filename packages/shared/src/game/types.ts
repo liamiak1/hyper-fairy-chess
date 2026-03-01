@@ -209,6 +209,10 @@ export interface GameState {
   // En passant target (if last move was pawn double-move)
   enPassantTarget: Position | null;
 
+  // Draw tracking
+  halfmoveClock: number;        // Moves since last pawn move or capture (for 50-move rule)
+  positionHistory: string[];    // Position hashes for threefold repetition detection
+
   // Game result
   result: GameResult | null;
 }
@@ -257,7 +261,9 @@ export type GameResultType =
   | 'resignation'
   | 'timeout'
   | 'draw-agreement'
-  | 'draw-vp-tie';
+  | 'draw-vp-tie'
+  | 'draw-fifty-move'
+  | 'draw-repetition';
 
 export interface GameResult {
   type: GameResultType;

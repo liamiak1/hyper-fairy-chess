@@ -68,6 +68,9 @@ export interface OnlineGameState {
   // Game
   gameState: GameState | null;
 
+  // Draw offer
+  drawOfferedBy: PlayerColor | null;
+
   // Errors
   error: string | null;
 
@@ -91,6 +94,7 @@ const initialState: OnlineGameState = {
   blackDraft: null,
   placementState: null,
   gameState: null,
+  drawOfferedBy: null,
   error: null,
   opponentStatus: null,
 };
@@ -242,6 +246,7 @@ export function useOnlineGame() {
         setState(prev => ({
           ...prev,
           gameState: reconstructGameState(message.gameState),
+          drawOfferedBy: null, // Clear any pending draw offer when a move is made
         }));
         break;
 
@@ -291,6 +296,20 @@ export function useOnlineGame() {
           placementState: message.placementState || prev.placementState,
           whiteDraft: message.whiteDraft || prev.whiteDraft,
           blackDraft: message.blackDraft || prev.blackDraft,
+        }));
+        break;
+
+      case 'DRAW_OFFERED':
+        setState(prev => ({
+          ...prev,
+          drawOfferedBy: message.by,
+        }));
+        break;
+
+      case 'DRAW_DECLINED':
+        setState(prev => ({
+          ...prev,
+          drawOfferedBy: null,
         }));
         break;
     }
@@ -359,6 +378,21 @@ export function useOnlineGame() {
     });
   }, [sendMessage]);
 
+  const offerDraw = useCallback(() => {
+    sendMessage({
+      type: 'OFFER_DRAW',
+      timestamp: Date.now(),
+    });
+  }, [sendMessage]);
+
+  const respondDraw = useCallback((accept: boolean) => {
+    sendMessage({
+      type: 'RESPOND_DRAW',
+      timestamp: Date.now(),
+      accept,
+    });
+  }, [sendMessage]);
+
   const reconnect = useCallback(() => {
     const roomCode = localStorage.getItem('hfc_roomCode');
     const playerId = localStorage.getItem('hfc_playerId');
@@ -387,6 +421,8 @@ export function useOnlineGame() {
       placePiece,
       makeMove,
       resign,
+      offerDraw,
+      respondDraw,
       reconnect,
       clearError,
     },

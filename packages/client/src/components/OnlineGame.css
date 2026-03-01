@@ -209,3 +209,88 @@
     transform: translateY(0);
   }
 }
+
+/* Draw offer notification */
+.draw-offer-notification {
+  width: 100%;
+  max-width: 800px;
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  text-align: center;
+  background: rgba(108, 92, 231, 0.2);
+  color: #b39ddb;
+  border: 1px solid rgba(108, 92, 231, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  animation: slideIn 0.3s ease-out;
+}
+
+.draw-offer-notification span {
+  font-weight: 500;
+}
+
+.draw-offer-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.draw-offer-buttons .btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.draw-offer-buttons .btn-success {
+  background: #4caf50;
+  color: #fff;
+}
+
+.draw-offer-buttons .btn-success:hover {
+  background: #388e3c;
+}
+
+.draw-offer-buttons .btn-danger {
+  background: #f44336;
+  color: #fff;
+}
+
+.draw-offer-buttons .btn-danger:hover {
+  background: #d32f2f;
+}
+
+/* Draw warning banners */
+.draw-warning-banner {
+  width: 100%;
+  max-width: 800px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  text-align: center;
+  font-weight: 500;
+  background: rgba(255, 193, 7, 0.15);
+  color: #ffd54f;
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Offer draw button */
+.online-game-controls .btn-draw {
+  background: #6c5ce7;
+  color: #fff;
+}
+
+.online-game-controls .btn-draw:hover:not(:disabled) {
+  background: #5b4bd5;
+}
+
+.online-game-controls .btn-draw:disabled {
+  background: #4a4a6c;
+  color: #888;
+  cursor: not-allowed;
+}

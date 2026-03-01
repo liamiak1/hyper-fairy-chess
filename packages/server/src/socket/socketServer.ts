@@ -12,6 +12,7 @@ import type {
   PlacePieceMessage,
   MakeMoveMessage,
   ReconnectMessage,
+  RespondDrawMessage,
   RoomCreatedMessage,
   RoomJoinedMessage,
   PlayerJoinedMessage,
@@ -101,6 +102,14 @@ function handleMessage(
 
     case 'RESIGN':
       handleResign(socket, roomManager, state);
+      break;
+
+    case 'OFFER_DRAW':
+      handleOfferDraw(socket, roomManager, state);
+      break;
+
+    case 'RESPOND_DRAW':
+      handleRespondDraw(socket, msg as RespondDrawMessage, roomManager, state);
       break;
 
     case 'RECONNECT':
@@ -348,4 +357,31 @@ function handleReconnect(
   state.playerId = msg.playerId;
 
   socket.emit('message', syncState);
+}
+
+function handleOfferDraw(
+  _socket: Socket,
+  roomManager: RoomManager,
+  state: SocketState
+): void {
+  if (!state.roomCode || !state.playerId) return;
+
+  const room = roomManager.getRoom(state.roomCode);
+  if (!room) return;
+
+  room.handleOfferDraw(state.playerId);
+}
+
+function handleRespondDraw(
+  _socket: Socket,
+  msg: RespondDrawMessage,
+  roomManager: RoomManager,
+  state: SocketState
+): void {
+  if (!state.roomCode || !state.playerId) return;
+
+  const room = roomManager.getRoom(state.roomCode);
+  if (!room) return;
+
+  room.handleRespondDraw(state.playerId, msg.accept);
 }

@@ -22,6 +22,7 @@ import {
   fileToIndex,
   getKing,
   hasCapturableEnemyPiece,
+  hashPosition,
 } from '../board/boardUtils';
 import { isCastlingMove } from './castling';
 import { isInCheck } from './checkDetection';
@@ -716,6 +717,17 @@ export function executeMove(gameState: GameState, move: Move): GameState {
   // Check if opponent is now in check
   const inCheck = isInCheck(boardWithFrozen, nextTurn) ? nextTurn : null;
 
+  // Update halfmove clock for 50-move rule
+  // Reset to 0 if pawn moved or any capture occurred, otherwise increment
+  const isPawnMove = pieceType?.tier === 'pawn';
+  const hasCapture = move.capturedPieceId !== null ||
+    (move.additionalCaptures && move.additionalCaptures.length > 0);
+  const newHalfmoveClock = (isPawnMove || hasCapture) ? 0 : gameState.halfmoveClock + 1;
+
+  // Calculate position hash for threefold repetition detection
+  const positionHash = hashPosition(boardWithFrozen, nextTurn, enPassantTarget);
+  const newPositionHistory = [...gameState.positionHistory, positionHash];
+
   return {
     ...gameState,
     board: boardWithFrozen,
@@ -724,6 +736,8 @@ export function executeMove(gameState: GameState, move: Move): GameState {
     enPassantTarget,
     inCheck,
     moveHistory: [...gameState.moveHistory, move],
+    halfmoveClock: newHalfmoveClock,
+    positionHistory: newPositionHistory,
   };
 }
 
@@ -877,6 +891,8 @@ export function createInitialGameState(
     inCheck: null,
     moveHistory: [],
     enPassantTarget: null,
+    halfmoveClock: 0,
+    positionHistory: [],
     result: null,
   };
 }
@@ -914,6 +930,8 @@ export function createEmptyGameState(
     inCheck: null,
     moveHistory: [],
     enPassantTarget: null,
+    halfmoveClock: 0,
+    positionHistory: [],
     result: null,
   };
 }
