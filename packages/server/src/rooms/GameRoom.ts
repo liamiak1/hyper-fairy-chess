@@ -991,6 +991,13 @@ export class GameRoom {
     }
   }
 
+  private sendToPlayer(playerId: string, message: ServerToClientMessage): void {
+    const player = this.players.get(playerId);
+    if (player && this.io) {
+      this.io.to(player.socketId).emit('message', message);
+    }
+  }
+
   private buildSyncState(playerId: string): SyncStateMessage {
     const player = this.players.get(playerId);
 
