@@ -6,7 +6,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useOnlineGame } from '../hooks/useOnlineGame';
 import type { Position, PlayerColor, PieceType, PieceInstance, GameResult } from '@hyper-fairy-chess/shared';
-import { BOARD_CONFIGS, getPlacementZones, getValidPlacementSquares, generateLegalMoves } from '@hyper-fairy-chess/shared';
+import { BOARD_CONFIGS, getPlacementZones, getValidPlacementSquares, generateLegalMoves, isPromotionMove, getPromotionOptionsForPiece } from '@hyper-fairy-chess/shared';
 import { PIECE_BY_ID } from '../game/pieces/pieceDefinitions';
 import { OnlineLobby } from './OnlineLobby';
 import { WaitingRoom } from './WaitingRoom';
@@ -277,18 +277,30 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
         );
 
         if (movingPiece && movingPiece.owner === state.playerColor) {
-          // Check if this might be a promotion (simplified check)
-          const isPawn = movingPiece.typeId === 'pawn' ||
-                        movingPiece.typeId === 'berolina' ||
-                        movingPiece.typeId === 'sergeant' ||
-                        movingPiece.typeId === 'soldier';
+          // Check if this is a promotion move
+          const pieceType = PIECE_BY_ID[movingPiece.typeId];
           const boardConfig = BOARD_CONFIGS[state.settings!.boardSize];
-          const lastRank = movingPiece.owner === 'white' ? boardConfig.ranks : 1;
+          const dimensions = { files: boardConfig.files, ranks: boardConfig.ranks };
 
-          if (isPawn && position.rank === lastRank) {
-            // Would need promotion - for now, default to queen
-            // TODO: Show promotion dialog
-            actions.makeMove(selectedSquare, position, 'queen');
+          if (pieceType && isPromotionMove(movingPiece, pieceType, position, dimensions)) {
+            // Get promotion options based on pieces in the game
+            const options = getPromotionOptionsForPiece(pieceType, state.gameState!);
+
+            if (options.length === 1) {
+              // Only one option (e.g., Fool -> Jester), auto-promote
+              actions.makeMove(selectedSquare, position, options[0].id);
+            } else if (options.length > 1) {
+              // Show promotion dialog
+              setPromotionPending({
+                from: selectedSquare,
+                to: position,
+                options,
+              });
+              return; // Don't clear selection yet
+            } else {
+              // No valid options, fall back to queen (shouldn't happen)
+              actions.makeMove(selectedSquare, position, 'queen');
+            }
           } else {
             actions.makeMove(selectedSquare, position);
           }
