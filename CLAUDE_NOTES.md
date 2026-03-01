@@ -57,3 +57,12 @@ packages/
 
 ## GitHub
 - Repo: https://github.com/liamiak1/hyper-fairy-chess
+
+## IMPORTANT: Deployment Workflow
+Railway deploys from GitHub, NOT from local files. Before deploying or when the user mentions deploying:
+
+1. **Always check for uncommitted changes**: `git status`
+2. **Commit and push** any changes before deploying
+3. **Verify** the push succeeded before telling the user to redeploy
+
+If changes work locally but not on Railway, the most likely cause is uncommitted/unpushed changes.
