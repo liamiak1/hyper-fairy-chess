@@ -15,6 +15,7 @@ import { Board } from './Board';
 import { GameInfo } from './GameInfo';
 import { PromotionDialog } from './PromotionDialog';
 import { PlacementUI } from './PlacementUI';
+import { BlindPlacementUI } from './BlindPlacementUI';
 import { OpponentPiecesPanel } from './OpponentPiecesPanel';
 import { PieceInfoPopup } from './PieceInfoPopup';
 import './OnlineGame.css';
@@ -144,7 +145,35 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
     );
   }
 
-  // Placement phase
+  // Blind Placement phase
+  if (state.phase === 'placement' && state.placementState && state.blindMode) {
+    const myPieces = state.playerColor === 'white'
+      ? state.placementState.whitePiecesToPlace
+      : state.placementState.blackPiecesToPlace;
+    const opponentArmy = state.playerColor === 'white'
+      ? state.placementState.blackPiecesToPlace
+      : state.placementState.whitePiecesToPlace;
+
+    return (
+      <BlindPlacementUI
+        playerColor={state.playerColor!}
+        piecesToPlace={myPieces}
+        myPlacedPieces={state.myPlacedPieces}
+        opponentArmy={opponentArmy}
+        boardSize={state.settings!.boardSize}
+        myReady={state.myReady}
+        opponentReady={state.opponentBlindReady}
+        onPlacePiece={actions.blindPlacePiece}
+        onUnplacePiece={actions.blindUnplacePiece}
+        onReady={actions.setBlindReady}
+        onCancelReady={actions.cancelBlindReady}
+        onPieceRightClick={handlePieceRightClick}
+        roomCode={state.roomCode!}
+      />
+    );
+  }
+
+  // Regular Placement phase
   if (state.phase === 'placement' && state.placementState) {
     const isMyTurn = state.placementState.currentPlacer === state.playerColor;
     const myPieces = state.playerColor === 'white'

@@ -1,0 +1,333 @@
+/* Blind Placement UI Styles */
+
+.blind-placement-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: #1a1a2e;
+  color: #fff;
+}
+
+.blind-placement-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 1200px;
+  margin-bottom: 16px;
+}
+
+.blind-placement-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.blind-placement-status {
+  width: 100%;
+  max-width: 1200px;
+  margin-bottom: 16px;
+}
+
+.waiting-banner {
+  padding: 12px 20px;
+  border-radius: 8px;
+  text-align: center;
+  background: rgba(108, 92, 231, 0.2);
+  color: #b39ddb;
+  border: 1px solid rgba(108, 92, 231, 0.3);
+  animation: pulse 2s infinite;
+}
+
+.opponent-ready-banner {
+  padding: 12px 20px;
+  border-radius: 8px;
+  text-align: center;
+  background: rgba(76, 175, 80, 0.2);
+  color: #81c784;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.blind-placement-main {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  max-width: 1200px;
+}
+
+/* Left Panel - Opponent's Army */
+.opponent-army-panel {
+  width: 200px;
+  padding: 16px;
+  background: #242442;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.opponent-army-panel h3 {
+  margin: 0 0 8px 0;
+  font-size: 1rem;
+  color: #fff;
+}
+
+.panel-subtitle {
+  margin: 0 0 16px 0;
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.army-pieces {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.army-tier-group h4 {
+  margin: 0 0 4px 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #666;
+}
+
+.army-piece-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.army-piece {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  font-size: 1.2rem;
+}
+
+.army-piece-count {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.opponent-status {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ready-indicator {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.ready-indicator.ready {
+  background: rgba(76, 175, 80, 0.2);
+  color: #81c784;
+}
+
+.ready-indicator.placing {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+}
+
+/* Center - Board */
+.blind-placement-main .board-wrapper {
+  flex-shrink: 0;
+}
+
+.blind-placement-container .board-container {
+  max-width: 680px;
+}
+
+.blind-placement-container .board {
+  max-width: 640px;
+}
+
+.blind-placement-container .piece {
+  font-size: 2.1em;
+}
+
+/* Right Panel - My Pieces */
+.my-pieces-panel {
+  width: 220px;
+  padding: 16px;
+  background: #242442;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.my-pieces-panel h3 {
+  margin: 0 0 8px 0;
+  font-size: 1rem;
+  color: #fff;
+}
+
+.pieces-to-place {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.tier-group h4 {
+  margin: 0 0 4px 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #666;
+}
+
+.piece-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.piece-button {
+  width: 40px;
+  height: 40px;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.piece-button .piece-symbol {
+  font-size: 1.5rem;
+}
+
+.piece-button.white .piece-symbol {
+  color: #fff;
+  text-shadow: 0 0 2px #000;
+}
+
+.piece-button.black .piece-symbol {
+  color: #333;
+  text-shadow: 0 0 2px #fff;
+}
+
+.piece-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(108, 92, 231, 0.5);
+}
+
+.piece-button.selected {
+  background: rgba(108, 92, 231, 0.3);
+  border-color: #6c5ce7;
+  box-shadow: 0 0 8px rgba(108, 92, 231, 0.4);
+}
+
+/* Placed pieces section */
+.placed-pieces-section {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.placed-pieces-section h4 {
+  margin: 0 0 8px 0;
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.placed-piece-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.placed-piece-item {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 4px;
+  background: rgba(76, 175, 80, 0.2);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placed-piece-item .piece-symbol {
+  font-size: 1.2rem;
+}
+
+.placed-piece-item:hover {
+  background: rgba(244, 67, 54, 0.3);
+}
+
+/* Ready button */
+.btn-ready {
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #6c5ce7;
+  color: #fff;
+}
+
+.btn-ready:hover:not(:disabled) {
+  background: #5b4bd5;
+}
+
+.btn-ready:disabled {
+  background: #4a4a6c;
+  color: #888;
+  cursor: not-allowed;
+}
+
+/* Ready status */
+.ready-status {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.ready-badge {
+  display: inline-block;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  background: rgba(76, 175, 80, 0.2);
+  color: #81c784;
+}
+
+.btn-cancel-ready {
+  width: 100%;
+  padding: 10px 16px;
+  border: 2px solid #666;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+  color: #888;
+}
+
+.btn-cancel-ready:hover {
+  border-color: #f44336;
+  color: #f44336;
+}

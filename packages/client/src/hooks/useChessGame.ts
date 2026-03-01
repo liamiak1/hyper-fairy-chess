@@ -606,6 +606,9 @@ export function useChessGame(
           currentPlacer
         ),
         selectedPieceId: null,
+        mode: placementState.mode,
+        whiteReady: placementState.whiteReady,
+        blackReady: placementState.blackReady,
       };
 
       // Check if placement is complete

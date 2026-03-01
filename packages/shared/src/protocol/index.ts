@@ -40,6 +40,7 @@ export interface RoomSettings {
   boardSize: BoardSize;
   draftTimeLimit: number | null; // seconds, null = no limit
   moveTimeLimit: number | null; // seconds per move, null = no limit
+  placementMode: 'alternating' | 'blind'; // alternating = take turns, blind = simultaneous hidden
 }
 
 // =============================================================================
@@ -206,6 +207,68 @@ export interface PlacementCompleteMessage extends ServerMessage {
 }
 
 // =============================================================================
+// Blind Placement Phase Messages
+// =============================================================================
+
+// Client -> Server: Place a piece (position stored privately on server)
+export interface BlindPlacePieceMessage extends ClientMessage {
+  type: 'BLIND_PLACE_PIECE';
+  pieceId: string;
+  position: Position;
+}
+
+// Client -> Server: Remove a placed piece (to reposition)
+export interface BlindUnplacePieceMessage extends ClientMessage {
+  type: 'BLIND_UNPLACE_PIECE';
+  pieceId: string;
+}
+
+// Client -> Server: Signal ready (all pieces placed)
+export interface BlindPlacementReadyMessage extends ClientMessage {
+  type: 'BLIND_PLACEMENT_READY';
+}
+
+// Client -> Server: Cancel ready to make changes
+export interface BlindPlacementUnreadyMessage extends ClientMessage {
+  type: 'BLIND_PLACEMENT_UNREADY';
+}
+
+// Server -> Client: Confirm placement to placing player only
+export interface BlindPlacementConfirmMessage extends ServerMessage {
+  type: 'BLIND_PLACEMENT_CONFIRM';
+  pieceId: string;
+  position: Position;
+  actualPosition?: Position; // For Herald special placement
+  pawnSwap?: {
+    pawnId: string;
+    newPosition: Position;
+  };
+}
+
+// Server -> Client: Confirm unplace to placing player only
+export interface BlindUnplaceConfirmMessage extends ServerMessage {
+  type: 'BLIND_UNPLACE_CONFIRM';
+  pieceId: string;
+  pawnSwap?: {
+    pawnId: string;
+    newPosition: Position;
+  };
+}
+
+// Server -> Client: Notify ready status change
+export interface BlindReadyStatusMessage extends ServerMessage {
+  type: 'BLIND_READY_STATUS';
+  color: PlayerColor;
+  ready: boolean;
+}
+
+// Server -> Client: Reveal when both ready - game starts
+export interface BlindPlacementRevealMessage extends ServerMessage {
+  type: 'BLIND_PLACEMENT_REVEAL';
+  gameState: GameState;
+}
+
+// =============================================================================
 // Play Phase Messages
 // =============================================================================
 
@@ -287,6 +350,11 @@ export interface SyncStateMessage extends ServerMessage {
     opponentSubmitted: boolean;
     timeRemaining: number;
   };
+  blindPlacementState?: {
+    myPlacedPieces: Array<{ pieceId: string; position: Position }>;
+    myReady: boolean;
+    opponentReady: boolean;
+  };
 }
 
 export interface GameStartMessage extends ServerMessage {
@@ -321,6 +389,10 @@ export type ClientToServerMessage =
   | LeaveRoomMessage
   | DraftSubmitMessage
   | PlacePieceMessage
+  | BlindPlacePieceMessage
+  | BlindUnplacePieceMessage
+  | BlindPlacementReadyMessage
+  | BlindPlacementUnreadyMessage
   | MakeMoveMessage
   | OfferDrawMessage
   | RespondDrawMessage
@@ -344,6 +416,10 @@ export type ServerToClientMessage =
   | PiecePlacedMessage
   | PlacementErrorMessage
   | PlacementCompleteMessage
+  | BlindPlacementConfirmMessage
+  | BlindUnplaceConfirmMessage
+  | BlindReadyStatusMessage
+  | BlindPlacementRevealMessage
   | GameStartMessage
   | MoveMadeMessage
   | MoveRejectedMessage

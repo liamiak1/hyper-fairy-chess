@@ -83,6 +83,10 @@ export class GameRoom {
   // Draw offer state
   private drawOffer: PlayerColor | null = null;
 
+  // Blind placement state - stores placed pieces with their positions
+  private blindPlacements: Map<PlayerColor, Map<string, { piece: PieceInstance; position: Position }>> = new Map();
+  private blindReady: Map<PlayerColor, boolean> = new Map();
+
   // Socket.io server reference
   private io: Server | null = null;
 
@@ -406,12 +410,23 @@ export class GameRoom {
   private startPlacement(): void {
     this.phase = 'placement';
 
+    const placementMode = this.settings.placementMode || 'alternating';
+
     this.placementState = createPlacementStateFromDrafts(
       this.whiteDraft!,
-      this.blackDraft!
+      this.blackDraft!,
+      placementMode
     );
 
     this.gameState = this.createEmptyGameState();
+
+    // Initialize blind placement state if in blind mode
+    if (placementMode === 'blind') {
+      this.blindPlacements.set('white', new Map());
+      this.blindPlacements.set('black', new Map());
+      this.blindReady.set('white', false);
+      this.blindReady.set('black', false);
+    }
 
     this.broadcast({
       type: 'PLACEMENT_START',
@@ -527,6 +542,239 @@ export class GameRoom {
     }
 
     return { success: true };
+  }
+
+  // =========================================================================
+  // Blind Placement Phase
+  // =========================================================================
+
+  handleBlindPlacePiece(playerId: string, pieceId: string, position: Position): void {
+    if (this.phase !== 'placement' || !this.placementState || !this.gameState) {
+      return;
+    }
+
+    if (this.placementState.mode !== 'blind') {
+      return;
+    }
+
+    const player = this.players.get(playerId);
+    if (!player || !player.color) {
+      return;
+    }
+
+    // Check if player is already ready - can't place while ready
+    if (this.blindReady.get(player.color)) {
+      return;
+    }
+
+    const piecesToPlace = player.color === 'white'
+      ? this.placementState.whitePiecesToPlace
+      : this.placementState.blackPiecesToPlace;
+
+    const pieceIndex = piecesToPlace.findIndex(p => p.id === pieceId);
+    if (pieceIndex === -1) {
+      return;
+    }
+
+    const piece = piecesToPlace[pieceIndex];
+
+    // Validate position
+    const boardSize = typeof this.settings.boardSize === 'number'
+      ? this.settings.boardSize
+      : parseInt(String(this.settings.boardSize), 10);
+    const validRanks = player.color === 'white' ? [1, 2] : [boardSize - 1, boardSize];
+    if (!validRanks.includes(position.rank)) {
+      return;
+    }
+
+    // Check if position is already occupied by this player's placed pieces
+    const playerPlacements = this.blindPlacements.get(player.color);
+    if (playerPlacements) {
+      for (const placement of playerPlacements.values()) {
+        if (placement.position.file === position.file && placement.position.rank === position.rank) {
+          return; // Position occupied
+        }
+      }
+    }
+
+    // Store the placement with full piece data
+    if (playerPlacements) {
+      playerPlacements.set(pieceId, { piece, position });
+    }
+
+    // Remove piece from pieces to place
+    piecesToPlace.splice(pieceIndex, 1);
+
+    this.lastActivity = Date.now();
+
+    // Send confirmation only to the placing player
+    this.sendToPlayer(playerId, {
+      type: 'BLIND_PLACEMENT_CONFIRM',
+      timestamp: Date.now(),
+      pieceId,
+      position,
+    });
+  }
+
+  handleBlindUnplacePiece(playerId: string, pieceId: string): void {
+    if (this.phase !== 'placement' || !this.placementState || !this.gameState) {
+      return;
+    }
+
+    if (this.placementState.mode !== 'blind') {
+      return;
+    }
+
+    const player = this.players.get(playerId);
+    if (!player || !player.color) {
+      return;
+    }
+
+    // Check if player is already ready - can't unplace while ready
+    if (this.blindReady.get(player.color)) {
+      return;
+    }
+
+    const playerPlacements = this.blindPlacements.get(player.color);
+    if (!playerPlacements || !playerPlacements.has(pieceId)) {
+      return;
+    }
+
+    // Get the stored placement data (includes full piece)
+    const placementData = playerPlacements.get(pieceId)!;
+
+    // Remove the placement
+    playerPlacements.delete(pieceId);
+
+    // Add the piece back to piecesToPlace
+    const piecesToPlace = player.color === 'white'
+      ? this.placementState.whitePiecesToPlace
+      : this.placementState.blackPiecesToPlace;
+
+    // Reset position to null when adding back
+    const pieceToRestore: PieceInstance = {
+      ...placementData.piece,
+      position: null,
+    };
+    piecesToPlace.push(pieceToRestore);
+
+    this.lastActivity = Date.now();
+
+    // Send confirmation to the player
+    this.sendToPlayer(playerId, {
+      type: 'BLIND_UNPLACE_CONFIRM',
+      timestamp: Date.now(),
+      pieceId,
+    });
+  }
+
+  handleBlindReady(playerId: string): void {
+    if (this.phase !== 'placement' || !this.placementState || !this.gameState) {
+      return;
+    }
+
+    if (this.placementState.mode !== 'blind') {
+      return;
+    }
+
+    const player = this.players.get(playerId);
+    if (!player || !player.color) {
+      return;
+    }
+
+    // Check if all pieces are placed
+    const piecesToPlace = player.color === 'white'
+      ? this.placementState.whitePiecesToPlace
+      : this.placementState.blackPiecesToPlace;
+
+    if (piecesToPlace.length > 0) {
+      return; // Still have pieces to place
+    }
+
+    // Mark player as ready
+    this.blindReady.set(player.color, true);
+    this.placementState[player.color === 'white' ? 'whiteReady' : 'blackReady'] = true;
+
+    this.lastActivity = Date.now();
+
+    // Broadcast ready status
+    this.broadcast({
+      type: 'BLIND_READY_STATUS',
+      timestamp: Date.now(),
+      color: player.color,
+      ready: true,
+    });
+
+    // Check if both players are ready
+    if (this.blindReady.get('white') && this.blindReady.get('black')) {
+      this.revealBlindPlacements();
+    }
+  }
+
+  handleBlindUnready(playerId: string): void {
+    if (this.phase !== 'placement' || !this.placementState || !this.gameState) {
+      return;
+    }
+
+    if (this.placementState.mode !== 'blind') {
+      return;
+    }
+
+    const player = this.players.get(playerId);
+    if (!player || !player.color) {
+      return;
+    }
+
+    // Only allow unready if opponent isn't ready yet (or we could allow it anytime)
+    // For flexibility, allow it anytime before reveal
+
+    this.blindReady.set(player.color, false);
+    this.placementState[player.color === 'white' ? 'whiteReady' : 'blackReady'] = false;
+
+    this.lastActivity = Date.now();
+
+    // Broadcast ready status
+    this.broadcast({
+      type: 'BLIND_READY_STATUS',
+      timestamp: Date.now(),
+      color: player.color,
+      ready: false,
+    });
+  }
+
+  private revealBlindPlacements(): void {
+    if (!this.placementState || !this.gameState) {
+      return;
+    }
+
+    // Merge all blind placements onto the board
+    for (const [_color, placements] of this.blindPlacements) {
+      for (const [_pieceId, placementData] of placements) {
+        // Use the stored piece with its position
+        const piece: PieceInstance = {
+          ...placementData.piece,
+          position: placementData.position,
+        };
+
+        this.gameState.board.pieces.push(piece);
+        const posKey = `${placementData.position.file}${placementData.position.rank}`;
+        this.gameState.board.positionMap.set(posKey, piece.id);
+      }
+    }
+
+    // Clear blind placement state
+    this.blindPlacements.clear();
+    this.blindReady.clear();
+
+    // Broadcast the reveal
+    this.broadcast({
+      type: 'BLIND_PLACEMENT_REVEAL',
+      timestamp: Date.now(),
+      gameState: this.gameState,
+    });
+
+    // Start play phase
+    this.startPlay();
   }
 
   // =========================================================================
@@ -746,6 +994,25 @@ export class GameRoom {
   private buildSyncState(playerId: string): SyncStateMessage {
     const player = this.players.get(playerId);
 
+    // Build blind placement state if in blind mode
+    let blindPlacementState = undefined;
+    if (this.phase === 'placement' && this.placementState?.mode === 'blind' && player?.color) {
+      const playerPlacements = this.blindPlacements.get(player.color);
+      const myPlacedPieces: Array<{ pieceId: string; position: Position }> = [];
+      if (playerPlacements) {
+        for (const [pieceId, data] of playerPlacements) {
+          myPlacedPieces.push({ pieceId, position: data.position });
+        }
+      }
+
+      const opponentColor = player.color === 'white' ? 'black' : 'white';
+      blindPlacementState = {
+        myPlacedPieces,
+        myReady: this.blindReady.get(player.color) || false,
+        opponentReady: this.blindReady.get(opponentColor) || false,
+      };
+    }
+
     return {
       type: 'SYNC_STATE',
       timestamp: Date.now(),
@@ -770,6 +1037,7 @@ export class GameRoom {
         opponentSubmitted: player?.color === 'white' ? !!this.blackDraft : !!this.whiteDraft,
         timeRemaining: this.draftDeadline ? Math.max(0, (this.draftDeadline - Date.now()) / 1000) : 0,
       } : undefined,
+      blindPlacementState,
     };
   }
 

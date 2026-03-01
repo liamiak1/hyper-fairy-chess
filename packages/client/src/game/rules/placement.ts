@@ -31,6 +31,9 @@ export interface PlacementState {
   blackPiecesToPlace: PieceInstance[];
   currentPlacer: PlayerColor;
   selectedPieceId: string | null;
+  mode: 'alternating' | 'blind';
+  whiteReady: boolean;
+  blackReady: boolean;
 }
 
 // =============================================================================
@@ -242,6 +245,9 @@ export function createInitialPlacementState(): PlacementState {
     blackPiecesToPlace: createStandardArmyPieces('black'),
     currentPlacer: 'white',
     selectedPieceId: null,
+    mode: 'alternating',
+    whiteReady: false,
+    blackReady: false,
   };
 }
 
@@ -280,13 +286,17 @@ export function getNextPlacer(state: PlacementState, currentPlacer: PlayerColor)
  */
 export function createPlacementStateFromDrafts(
   whiteDraft: PlayerDraft,
-  blackDraft: PlayerDraft
+  blackDraft: PlayerDraft,
+  mode: 'alternating' | 'blind' = 'alternating'
 ): PlacementState {
   return {
     whitePiecesToPlace: createPiecesFromDraft(whiteDraft, 'white'),
     blackPiecesToPlace: createPiecesFromDraft(blackDraft, 'black'),
     currentPlacer: 'white',
     selectedPieceId: null,
+    mode,
+    whiteReady: false,
+    blackReady: false,
   };
 }
 

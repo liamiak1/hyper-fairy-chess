@@ -17,6 +17,7 @@ import type {
   RoomJoinedMessage,
   PlayerJoinedMessage,
   RoomErrorMessage,
+  Position,
 } from '@hyper-fairy-chess/shared';
 
 export function setupSocketHandlers(io: Server, roomManager: RoomManager): void {
@@ -94,6 +95,22 @@ function handleMessage(
 
     case 'PLACE_PIECE':
       handlePlacePiece(socket, msg as PlacePieceMessage, roomManager, state);
+      break;
+
+    case 'BLIND_PLACE_PIECE':
+      handleBlindPlacePiece(socket, msg, roomManager, state);
+      break;
+
+    case 'BLIND_UNPLACE_PIECE':
+      handleBlindUnplacePiece(socket, msg, roomManager, state);
+      break;
+
+    case 'BLIND_PLACEMENT_READY':
+      handleBlindReady(socket, roomManager, state);
+      break;
+
+    case 'BLIND_PLACEMENT_UNREADY':
+      handleBlindUnready(socket, roomManager, state);
       break;
 
     case 'MAKE_MOVE':
@@ -294,6 +311,60 @@ function handlePlacePiece(
       placementState: null, // Room will send correct state
     });
   }
+}
+
+function handleBlindPlacePiece(
+  _socket: Socket,
+  msg: { pieceId: string; position: { file: string; rank: number } },
+  roomManager: RoomManager,
+  state: SocketState
+): void {
+  if (!state.roomCode || !state.playerId) return;
+
+  const room = roomManager.getRoom(state.roomCode);
+  if (!room) return;
+
+  room.handleBlindPlacePiece(state.playerId, msg.pieceId, msg.position as Position);
+}
+
+function handleBlindUnplacePiece(
+  _socket: Socket,
+  msg: { pieceId: string },
+  roomManager: RoomManager,
+  state: SocketState
+): void {
+  if (!state.roomCode || !state.playerId) return;
+
+  const room = roomManager.getRoom(state.roomCode);
+  if (!room) return;
+
+  room.handleBlindUnplacePiece(state.playerId, msg.pieceId);
+}
+
+function handleBlindReady(
+  _socket: Socket,
+  roomManager: RoomManager,
+  state: SocketState
+): void {
+  if (!state.roomCode || !state.playerId) return;
+
+  const room = roomManager.getRoom(state.roomCode);
+  if (!room) return;
+
+  room.handleBlindReady(state.playerId);
+}
+
+function handleBlindUnready(
+  _socket: Socket,
+  roomManager: RoomManager,
+  state: SocketState
+): void {
+  if (!state.roomCode || !state.playerId) return;
+
+  const room = roomManager.getRoom(state.roomCode);
+  if (!room) return;
+
+  room.handleBlindUnready(state.playerId);
 }
 
 function handleMakeMove(

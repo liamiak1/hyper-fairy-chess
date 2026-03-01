@@ -65,6 +65,12 @@ export interface OnlineGameState {
   // Placement
   placementState: PlacementState | null;
 
+  // Blind placement
+  blindMode: boolean;
+  myPlacedPieces: Array<{ pieceId: string; position: Position }>;
+  myReady: boolean;
+  opponentBlindReady: boolean;
+
   // Game
   gameState: GameState | null;
 
@@ -93,6 +99,10 @@ const initialState: OnlineGameState = {
   whiteDraft: null,
   blackDraft: null,
   placementState: null,
+  blindMode: false,
+  myPlacedPieces: [],
+  myReady: false,
+  opponentBlindReady: false,
   gameState: null,
   drawOfferedBy: null,
   error: null,
@@ -215,6 +225,10 @@ export function useOnlineGame() {
           phase: 'placement',
           placementState: message.placementState,
           gameState: reconstructGameState(message.gameState),
+          blindMode: message.placementState.mode === 'blind',
+          myPlacedPieces: [],
+          myReady: false,
+          opponentBlindReady: false,
         }));
         break;
 
@@ -231,6 +245,67 @@ export function useOnlineGame() {
           ...prev,
           error: message.error,
           placementState: message.placementState || prev.placementState,
+        }));
+        break;
+
+      case 'BLIND_PLACEMENT_CONFIRM':
+        setState(prev => ({
+          ...prev,
+          myPlacedPieces: [
+            ...prev.myPlacedPieces,
+            { pieceId: message.pieceId, position: message.position },
+          ],
+          // Remove the piece from placementState's piecesToPlace for UI update
+          placementState: prev.placementState ? {
+            ...prev.placementState,
+            whitePiecesToPlace: prev.playerColor === 'white'
+              ? prev.placementState.whitePiecesToPlace.filter(p => p.id !== message.pieceId)
+              : prev.placementState.whitePiecesToPlace,
+            blackPiecesToPlace: prev.playerColor === 'black'
+              ? prev.placementState.blackPiecesToPlace.filter(p => p.id !== message.pieceId)
+              : prev.placementState.blackPiecesToPlace,
+          } : null,
+        }));
+        break;
+
+      case 'BLIND_UNPLACE_CONFIRM':
+        setState(prev => {
+          // Find the unplaced piece data
+          const unplacedData = prev.myPlacedPieces.find(p => p.pieceId === message.pieceId);
+          if (!unplacedData || !prev.placementState) return prev;
+
+          // We need to add the piece back to piecesToPlace
+          // This is tricky because we don't have the full piece data
+          // For now, just remove from myPlacedPieces - the server will sync state
+          return {
+            ...prev,
+            myPlacedPieces: prev.myPlacedPieces.filter(p => p.pieceId !== message.pieceId),
+          };
+        });
+        break;
+
+      case 'BLIND_READY_STATUS':
+        setState(prev => ({
+          ...prev,
+          myReady: message.color === prev.playerColor ? message.ready : prev.myReady,
+          opponentBlindReady: message.color !== prev.playerColor ? message.ready : prev.opponentBlindReady,
+          placementState: prev.placementState ? {
+            ...prev.placementState,
+            whiteReady: message.color === 'white' ? message.ready : prev.placementState.whiteReady,
+            blackReady: message.color === 'black' ? message.ready : prev.placementState.blackReady,
+          } : null,
+        }));
+        break;
+
+      case 'BLIND_PLACEMENT_REVEAL':
+        // Full board is revealed, transition to play
+        setState(prev => ({
+          ...prev,
+          gameState: reconstructGameState(message.gameState),
+          blindMode: false,
+          myPlacedPieces: [],
+          myReady: false,
+          opponentBlindReady: false,
         }));
         break;
 
@@ -296,6 +371,11 @@ export function useOnlineGame() {
           placementState: message.placementState || prev.placementState,
           whiteDraft: message.whiteDraft || prev.whiteDraft,
           blackDraft: message.blackDraft || prev.blackDraft,
+          // Restore blind placement state if present
+          blindMode: message.placementState?.mode === 'blind',
+          myPlacedPieces: message.blindPlacementState?.myPlacedPieces || [],
+          myReady: message.blindPlacementState?.myReady || false,
+          opponentBlindReady: message.blindPlacementState?.opponentReady || false,
         }));
         break;
 
@@ -361,6 +441,38 @@ export function useOnlineGame() {
     });
   }, [sendMessage]);
 
+  // Blind placement actions
+  const blindPlacePiece = useCallback((pieceId: string, position: Position) => {
+    sendMessage({
+      type: 'BLIND_PLACE_PIECE',
+      timestamp: Date.now(),
+      pieceId,
+      position,
+    });
+  }, [sendMessage]);
+
+  const blindUnplacePiece = useCallback((pieceId: string) => {
+    sendMessage({
+      type: 'BLIND_UNPLACE_PIECE',
+      timestamp: Date.now(),
+      pieceId,
+    });
+  }, [sendMessage]);
+
+  const setBlindReady = useCallback(() => {
+    sendMessage({
+      type: 'BLIND_PLACEMENT_READY',
+      timestamp: Date.now(),
+    });
+  }, [sendMessage]);
+
+  const cancelBlindReady = useCallback(() => {
+    sendMessage({
+      type: 'BLIND_PLACEMENT_UNREADY',
+      timestamp: Date.now(),
+    });
+  }, [sendMessage]);
+
   const makeMove = useCallback((from: Position, to: Position, promotionPieceTypeId?: string) => {
     sendMessage({
       type: 'MAKE_MOVE',
@@ -419,6 +531,10 @@ export function useOnlineGame() {
       leaveRoom,
       submitDraft,
       placePiece,
+      blindPlacePiece,
+      blindUnplacePiece,
+      setBlindReady,
+      cancelBlindReady,
       makeMove,
       resign,
       offerDraw,

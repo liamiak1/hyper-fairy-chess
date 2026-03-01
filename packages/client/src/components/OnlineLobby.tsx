@@ -34,6 +34,7 @@ export function OnlineLobby({
     boardSize: '8x8',
     draftTimeLimit: 180,
     moveTimeLimit: null,
+    placementMode: 'alternating',
   });
   const [budgetOption, setBudgetOption] = useState<string>('360');
 
@@ -164,6 +165,18 @@ export function OnlineLobby({
               <option value="8x8">8x8 (Standard)</option>
               <option value="10x8">10x8 (Extended)</option>
               <option value="10x10">10x10 (Large)</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="placementMode">Placement Mode</label>
+            <select
+              id="placementMode"
+              value={settings.placementMode}
+              onChange={(e) => setSettings({ ...settings, placementMode: e.target.value as 'alternating' | 'blind' })}
+            >
+              <option value="alternating">Alternating (take turns)</option>
+              <option value="blind">Blind (simultaneous, hidden)</option>
             </select>
           </div>
 

@@ -57,6 +57,12 @@ export function WaitingRoom({
                 : 'No limit'}
             </span>
           </div>
+          <div className="setting-row">
+            <span className="setting-label">Placement:</span>
+            <span className="setting-value">
+              {settings.placementMode === 'blind' ? 'Blind (simultaneous)' : 'Alternating'}
+            </span>
+          </div>
         </div>
 
         <div className="players-section">
