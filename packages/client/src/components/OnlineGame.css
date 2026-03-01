@@ -50,6 +50,19 @@
   flex-shrink: 0;
 }
 
+/* Larger board for online games */
+.online-game-container .board-container {
+  max-width: 680px;
+}
+
+.online-game-container .board {
+  max-width: 640px;
+}
+
+.online-game-container .piece {
+  font-size: 2.1em;
+}
+
 .online-game-controls {
   display: flex;
   gap: 12px;
