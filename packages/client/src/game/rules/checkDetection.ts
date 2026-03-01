@@ -560,18 +560,38 @@ export function simulateMove(
   const pieceIndex = newBoard.pieces.findIndex((p) => p.id === piece.id);
   if (pieceIndex === -1) return newBoard;
 
+  // Get the original position of the moving piece
+  const fromPosition = piece.position;
+
   // Handle capture at the destination (or en passant capture position)
   const capturePos = capturePosition || to;
   const captureKey = positionToString(capturePos);
-  const capturedPieceId = newBoard.positionMap.get(captureKey);
+  const targetPieceId = newBoard.positionMap.get(captureKey);
 
-  if (capturedPieceId && capturedPieceId !== piece.id) {
-    const capturedIndex = newBoard.pieces.findIndex((p) => p.id === capturedPieceId);
-    if (capturedIndex !== -1) {
-      newBoard.pieces[capturedIndex] = {
-        ...newBoard.pieces[capturedIndex],
-        position: null,
-      };
+  if (targetPieceId && targetPieceId !== piece.id) {
+    const targetIndex = newBoard.pieces.findIndex((p) => p.id === targetPieceId);
+    if (targetIndex !== -1) {
+      const targetPiece = newBoard.pieces[targetIndex];
+      const pieceType = PIECE_BY_ID[piece.typeId];
+
+      // Check if this is a swap move (piece has swap-adjacent and target is friendly)
+      const isSwapMove = pieceType?.movement.special.includes('swap-adjacent') &&
+                         targetPiece.owner === piece.owner &&
+                         fromPosition !== null;
+
+      if (isSwapMove) {
+        // Swap: move the target piece to the moving piece's original position
+        newBoard.pieces[targetIndex] = {
+          ...targetPiece,
+          position: fromPosition,
+        };
+      } else {
+        // Capture: remove the target piece from the board
+        newBoard.pieces[targetIndex] = {
+          ...targetPiece,
+          position: null,
+        };
+      }
     }
   }
 
