@@ -208,7 +208,7 @@ export const LANCER: PieceType = {
   cost: 8,
   victoryPoints: 8,
   symbol: '↟',
-  description: 'Leaps exactly 2 squares diagonally (Alfil move). Jumps over any pieces.',
+  description: 'Leaps in an extended L-shape (3 squares in one direction, 1 perpendicular). Like a stretched knight.',
   isRoyal: false,
   isMandatory: false,
   canCastle: false,
@@ -217,7 +217,7 @@ export const LANCER: PieceType = {
   canBeJumpedOver: true,
   movement: {
     slides: [],
-    leaps: [{ dx: 2, dy: 2, symmetric: true }], // Alfil leap
+    leaps: [{ dx: 3, dy: 1, symmetric: true }], // Extended knight leap (3-1)
     special: [],
   },
   captureType: 'standard',

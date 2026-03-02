@@ -3,10 +3,30 @@
  * Orchestrates the multiplayer game flow
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useOnlineGame } from '../hooks/useOnlineGame';
 import type { Position, PlayerColor, PieceType, PieceInstance, GameResult } from '@hyper-fairy-chess/shared';
-import { BOARD_CONFIGS, getPlacementZones, getValidPlacementSquares, generateLegalMoves, isPromotionMove, getPromotionOptionsForPiece, isNearFiftyMoveRule, isNearThreefoldRepetition } from '@hyper-fairy-chess/shared';
+
+interface SpecialCaptureTarget {
+  position: Position;
+  movePosition: Position; // The move that causes this capture
+}
+import {
+  BOARD_CONFIGS,
+  getPlacementZones,
+  getValidPlacementSquares,
+  generateLegalMoves,
+  isPromotionMove,
+  getPromotionOptionsForPiece,
+  isNearFiftyMoveRule,
+  isNearThreefoldRepetition,
+  getCoordinatorCaptures,
+  getBoxerCaptures,
+  getWithdrawerCapture,
+  getThiefCapture,
+  getLongLeaperCaptures,
+  getChameleonCaptures,
+} from '@hyper-fairy-chess/shared';
 import { PIECE_BY_ID } from '../game/pieces/pieceDefinitions';
 import { OnlineLobby } from './OnlineLobby';
 import { WaitingRoom } from './WaitingRoom';
@@ -352,33 +372,100 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
       }
     };
 
-    // Calculate valid moves for selected piece
-    let validMoves: Position[] = [];
-    if (selectedSquare && isMyTurn) {
-      const selectedPiece = state.gameState.board.pieces.find(
+    // Reconstruct board with proper positionMap (Maps don't survive JSON serialization)
+    const board = useMemo(() => {
+      const positionMap = new Map<string, string>();
+      for (const piece of state.gameState!.board.pieces) {
+        if (piece.position) {
+          positionMap.set(`${piece.position.file}${piece.position.rank}`, piece.id);
+        }
+      }
+      return {
+        ...state.gameState!.board,
+        positionMap,
+      };
+    }, [state.gameState?.board]);
+
+    // Find selected piece
+    const selectedPiece = useMemo(() => {
+      if (!selectedSquare || !isMyTurn) return null;
+      return state.gameState!.board.pieces.find(
         p => p.position && p.position.file === selectedSquare.file &&
              p.position.rank === selectedSquare.rank &&
              p.owner === state.playerColor
-      );
-      if (selectedPiece) {
-        try {
-          // Always reconstruct board with proper positionMap (Maps don't survive JSON serialization)
-          const positionMap = new Map<string, string>();
-          for (const piece of state.gameState.board.pieces) {
-            if (piece.position) {
-              positionMap.set(`${piece.position.file}${piece.position.rank}`, piece.id);
+      ) || null;
+    }, [selectedSquare, isMyTurn, state.gameState?.board.pieces, state.playerColor]);
+
+    // Calculate valid moves for selected piece
+    const validMoves = useMemo(() => {
+      if (!selectedPiece) return [];
+      try {
+        return generateLegalMoves(board, selectedPiece, state.gameState!.enPassantTarget);
+      } catch (err) {
+        console.error('Error calculating valid moves:', err);
+        return [];
+      }
+    }, [selectedPiece, board, state.gameState?.enPassantTarget]);
+
+    // Calculate special capture targets for selected piece (withdrawer, coordinator, etc.)
+    const specialCaptureTargets = useMemo((): SpecialCaptureTarget[] => {
+      if (!selectedPiece || validMoves.length === 0) return [];
+
+      const pieceType = PIECE_BY_ID[selectedPiece.typeId];
+      if (!pieceType) return [];
+
+      const targets: SpecialCaptureTarget[] = [];
+
+      // Only calculate for pieces with special capture types
+      if (!['coordinator', 'boxer', 'withdrawal', 'thief', 'long-leap', 'chameleon'].includes(pieceType.captureType)) {
+        return [];
+      }
+
+      for (const move of validMoves) {
+        let captures: { pieceId: string; position: Position }[] = [];
+
+        switch (pieceType.captureType) {
+          case 'coordinator':
+            captures = getCoordinatorCaptures(board, selectedPiece.owner, move);
+            break;
+          case 'boxer':
+            captures = getBoxerCaptures(board, selectedPiece.owner, move);
+            break;
+          case 'withdrawal':
+            if (selectedPiece.position) {
+              const capture = getWithdrawerCapture(board, selectedPiece.owner, selectedPiece.position, move);
+              if (capture) captures = [capture];
             }
-          }
-          const board = {
-            ...state.gameState.board,
-            positionMap,
-          };
-          validMoves = generateLegalMoves(board, selectedPiece, state.gameState.enPassantTarget);
-        } catch (err) {
-          console.error('Error calculating valid moves:', err);
+            break;
+          case 'thief':
+            if (selectedPiece.position) {
+              const capture = getThiefCapture(board, selectedPiece.owner, selectedPiece.position, move);
+              if (capture) captures = [capture];
+            }
+            break;
+          case 'long-leap':
+            if (selectedPiece.position) {
+              captures = getLongLeaperCaptures(board, selectedPiece.owner, selectedPiece.position, move);
+            }
+            break;
+          case 'chameleon':
+            if (selectedPiece.position) {
+              const chameleonCaptures = getChameleonCaptures(board, selectedPiece, selectedPiece.position, move);
+              if (chameleonCaptures) captures = chameleonCaptures;
+            }
+            break;
+        }
+
+        for (const capture of captures) {
+          targets.push({
+            position: capture.position,
+            movePosition: move,
+          });
         }
       }
-    }
+
+      return targets;
+    }, [selectedPiece, validMoves, board]);
 
     const lastMove = state.gameState.moveHistory.length > 0
       ? state.gameState.moveHistory[state.gameState.moveHistory.length - 1]
@@ -450,7 +537,7 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
               lastMove={lastMove}
               validPlacementSquares={[]}
               isPlacementMode={false}
-              specialCaptureTargets={[]}
+              specialCaptureTargets={specialCaptureTargets}
               hoveredMove={hoveredMove}
               onSquareHover={setHoveredMove}
               currentTurn={state.gameState.currentTurn}
