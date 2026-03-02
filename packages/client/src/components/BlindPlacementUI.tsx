@@ -13,7 +13,7 @@ import './BlindPlacementUI.css';
 interface BlindPlacementUIProps {
   playerColor: PlayerColor;
   piecesToPlace: PieceInstance[];
-  myPlacedPieces: Array<{ pieceId: string; position: Position }>;
+  myPlacedPieces: Array<{ pieceId: string; typeId: string; position: Position }>;
   opponentArmy: PieceInstance[]; // Opponent's drafted pieces (for display)
   boardSize: BoardSize;
   myReady: boolean;
@@ -46,16 +46,11 @@ export function BlindPlacementUI({
   const boardConfig = BOARD_CONFIGS[boardSize];
 
   // Build the board pieces from my placed pieces (only my pieces are visible)
-  const boardPieces: PieceInstance[] = myPlacedPieces.map(({ pieceId, position }) => {
-    const originalPiece = piecesToPlace.find(p => p.id === pieceId);
-    // Find the piece info - it might be in the original draft or we need to reconstruct
-    // pieceId format: "{color}-{typeId}-{counter}" where typeId may contain hyphens (e.g., "phantom-king")
-    const parts = pieceId.split('-');
-    // Remove first (color) and last (counter) parts, join the rest for typeId
-    const typeId = parts.slice(1, -1).join('-'); // e.g., "white-phantom-king-0" -> "phantom-king"
+  // The typeId is now sent directly from the server, no parsing needed
+  const boardPieces: PieceInstance[] = myPlacedPieces.map(({ pieceId, typeId, position }) => {
     return {
       id: pieceId,
-      typeId: originalPiece?.typeId || typeId,
+      typeId,
       owner: playerColor,
       position,
       hasMoved: false,

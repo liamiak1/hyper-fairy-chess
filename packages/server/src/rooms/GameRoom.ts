@@ -673,6 +673,7 @@ export class GameRoom {
       type: 'BLIND_PLACEMENT_CONFIRM',
       timestamp: Date.now(),
       pieceId,
+      typeId: piece.typeId,
       position: actualPosition,
       actualPosition: isHerald(piece) ? actualPosition : undefined,
       pawnSwap: pawnSwapInfo,
@@ -1083,10 +1084,10 @@ export class GameRoom {
     let blindPlacementState = undefined;
     if (this.phase === 'placement' && this.placementState?.mode === 'blind' && player?.color) {
       const playerPlacements = this.blindPlacements.get(player.color);
-      const myPlacedPieces: Array<{ pieceId: string; position: Position }> = [];
+      const myPlacedPieces: Array<{ pieceId: string; typeId: string; position: Position }> = [];
       if (playerPlacements) {
         for (const [pieceId, data] of playerPlacements) {
-          myPlacedPieces.push({ pieceId, position: data.position });
+          myPlacedPieces.push({ pieceId, typeId: data.piece.typeId, position: data.position });
         }
       }
 

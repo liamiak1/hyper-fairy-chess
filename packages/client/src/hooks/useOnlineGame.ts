@@ -67,7 +67,7 @@ export interface OnlineGameState {
 
   // Blind placement
   blindMode: boolean;
-  myPlacedPieces: Array<{ pieceId: string; position: Position }>;
+  myPlacedPieces: Array<{ pieceId: string; typeId: string; position: Position }>;
   myReady: boolean;
   opponentBlindReady: boolean;
 
@@ -250,10 +250,10 @@ export function useOnlineGame() {
 
       case 'BLIND_PLACEMENT_CONFIRM':
         setState(prev => {
-          // Update myPlacedPieces with the new piece
+          // Update myPlacedPieces with the new piece (including typeId from server)
           let updatedPlacedPieces = [
             ...prev.myPlacedPieces,
-            { pieceId: message.pieceId, position: message.position },
+            { pieceId: message.pieceId, typeId: message.typeId, position: message.position },
           ];
 
           // If a pawn was swapped (Herald placement), update the pawn's position

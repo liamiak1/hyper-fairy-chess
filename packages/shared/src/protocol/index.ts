@@ -237,6 +237,7 @@ export interface BlindPlacementUnreadyMessage extends ClientMessage {
 export interface BlindPlacementConfirmMessage extends ServerMessage {
   type: 'BLIND_PLACEMENT_CONFIRM';
   pieceId: string;
+  typeId: string; // Piece type ID (e.g., 'shogi-pawn', 'phantom-king')
   position: Position;
   actualPosition?: Position; // For Herald special placement
   pawnSwap?: {
@@ -352,7 +353,7 @@ export interface SyncStateMessage extends ServerMessage {
     timeRemaining: number;
   };
   blindPlacementState?: {
-    myPlacedPieces: Array<{ pieceId: string; position: Position }>;
+    myPlacedPieces: Array<{ pieceId: string; typeId: string; position: Position }>;
     myReady: boolean;
     opponentReady: boolean;
   };
