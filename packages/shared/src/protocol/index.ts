@@ -249,9 +249,10 @@ export interface BlindPlacementConfirmMessage extends ServerMessage {
 export interface BlindUnplaceConfirmMessage extends ServerMessage {
   type: 'BLIND_UNPLACE_CONFIRM';
   pieceId: string;
-  pawnSwap?: {
-    pawnId: string;
-    newPosition: Position;
+  piece: {
+    id: string;
+    typeId: string;
+    owner: PlayerColor;
   };
 }
 

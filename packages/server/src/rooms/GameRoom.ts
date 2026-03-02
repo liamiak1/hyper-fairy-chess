@@ -660,11 +660,16 @@ export class GameRoom {
 
     this.lastActivity = Date.now();
 
-    // Send confirmation to the player
+    // Send confirmation to the player with piece data so client can restore it
     this.sendToPlayer(playerId, {
       type: 'BLIND_UNPLACE_CONFIRM',
       timestamp: Date.now(),
       pieceId,
+      piece: {
+        id: pieceToRestore.id,
+        typeId: pieceToRestore.typeId,
+        owner: pieceToRestore.owner,
+      },
     });
   }
 

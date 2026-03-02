@@ -270,16 +270,32 @@ export function useOnlineGame() {
 
       case 'BLIND_UNPLACE_CONFIRM':
         setState(prev => {
-          // Find the unplaced piece data
-          const unplacedData = prev.myPlacedPieces.find(p => p.pieceId === message.pieceId);
-          if (!unplacedData || !prev.placementState) return prev;
+          if (!prev.placementState) return prev;
 
-          // We need to add the piece back to piecesToPlace
-          // This is tricky because we don't have the full piece data
-          // For now, just remove from myPlacedPieces - the server will sync state
+          // Reconstruct the full PieceInstance from the message data
+          const restoredPiece = {
+            id: message.piece.id,
+            typeId: message.piece.typeId,
+            owner: message.piece.owner,
+            position: null,
+            hasMoved: false,
+            isFrozen: false,
+          };
+
+          // Add piece back to appropriate piecesToPlace list
+          const isWhite = prev.playerColor === 'white';
           return {
             ...prev,
             myPlacedPieces: prev.myPlacedPieces.filter(p => p.pieceId !== message.pieceId),
+            placementState: {
+              ...prev.placementState,
+              whitePiecesToPlace: isWhite
+                ? [...prev.placementState.whitePiecesToPlace, restoredPiece]
+                : prev.placementState.whitePiecesToPlace,
+              blackPiecesToPlace: !isWhite
+                ? [...prev.placementState.blackPiecesToPlace, restoredPiece]
+                : prev.placementState.blackPiecesToPlace,
+            },
           };
         });
         break;
