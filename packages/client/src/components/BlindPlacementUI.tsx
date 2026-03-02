@@ -49,7 +49,10 @@ export function BlindPlacementUI({
   const boardPieces: PieceInstance[] = myPlacedPieces.map(({ pieceId, position }) => {
     const originalPiece = piecesToPlace.find(p => p.id === pieceId);
     // Find the piece info - it might be in the original draft or we need to reconstruct
-    const typeId = pieceId.split('-')[1]; // e.g., "white-pawn-0" -> "pawn"
+    // pieceId format: "{color}-{typeId}-{counter}" where typeId may contain hyphens (e.g., "phantom-king")
+    const parts = pieceId.split('-');
+    // Remove first (color) and last (counter) parts, join the rest for typeId
+    const typeId = parts.slice(1, -1).join('-'); // e.g., "white-phantom-king-0" -> "phantom-king"
     return {
       id: pieceId,
       typeId: originalPiece?.typeId || typeId,
