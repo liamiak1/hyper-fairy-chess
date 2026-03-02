@@ -34,7 +34,12 @@ import {
   createPlacementStateFromDrafts,
   isPlacementComplete,
   getNextPlacer,
+  isHerald,
+  getHeraldActualPosition,
+  getPawnSwapPosition,
+  shouldPawnSwapToBackRank,
 } from '@hyper-fairy-chess/shared';
+import { PIECE_BY_ID } from '@hyper-fairy-chess/shared';
 import {
   createBoardState,
   getPieceAt,
@@ -42,7 +47,7 @@ import {
 } from '@hyper-fairy-chess/shared';
 import {
   generateLegalMoves,
-  createMove,
+  prepareMoveFromPositions,
   executeMove,
 } from '@hyper-fairy-chess/shared';
 import {
@@ -577,6 +582,10 @@ export class GameRoom {
     }
 
     const piece = piecesToPlace[pieceIndex];
+    const pieceType = PIECE_BY_ID[piece.typeId];
+    if (!pieceType) {
+      return;
+    }
 
     // Validate position
     const boardSize = typeof this.settings.boardSize === 'number'
@@ -587,20 +596,72 @@ export class GameRoom {
       return;
     }
 
-    // Check if position is already occupied by this player's placed pieces
     const playerPlacements = this.blindPlacements.get(player.color);
-    if (playerPlacements) {
+    if (!playerPlacements) {
+      return;
+    }
+
+    // Calculate actual position and handle Herald/Pawn swaps
+    let actualPosition = position;
+    let pawnSwapInfo: { pawnId: string; newPosition: Position } | undefined;
+
+    if (isHerald(piece)) {
+      // Herald goes to pawn rank instead of back rank
+      actualPosition = getHeraldActualPosition(
+        position,
+        player.color,
+        { ranks: boardSize }
+      );
+
+      // Check if there's already a pawn placed on the pawn rank in this file
+      for (const [placedId, placement] of playerPlacements.entries()) {
+        if (placement.position.file === actualPosition.file &&
+            placement.position.rank === actualPosition.rank) {
+          const placedPieceType = PIECE_BY_ID[placement.piece.typeId];
+          if (placedPieceType?.tier === 'pawn') {
+            // Move the pawn to the back rank
+            const pawnNewPos = getPawnSwapPosition(
+              actualPosition.file,
+              player.color,
+              { ranks: boardSize }
+            );
+            // Update the pawn's position in placements
+            placement.position = pawnNewPos;
+            pawnSwapInfo = { pawnId: placedId, newPosition: pawnNewPos };
+          } else {
+            // Position occupied by non-pawn, can't place
+            return;
+          }
+        }
+      }
+    } else if (pieceType.tier === 'pawn') {
+      // Check if a Herald is already on the pawn rank in this file
+      const pawnRank = player.color === 'white' ? 2 : (boardSize - 1);
       for (const placement of playerPlacements.values()) {
-        if (placement.position.file === position.file && placement.position.rank === position.rank) {
-          return; // Position occupied
+        if (placement.position.file === position.file &&
+            placement.position.rank === pawnRank &&
+            isHerald(placement.piece)) {
+          // Herald is on pawn rank, pawn goes to back rank
+          actualPosition = getPawnSwapPosition(
+            position.file,
+            player.color,
+            { ranks: boardSize }
+          );
+          break;
         }
       }
     }
 
-    // Store the placement with full piece data
-    if (playerPlacements) {
-      playerPlacements.set(pieceId, { piece, position });
+    // Check if actual position is already occupied
+    for (const placement of playerPlacements.values()) {
+      if (placement.position.file === actualPosition.file &&
+          placement.position.rank === actualPosition.rank) {
+        return; // Position occupied
+      }
     }
+
+    // Store the placement with full piece data
+    playerPlacements.set(pieceId, { piece, position: actualPosition });
 
     // Remove piece from pieces to place
     piecesToPlace.splice(pieceIndex, 1);
@@ -612,7 +673,9 @@ export class GameRoom {
       type: 'BLIND_PLACEMENT_CONFIRM',
       timestamp: Date.now(),
       pieceId,
-      position,
+      position: actualPosition,
+      actualPosition: isHerald(piece) ? actualPosition : undefined,
+      pawnSwap: pawnSwapInfo,
     });
   }
 
@@ -855,11 +918,21 @@ export class GameRoom {
       return;
     }
 
-    // Create and execute the move
-    const move = createMove(this.gameState.board, piece, from, to, {
-      isPromotion: !!promotionPieceType,
-      promotionPieceType,
-    });
+    // Create and execute the move using prepareMoveFromPositions
+    // This handles special moves like castling, en passant, and special captures
+    // (withdrawer, coordinator, boxer, chameleon, etc.)
+    const move = prepareMoveFromPositions(
+      this.gameState,
+      piece,
+      from,
+      to,
+      promotionPieceType
+    );
+
+    if (!move) {
+      this.sendMoveRejected(playerId, 'INVALID_MOVE', 'Could not create move');
+      return;
+    }
 
     const newGameState = executeMove(this.gameState, move);
 

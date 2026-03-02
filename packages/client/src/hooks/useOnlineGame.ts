@@ -249,23 +249,37 @@ export function useOnlineGame() {
         break;
 
       case 'BLIND_PLACEMENT_CONFIRM':
-        setState(prev => ({
-          ...prev,
-          myPlacedPieces: [
+        setState(prev => {
+          // Update myPlacedPieces with the new piece
+          let updatedPlacedPieces = [
             ...prev.myPlacedPieces,
             { pieceId: message.pieceId, position: message.position },
-          ],
-          // Remove the piece from placementState's piecesToPlace for UI update
-          placementState: prev.placementState ? {
-            ...prev.placementState,
-            whitePiecesToPlace: prev.playerColor === 'white'
-              ? prev.placementState.whitePiecesToPlace.filter(p => p.id !== message.pieceId)
-              : prev.placementState.whitePiecesToPlace,
-            blackPiecesToPlace: prev.playerColor === 'black'
-              ? prev.placementState.blackPiecesToPlace.filter(p => p.id !== message.pieceId)
-              : prev.placementState.blackPiecesToPlace,
-          } : null,
-        }));
+          ];
+
+          // If a pawn was swapped (Herald placement), update the pawn's position
+          if (message.pawnSwap) {
+            updatedPlacedPieces = updatedPlacedPieces.map(p =>
+              p.pieceId === message.pawnSwap!.pawnId
+                ? { ...p, position: message.pawnSwap!.newPosition }
+                : p
+            );
+          }
+
+          return {
+            ...prev,
+            myPlacedPieces: updatedPlacedPieces,
+            // Remove the piece from placementState's piecesToPlace for UI update
+            placementState: prev.placementState ? {
+              ...prev.placementState,
+              whitePiecesToPlace: prev.playerColor === 'white'
+                ? prev.placementState.whitePiecesToPlace.filter(p => p.id !== message.pieceId)
+                : prev.placementState.whitePiecesToPlace,
+              blackPiecesToPlace: prev.playerColor === 'black'
+                ? prev.placementState.blackPiecesToPlace.filter(p => p.id !== message.pieceId)
+                : prev.placementState.blackPiecesToPlace,
+            } : null,
+          };
+        });
         break;
 
       case 'BLIND_UNPLACE_CONFIRM':
