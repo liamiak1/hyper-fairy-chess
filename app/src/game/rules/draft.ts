@@ -164,6 +164,11 @@ export function canAddPiece(
   budget: number,
   boardSize: BoardSize
 ): boolean {
+  // Mandatory pieces (like King) cannot be manually added
+  if (pieceType.isMandatory) {
+    return false;
+  }
+
   // Check budget
   if (draft.budgetSpent + pieceType.cost > budget) {
     return false;

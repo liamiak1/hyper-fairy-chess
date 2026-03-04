@@ -20,8 +20,9 @@ import {
   getPieceCountInDraft,
   getDraftPieceCount,
   hasKingReplacer,
+  getAvailablePieces,
 } from '../game/rules/draft';
-import { PIECE_BY_ID, ALL_PIECES } from '../game/pieces/pieceDefinitions';
+import { PIECE_BY_ID } from '../game/pieces/pieceDefinitions';
 import { PieceInfoPopup } from './PieceInfoPopup';
 import './OnlineDraftUI.css';
 
@@ -62,11 +63,15 @@ export function OnlineDraftUI({
   const budgetRemaining = budget - draft.budgetSpent;
   const totalPieces = getDraftPieceCount(draft);
 
-  const piecesByTier = useMemo(() => ({
-    pawn: ALL_PIECES.filter((p: PieceType) => p.tier === 'pawn'),
-    piece: ALL_PIECES.filter((p: PieceType) => p.tier === 'piece'),
-    royalty: ALL_PIECES.filter((p: PieceType) => p.tier === 'royalty'),
-  }), []);
+  const piecesByTier = useMemo(() => {
+    // Use getAvailablePieces() which filters out mandatory pieces like King
+    const available = getAvailablePieces();
+    return {
+      pawn: available.filter((p: PieceType) => p.tier === 'pawn'),
+      piece: available.filter((p: PieceType) => p.tier === 'piece'),
+      royalty: available.filter((p: PieceType) => p.tier === 'royalty'),
+    };
+  }, []);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
