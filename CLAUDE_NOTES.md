@@ -2,14 +2,14 @@
 
 ## Build Commands (Local)
 ```bash
+# IMPORTANT: Must set PATH first on Windows (node/npm/pnpm not in default PATH)
 export PATH="/c/Program Files/nodejs:$PATH"
 
-# Build everything
-cd /c/claude/hyper_fairy_chess && npx pnpm run build
+# Build all packages (shared, client, server) - use -r for recursive workspace build
+cd /c/claude/hyper_fairy_chess && npx pnpm -r run build
 
-# Or individually
-cd /c/claude/hyper_fairy_chess/packages/client && npx pnpm run build
-cd /c/claude/hyper_fairy_chess/packages/server && npx pnpm run build
+# Single command (can copy-paste directly):
+export PATH="/c/Program Files/nodejs:$PATH" && cd /c/claude/hyper_fairy_chess && npx pnpm -r run build
 ```
 
 ## Start/Stop (Local Development)
