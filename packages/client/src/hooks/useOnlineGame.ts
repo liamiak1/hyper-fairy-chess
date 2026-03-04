@@ -329,8 +329,11 @@ export function useOnlineGame() {
 
       case 'BLIND_PLACEMENT_REVEAL':
         // Full board is revealed, transition to play
+        // Set phase to 'playing' immediately to avoid intermediate state
+        // where UI would try to render alternating placement mode
         setState(prev => ({
           ...prev,
+          phase: 'playing',
           gameState: reconstructGameState(message.gameState),
           blindMode: false,
           myPlacedPieces: [],
