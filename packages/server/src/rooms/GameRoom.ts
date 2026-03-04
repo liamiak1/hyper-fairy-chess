@@ -272,7 +272,9 @@ export class GameRoom {
     this.whiteDraft = null;
     this.blackDraft = null;
 
+    console.log(`Starting draft with draftTimeLimit: ${this.settings.draftTimeLimit}`);
     const timeLimit = this.settings.draftTimeLimit || 180;
+    console.log(`Using timeLimit: ${timeLimit}`);
     this.draftDeadline = Date.now() + timeLimit * 1000;
 
     this.broadcast({

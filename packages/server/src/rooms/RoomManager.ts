@@ -42,7 +42,7 @@ export class RoomManager {
     const room = new GameRoom(code, settings);
     this.rooms.set(code, room);
 
-    console.log(`Room created: ${code} (budget: ${settings.budget}, board: ${settings.boardSize})`);
+    console.log(`Room created: ${code} (budget: ${settings.budget}, board: ${settings.boardSize}, draftTime: ${settings.draftTimeLimit})`);
 
     return room;
   }
