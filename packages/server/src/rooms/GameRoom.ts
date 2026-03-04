@@ -272,10 +272,9 @@ export class GameRoom {
     this.whiteDraft = null;
     this.blackDraft = null;
 
-    console.log(`Starting draft with draftTimeLimit: ${this.settings.draftTimeLimit}`);
-    const timeLimit = this.settings.draftTimeLimit || 180;
-    console.log(`Using timeLimit: ${timeLimit}`);
-    this.draftDeadline = Date.now() + timeLimit * 1000;
+    // null means no time limit
+    const hasTimeLimit = this.settings.draftTimeLimit !== null;
+    const timeLimit = this.settings.draftTimeLimit ?? 0; // 0 means no limit for the client
 
     this.broadcast({
       type: 'DRAFT_START',
@@ -285,21 +284,28 @@ export class GameRoom {
       timeLimit: timeLimit,
     });
 
-    // Send periodic countdown updates every second
-    this.draftTickTimer = setInterval(() => {
-      if (this.draftDeadline) {
-        const remaining = Math.max(0, Math.ceil((this.draftDeadline - Date.now()) / 1000));
-        this.broadcast({
-          type: 'DRAFT_COUNTDOWN',
-          timestamp: Date.now(),
-          timeRemaining: remaining,
-        });
-      }
-    }, 1000);
+    if (hasTimeLimit && timeLimit > 0) {
+      this.draftDeadline = Date.now() + timeLimit * 1000;
 
-    this.draftTimer = setTimeout(() => {
-      this.handleDraftTimeout();
-    }, timeLimit * 1000);
+      // Send periodic countdown updates every second
+      this.draftTickTimer = setInterval(() => {
+        if (this.draftDeadline) {
+          const remaining = Math.max(0, Math.ceil((this.draftDeadline - Date.now()) / 1000));
+          this.broadcast({
+            type: 'DRAFT_COUNTDOWN',
+            timestamp: Date.now(),
+            timeRemaining: remaining,
+          });
+        }
+      }, 1000);
+
+      this.draftTimer = setTimeout(() => {
+        this.handleDraftTimeout();
+      }, timeLimit * 1000);
+    } else {
+      // No time limit - no deadline or timer
+      this.draftDeadline = null;
+    }
   }
 
   submitDraft(playerId: string, draftPicks: DraftPick[]): { success: boolean; error?: string } {

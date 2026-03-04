@@ -188,7 +188,8 @@ export function useOnlineGame() {
         setState(prev => ({
           ...prev,
           phase: 'drafting',
-          draftTimeRemaining: message.timeLimit,
+          // 0 means no time limit, store as null
+          draftTimeRemaining: message.timeLimit > 0 ? message.timeLimit : null,
           opponentReady: false,
           draftRevealed: false,
           whiteDraft: null,
