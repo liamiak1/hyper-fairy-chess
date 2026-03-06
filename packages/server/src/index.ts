@@ -6,8 +6,10 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
-import { setupSocketHandlers } from './socket/socketServer';
-import { RoomManager } from './rooms/RoomManager';
+import { setupSocketHandlers } from './socket/socketServer.js';
+import { RoomManager } from './rooms/RoomManager.js';
+import { initDatabase, isDatabaseAvailable } from './db/index.js';
+import { authRouter } from './routes/auth.js';
 
 const PORT = process.env.PORT || 3001;
 // Allow all origins in development for LAN play
@@ -18,9 +20,16 @@ const app = express();
 app.use(cors({ origin: CORS_ORIGIN }));
 app.use(express.json());
 
+// Auth routes
+app.use('/auth', authRouter);
+
 // Health check endpoint
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: Date.now() });
+  res.json({
+    status: 'ok',
+    timestamp: Date.now(),
+    database: isDatabaseAvailable(),
+  });
 });
 
 // Room stats endpoint
@@ -48,10 +57,22 @@ const roomManager = new RoomManager();
 // Setup socket handlers
 setupSocketHandlers(io, roomManager);
 
-// Start server
-httpServer.listen(PORT, () => {
-  console.log(`Hyper Fairy Chess server running on port ${PORT}`);
-  console.log(`CORS origin: ${CORS_ORIGIN}`);
+// Initialize database and start server
+async function start() {
+  // Initialize database (optional - works without it)
+  await initDatabase();
+
+  // Start server
+  httpServer.listen(PORT, () => {
+    console.log(`Hyper Fairy Chess server running on port ${PORT}`);
+    console.log(`CORS origin: ${CORS_ORIGIN}`);
+    console.log(`Database: ${isDatabaseAvailable() ? 'connected' : 'not available (guest-only mode)'}`);
+  });
+}
+
+start().catch((err) => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
 });
 
 // Graceful shutdown

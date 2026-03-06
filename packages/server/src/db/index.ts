@@ -1,0 +1,68 @@
+import pg from 'pg';
+
+const { Pool } = pg;
+
+let pool: pg.Pool | null = null;
+
+/**
+ * Initialize database connection and run migrations.
+ * If DATABASE_URL is not set, returns null (allows running without a database for local dev).
+ */
+export async function initDatabase(): Promise<pg.Pool | null> {
+  const connectionString = process.env.DATABASE_URL;
+
+  if (!connectionString) {
+    console.log(
+      '[DB] DATABASE_URL not set - running without database (accounts disabled)'
+    );
+    return null;
+  }
+
+  try {
+    pool = new Pool({
+      connectionString,
+      ssl:
+        process.env.NODE_ENV === 'production'
+          ? { rejectUnauthorized: false }
+          : undefined,
+    });
+
+    // Test connection
+    await pool.query('SELECT NOW()');
+    console.log('[DB] Connected to PostgreSQL');
+
+    // Run migrations
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        username VARCHAR(30) NOT NULL UNIQUE,
+        email VARCHAR(255) NOT NULL UNIQUE,
+        password_hash VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+      CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+    `);
+    console.log('[DB] Migrations complete');
+
+    return pool;
+  } catch (error) {
+    console.error('[DB] Failed to connect:', error);
+    pool = null;
+    return null;
+  }
+}
+
+/**
+ * Get the database pool. Returns null if database is not initialized.
+ */
+export function getPool(): pg.Pool | null {
+  return pool;
+}
+
+/**
+ * Check if database is available.
+ */
+export function isDatabaseAvailable(): boolean {
+  return pool !== null;
+}

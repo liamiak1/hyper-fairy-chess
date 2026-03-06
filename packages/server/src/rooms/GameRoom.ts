@@ -106,7 +106,7 @@ export class GameRoom {
   // Player Management
   // =========================================================================
 
-  addPlayer(socket: Socket, name: string, _sessionToken?: string): {
+  addPlayer(socket: Socket, name: string, isAccountUser: boolean = false): {
     success: boolean;
     playerId?: string;
     color?: PlayerColor;
@@ -133,7 +133,7 @@ export class GameRoom {
       name,
       color,
       connected: true,
-      isAccountUser: false,
+      isAccountUser,
       lastSeen: Date.now(),
     };
 

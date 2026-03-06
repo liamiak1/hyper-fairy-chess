@@ -17,6 +17,9 @@ await esbuild.build({
     'path',
     'fs',
     'url',
+    'bcrypt',
+    'pg',
+    'jsonwebtoken',
   ],
 });
 

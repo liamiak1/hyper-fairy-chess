@@ -6,6 +6,8 @@
 import { useState } from 'react';
 import type { RoomSettings } from '@hyper-fairy-chess/shared';
 import { getValidSession, clearSession, getSavedPlayerName, savePlayerName } from '../utils/sessionStorage';
+import { useAuth } from '../context/AuthContext';
+import { AuthModal } from './AuthModal';
 import './OnlineLobby.css';
 
 interface OnlineLobbyProps {
@@ -27,8 +29,14 @@ export function OnlineLobby({
   onRejoinGame,
   onBack,
 }: OnlineLobbyProps) {
+  const { isAuthenticated, user, logout, authAvailable } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [mode, setMode] = useState<'menu' | 'create' | 'join'>('menu');
-  const [playerName, setPlayerName] = useState(getSavedPlayerName);
+  // Use account username as default name if logged in
+  const [playerName, setPlayerName] = useState(() => {
+    if (user?.username) return user.username;
+    return getSavedPlayerName();
+  });
   const [roomCode, setRoomCode] = useState('');
   const [settings, setSettings] = useState<RoomSettings>({
     budget: 360,
@@ -101,12 +109,40 @@ export function OnlineLobby({
   if (mode === 'menu') {
     return (
       <div className="online-lobby">
+        {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
         <div className="lobby-card">
           <h2>Online Multiplayer</h2>
           <div className="connection-status connected">
             <span className="status-icon">●</span>
             <span>Connected</span>
           </div>
+
+          {/* Auth status bar */}
+          {authAvailable && (
+            <div className="auth-status-bar">
+              {isAuthenticated && user ? (
+                <>
+                  <span className="auth-user">
+                    <span className="auth-badge">Account</span>
+                    {user.username}
+                  </span>
+                  <button className="auth-logout-btn" onClick={logout}>
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span className="auth-guest">Playing as guest</span>
+                  <button
+                    className="auth-login-btn"
+                    onClick={() => setShowAuthModal(true)}
+                  >
+                    Login / Register
+                  </button>
+                </>
+              )}
+            </div>
+          )}
 
           <div className="lobby-options">
             <button className="btn-primary large" onClick={() => setMode('create')}>

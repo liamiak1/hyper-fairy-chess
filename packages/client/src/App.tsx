@@ -3,11 +3,12 @@ import { Game } from './components/Game';
 import { MainMenu } from './components/MainMenu';
 import { OnlineGame } from './components/OnlineGame';
 import { SocketProvider } from './context/SocketContext';
+import { AuthProvider } from './context/AuthContext';
 import './App.css';
 
 type GameMode = 'menu' | 'local' | 'online';
 
-function App() {
+function AppContent() {
   const [mode, setMode] = useState<GameMode>('menu');
 
   if (mode === 'menu') {
@@ -36,6 +37,14 @@ function App() {
         <OnlineGame onBack={() => setMode('menu')} />
       </SocketProvider>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

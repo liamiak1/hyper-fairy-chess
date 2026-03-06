@@ -211,3 +211,70 @@
   font-family: monospace;
   opacity: 0.8;
 }
+
+/* Auth status bar styles */
+.auth-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+}
+
+.auth-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  font-weight: 500;
+}
+
+.auth-badge {
+  background: linear-gradient(135deg, #4a7c59 0%, #5a9c69 100%);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.auth-guest {
+  color: #888;
+}
+
+.auth-login-btn {
+  background: linear-gradient(135deg, #4a7c59 0%, #5a9c69 100%);
+  color: #fff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.auth-login-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(74, 124, 89, 0.4);
+}
+
+.auth-logout-btn {
+  background: transparent;
+  color: #888;
+  border: 1px solid #4a4a6a;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.auth-logout-btn:hover {
+  border-color: #dc3545;
+  color: #dc3545;
+}

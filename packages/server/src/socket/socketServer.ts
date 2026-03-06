@@ -3,7 +3,7 @@
  */
 
 import type { Server, Socket } from 'socket.io';
-import type { RoomManager } from '../rooms/RoomManager';
+import type { RoomManager } from '../rooms/RoomManager.js';
 import type {
   ClientToServerMessage,
   CreateRoomMessage,
@@ -19,6 +19,28 @@ import type {
   RoomErrorMessage,
   Position,
 } from '@hyper-fairy-chess/shared';
+import { verifyToken } from '../auth/jwt.js';
+
+/**
+ * Validate a session token and extract user info.
+ * Returns { isAccountUser, username } if valid, or { isAccountUser: false } if invalid.
+ */
+function validateSessionToken(
+  sessionToken: string | undefined,
+  fallbackName: string
+): { isAccountUser: boolean; verifiedName: string } {
+  if (!sessionToken) {
+    return { isAccountUser: false, verifiedName: fallbackName };
+  }
+
+  const payload = verifyToken(sessionToken);
+  if (!payload) {
+    return { isAccountUser: false, verifiedName: fallbackName };
+  }
+
+  // Token is valid - use the username from the token
+  return { isAccountUser: true, verifiedName: payload.username };
+}
 
 export function setupSocketHandlers(io: Server, roomManager: RoomManager): void {
   io.on('connection', (socket: Socket) => {
@@ -152,8 +174,14 @@ function handleCreateRoom(
   roomManager: RoomManager,
   state: SocketState
 ): void {
+  // Validate token and get verified name
+  const { isAccountUser, verifiedName } = validateSessionToken(
+    msg.sessionToken,
+    msg.playerName
+  );
+
   const room = roomManager.createRoom(msg.settings);
-  const result = room.addPlayer(socket, msg.playerName, msg.sessionToken);
+  const result = room.addPlayer(socket, verifiedName, isAccountUser);
 
   if (!result.success) {
     socket.emit('message', {
@@ -196,7 +224,13 @@ function handleJoinRoom(
     return;
   }
 
-  const result = room.addPlayer(socket, msg.playerName, msg.sessionToken);
+  // Validate token and get verified name
+  const { isAccountUser, verifiedName } = validateSessionToken(
+    msg.sessionToken,
+    msg.playerName
+  );
+
+  const result = room.addPlayer(socket, verifiedName, isAccountUser);
 
   if (!result.success) {
     socket.emit('message', {
@@ -229,10 +263,10 @@ function handleJoinRoom(
     timestamp: Date.now(),
     player: {
       id: result.playerId!,
-      name: msg.playerName,
+      name: verifiedName,
       color: result.color!,
       connected: true,
-      isAccountUser: !!msg.sessionToken,
+      isAccountUser,
     },
   } as PlayerJoinedMessage);
 }

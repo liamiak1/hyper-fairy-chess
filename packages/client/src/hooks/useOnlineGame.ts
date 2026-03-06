@@ -6,6 +6,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useSocket } from './useSocket';
 import { saveSession, clearSession } from '../utils/sessionStorage';
+import { getAuthToken } from '../utils/authStorage';
 import type {
   RoomPhase,
   PlayerColor,
@@ -450,20 +451,24 @@ export function useOnlineGame() {
 
   // Actions
   const createRoom = useCallback((playerName: string, settings: RoomSettings) => {
+    const token = getAuthToken();
     sendMessage({
       type: 'CREATE_ROOM',
       timestamp: Date.now(),
       playerName,
       settings,
+      sessionToken: token || undefined,
     });
   }, [sendMessage]);
 
   const joinRoom = useCallback((roomCode: string, playerName: string) => {
+    const token = getAuthToken();
     sendMessage({
       type: 'JOIN_ROOM',
       timestamp: Date.now(),
       roomCode: roomCode.toUpperCase(),
       playerName,
+      sessionToken: token || undefined,
     });
   }, [sendMessage]);
 
@@ -566,6 +571,7 @@ export function useOnlineGame() {
   const reconnect = useCallback(() => {
     const roomCode = localStorage.getItem('hfc_roomCode');
     const playerId = localStorage.getItem('hfc_playerId');
+    const token = getAuthToken();
 
     if (roomCode && playerId) {
       sendMessage({
@@ -573,6 +579,7 @@ export function useOnlineGame() {
         timestamp: Date.now(),
         roomCode,
         playerId,
+        sessionToken: token || undefined,
       });
     }
   }, [sendMessage]);
