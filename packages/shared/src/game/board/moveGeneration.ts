@@ -959,10 +959,9 @@ function exploreLongLeaperJumpPath(
         }
         // Continue exploring from landing position for more jumps or slides
         exploreLongLeaperJumpPath(board, chameleon, beyondPos, dir, newJumpedPieces, positions, visited);
-      } else if (hasEnemyPiece(board, beyondPos, chameleon.owner)) {
-        // Another enemy - continue chain by recursing from current enemy position
-        exploreLongLeaperJumpPath(board, chameleon, nextPos, dir, newJumpedPieces, positions, visited);
       }
+      // Note: If beyondPos has another enemy (two adjacent enemies), we're blocked.
+      // Long Leaper requires empty landing square after each jump - can't chain through adjacent enemies.
 
       break;
     }
