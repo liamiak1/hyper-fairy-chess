@@ -473,8 +473,13 @@ export function useOnlineGame() {
       timestamp: Date.now(),
     });
     clearSession();
-    setState(initialState);
-  }, [sendMessage]);
+    // Reset to initial state but preserve actual connection status
+    setState({
+      ...initialState,
+      isConnected,
+      connectionError,
+    });
+  }, [sendMessage, isConnected, connectionError]);
 
   const submitDraft = useCallback((draft: DraftPick[]) => {
     sendMessage({
