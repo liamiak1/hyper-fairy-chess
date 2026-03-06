@@ -44,6 +44,7 @@ import {
   createBoardState,
   getPieceAt,
   hashPosition,
+  initializeRoyalTracking,
 } from '@hyper-fairy-chess/shared';
 import {
   generateLegalMoves,
@@ -138,8 +139,10 @@ export class GameRoom {
 
     this.players.set(playerId, player);
     socket.join(this.code);
+    console.log(`[GameRoom] Player ${playerId} (${color}) joined room ${this.code}, socket ${socket.id}`);
 
     if (this.players.size === 2) {
+      console.log(`[GameRoom] Room ${this.code} now has 2 players, starting draft countdown`);
       this.startDraftCountdown();
     }
 
@@ -309,19 +312,25 @@ export class GameRoom {
   }
 
   submitDraft(playerId: string, draftPicks: DraftPick[]): { success: boolean; error?: string } {
+    console.log(`[GameRoom] submitDraft called - playerId: ${playerId}, phase: ${this.phase}, budget: ${this.settings.budget}`);
+
     if (this.phase !== 'drafting') {
+      console.log('[GameRoom] submitDraft failed - not in draft phase');
       return { success: false, error: 'Not in draft phase' };
     }
 
     const player = this.players.get(playerId);
     if (!player || !player.color) {
+      console.log('[GameRoom] submitDraft failed - player not found');
       return { success: false, error: 'Player not found' };
     }
 
     const draft = this.convertDraftPicksToPlayerDraft(draftPicks);
+    console.log(`[GameRoom] Draft converted - budgetSpent: ${draft.budgetSpent}, selections:`, draft.selections);
 
     const validation = validateDraft(draft, this.settings.budget, this.settings.boardSize);
     if (!validation.valid) {
+      console.log(`[GameRoom] Draft validation failed - budget: ${this.settings.budget}, errors:`, validation.errors);
       return { success: false, error: validation.errors.join(', ') };
     }
 
@@ -331,13 +340,16 @@ export class GameRoom {
       this.blackDraft = draft;
     }
 
+    console.log(`[GameRoom] Broadcasting DRAFT_SUBMITTED for player ${playerId} (${player.color})`);
     this.broadcast({
       type: 'DRAFT_SUBMITTED',
       timestamp: Date.now(),
       playerId,
     });
 
+    console.log(`[GameRoom] whiteDraft: ${!!this.whiteDraft}, blackDraft: ${!!this.blackDraft}`);
     if (this.whiteDraft && this.blackDraft) {
+      console.log('[GameRoom] Both drafts submitted - calling completeDraft()');
       this.completeDraft();
     }
 
@@ -347,6 +359,33 @@ export class GameRoom {
   private convertDraftPicksToPlayerDraft(picks: DraftPick[]): PlayerDraft {
     const draft = createEmptyDraft();
     draft.selections = picks.map(p => ({ pieceTypeId: p.pieceTypeId, count: p.count }));
+
+    // Calculate budgetSpent and slotsUsed from the selections
+    let budgetSpent = 0;
+    const slotsUsed = { pawn: 0, piece: 0, royalty: 1 }; // Start with 1 royalty for King
+
+    for (const pick of picks) {
+      const pieceType = PIECE_BY_ID[pick.pieceTypeId];
+      if (!pieceType) continue;
+
+      budgetSpent += pieceType.cost * pick.count;
+
+      // Update slot usage based on tier
+      if (pieceType.tier === 'pawn') {
+        slotsUsed.pawn += pick.count;
+      } else if (pieceType.tier === 'piece') {
+        slotsUsed.piece += pick.count;
+      } else if (pieceType.tier === 'royalty') {
+        // King-replacing pieces don't add to royalty slots
+        if (!pieceType.replacesKing) {
+          slotsUsed.royalty += pick.count;
+        }
+      }
+    }
+
+    draft.budgetSpent = budgetSpent;
+    draft.slotsUsed = slotsUsed;
+
     return draft;
   }
 
@@ -451,10 +490,13 @@ export class GameRoom {
 
   private createEmptyGameState(): GameState {
     const budget = this.settings.budget;
-    const boardSizeNum = typeof this.settings.boardSize === 'number'
-      ? this.settings.boardSize
-      : parseInt(String(this.settings.boardSize), 10);
-    const dimensions = { files: boardSizeNum, ranks: boardSizeNum };
+    // Parse board size properly - it's a string like '8x8' or '10x10'
+    const boardSizeStr = String(this.settings.boardSize);
+    const [filesStr, ranksStr] = boardSizeStr.split('x');
+    const dimensions = {
+      files: parseInt(filesStr, 10) || 8,
+      ranks: parseInt(ranksStr, 10) || 8,
+    };
 
     return {
       phase: 'placement',
@@ -506,10 +548,10 @@ export class GameRoom {
 
     const piece = piecesToPlace[pieceIndex];
 
-    const boardSize = typeof this.settings.boardSize === 'number'
-      ? this.settings.boardSize
-      : parseInt(String(this.settings.boardSize), 10);
-    const validRanks = player.color === 'white' ? [1, 2] : [boardSize - 1, boardSize];
+    // Parse board ranks from size string (e.g., '8x8' -> 8, '10x8' -> 8)
+    const boardSizeStr = String(this.settings.boardSize);
+    const boardRanks = parseInt(boardSizeStr.split('x')[1], 10) || 8;
+    const validRanks = player.color === 'white' ? [1, 2] : [boardRanks - 1, boardRanks];
     if (!validRanks.includes(position.rank)) {
       return { success: false, error: 'Invalid placement position' };
     }
@@ -595,11 +637,10 @@ export class GameRoom {
       return;
     }
 
-    // Validate position
-    const boardSize = typeof this.settings.boardSize === 'number'
-      ? this.settings.boardSize
-      : parseInt(String(this.settings.boardSize), 10);
-    const validRanks = player.color === 'white' ? [1, 2] : [boardSize - 1, boardSize];
+    // Validate position - parse board ranks from size string
+    const boardSizeStr = String(this.settings.boardSize);
+    const boardRanks = parseInt(boardSizeStr.split('x')[1], 10) || 8;
+    const validRanks = player.color === 'white' ? [1, 2] : [boardRanks - 1, boardRanks];
     if (!validRanks.includes(position.rank)) {
       return;
     }
@@ -618,7 +659,7 @@ export class GameRoom {
       actualPosition = getHeraldActualPosition(
         position,
         player.color,
-        { ranks: boardSize }
+        { ranks: boardRanks }
       );
 
       // Check if there's already a pawn placed on the pawn rank in this file
@@ -631,7 +672,7 @@ export class GameRoom {
             const pawnNewPos = getPawnSwapPosition(
               actualPosition.file,
               player.color,
-              { ranks: boardSize }
+              { ranks: boardRanks }
             );
             // Update the pawn's position in placements
             placement.position = pawnNewPos;
@@ -644,7 +685,7 @@ export class GameRoom {
       }
     } else if (pieceType.tier === 'pawn') {
       // Check if a Herald is already on the pawn rank in this file
-      const pawnRank = player.color === 'white' ? 2 : (boardSize - 1);
+      const pawnRank = player.color === 'white' ? 2 : (boardRanks - 1);
       for (const placement of playerPlacements.values()) {
         if (placement.position.file === position.file &&
             placement.position.rank === pawnRank &&
@@ -653,7 +694,7 @@ export class GameRoom {
           actualPosition = getPawnSwapPosition(
             position.file,
             player.color,
-            { ranks: boardSize }
+            { ranks: boardRanks }
           );
           break;
         }
@@ -863,6 +904,10 @@ export class GameRoom {
 
     if (this.gameState) {
       this.gameState.phase = 'play';
+
+      // Initialize royal tracking for Regent logic (must be done before play starts)
+      // This tracks whether each player started with multiple royalty-tier pieces
+      this.gameState.board = initializeRoyalTracking(this.gameState.board);
 
       // Record the initial position for threefold repetition detection
       const initialHash = hashPosition(
@@ -1074,7 +1119,13 @@ export class GameRoom {
 
   private broadcast(message: ServerToClientMessage): void {
     if (this.io) {
+      // Log player count and socket info
+      const playerCount = this.players.size;
+      const playerSocketIds = Array.from(this.players.values()).map(p => p.socketId);
+      console.log(`[GameRoom] Broadcasting ${message.type} to room ${this.code} (${playerCount} players, sockets: ${playerSocketIds.join(', ')})`);
       this.io.to(this.code).emit('message', message);
+    } else {
+      console.log('[GameRoom] WARNING: Cannot broadcast - io is null');
     }
   }
 

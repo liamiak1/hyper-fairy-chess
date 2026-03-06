@@ -24,6 +24,8 @@ import {
 } from '../game/rules/draft';
 import { PIECE_BY_ID } from '../game/pieces/pieceDefinitions';
 import { PieceInfoPopup } from './PieceInfoPopup';
+import { useArmyPresets } from '../hooks/useArmyPresets';
+import type { ArmyPreset } from '../hooks/useArmyPresets';
 import './OnlineDraftUI.css';
 
 interface PieceInfoState {
@@ -58,6 +60,11 @@ export function OnlineDraftUI({
   const [draft, setDraft] = useState<PlayerDraft>(createEmptyDraft());
   const [isLocked, setIsLocked] = useState(false);
   const [pieceInfo, setPieceInfo] = useState<PieceInfoState | null>(null);
+  const [showPresetMenu, setShowPresetMenu] = useState(false);
+  const [presetName, setPresetName] = useState('');
+
+  const { addPreset, removePreset, getPresetsForSettings } = useArmyPresets();
+  const availablePresets = getPresetsForSettings(boardSize, budget);
 
   const slotLimits = getSlotLimits(boardSize);
   const budgetRemaining = budget - draft.budgetSpent;
@@ -100,8 +107,53 @@ export function OnlineDraftUI({
       count: s.count,
     }));
 
+    console.log('[OnlineDraftUI] Lock-in clicked - budget prop:', budget, 'budgetSpent:', draft.budgetSpent);
+    console.log('[OnlineDraftUI] Submitting draft picks:', draftPicks);
+
     setIsLocked(true);
     onSubmitDraft(draftPicks);
+  };
+
+  const handleSavePreset = () => {
+    if (!presetName.trim()) return;
+    addPreset(presetName, draft.selections, draft.budgetSpent, budget, boardSize);
+    setPresetName('');
+    setShowPresetMenu(false);
+  };
+
+  const handleLoadPreset = (preset: ArmyPreset) => {
+    if (isLocked) return;
+
+    // Reconstruct PlayerDraft from preset
+    // We need to recalculate slotsUsed from the selections
+    let newSlotsUsed = { pawn: 0, piece: 0, royalty: 1 }; // Start with King slot
+
+    for (const selection of preset.selections) {
+      const pieceType = PIECE_BY_ID[selection.pieceTypeId];
+      if (pieceType) {
+        const tier = pieceType.tier;
+        if (tier === 'pawn') newSlotsUsed.pawn += selection.count;
+        else if (tier === 'piece') newSlotsUsed.piece += selection.count;
+        else if (tier === 'royalty') {
+          // King-replacing pieces don't add to royalty slots
+          if (!pieceType.replacesKing) {
+            newSlotsUsed.royalty += selection.count;
+          }
+        }
+      }
+    }
+
+    setDraft({
+      selections: preset.selections,
+      budgetSpent: preset.budgetUsed,
+      slotsUsed: newSlotsUsed,
+    });
+    setShowPresetMenu(false);
+  };
+
+  const handleDeletePreset = (presetId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    removePreset(presetId);
   };
 
   const handlePieceRightClick = (piece: PieceType, e: React.MouseEvent) => {
@@ -174,6 +226,65 @@ export function OnlineDraftUI({
           </div>
         </div>
       </div>
+
+      {/* Preset controls */}
+      {!isLocked && (
+        <div className="preset-controls">
+          <button
+            className="preset-btn"
+            onClick={() => setShowPresetMenu(!showPresetMenu)}
+          >
+            {showPresetMenu ? 'Close' : 'Presets'}
+          </button>
+
+          {showPresetMenu && (
+            <div className="preset-menu">
+              <div className="preset-save">
+                <input
+                  type="text"
+                  placeholder="Preset name..."
+                  value={presetName}
+                  onChange={(e) => setPresetName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSavePreset()}
+                />
+                <button
+                  onClick={handleSavePreset}
+                  disabled={!presetName.trim() || draft.selections.length === 0}
+                >
+                  Save Current
+                </button>
+              </div>
+
+              {availablePresets.length > 0 ? (
+                <div className="preset-list">
+                  <div className="preset-list-header">Load Preset:</div>
+                  {availablePresets.map(preset => (
+                    <div
+                      key={preset.id}
+                      className="preset-item"
+                      onClick={() => handleLoadPreset(preset)}
+                    >
+                      <span className="preset-name">{preset.name}</span>
+                      <span className="preset-info">{preset.budgetUsed} pts</span>
+                      <button
+                        className="preset-delete"
+                        onClick={(e) => handleDeletePreset(preset.id, e)}
+                        title="Delete preset"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="preset-empty">
+                  No saved presets for this board size
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="draft-content">
         {/* Available pieces */}

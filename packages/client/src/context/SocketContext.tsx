@@ -71,6 +71,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
     });
 
     socketInstance.on('message', (message: ServerToClientMessage) => {
+      console.log('[SocketContext] Received message:', message.type);
       messageHandlers.current.forEach(handler => handler(message));
     });
 

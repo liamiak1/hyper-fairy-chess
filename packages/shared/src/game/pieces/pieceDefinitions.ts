@@ -175,6 +175,52 @@ export const FOOL: PieceType = {
   captureType: 'standard', // Can capture by replacement
 };
 
+export const CHECKERS: PieceType = {
+  id: 'checkers',
+  name: 'Checkers',
+  tier: 'pawn',
+  cost: 15,
+  victoryPoints: 15,
+  symbol: '◉',
+  description: 'Moves diagonally forward 1 square. Captures by jumping diagonally forward over an enemy. Promotes to Checkers King.',
+  isRoyal: false,
+  isMandatory: false,
+  canCastle: false,
+  canBeCaptured: true,
+  canFreeze: false,
+  canBeJumpedOver: true,
+  movement: {
+    slides: [],
+    leaps: [],
+    special: ['checkers-forward'], // Diagonal forward move, jump capture forward
+  },
+  captureType: 'long-leap', // Checker-style jump capture
+};
+
+export const CHECKERS_KING: PieceType = {
+  id: 'checkers-king',
+  name: 'Checkers King',
+  tier: 'piece',
+  cost: 35,
+  victoryPoints: 35,
+  symbol: '◎',
+  description: 'Promoted Checkers piece. Moves diagonally 1 square any direction. Captures by jumping diagonally over enemies.',
+  isRoyal: false,
+  isMandatory: false,
+  canCastle: false,
+  canBeCaptured: true,
+  canFreeze: false,
+  canBeJumpedOver: true,
+  movement: {
+    slides: [],
+    leaps: [
+      { dx: 1, dy: 1, symmetric: true }, // 1 square diagonally any direction
+    ],
+    special: ['checkers-king'], // Can also do checker-style jumps
+  },
+  captureType: 'long-leap', // Checker-style jump capture
+};
+
 // =============================================================================
 // Tier 2: Pieces
 // =============================================================================
@@ -834,6 +880,7 @@ export const ALL_PIECES: PieceType[] = [
   BOXER,
   SOLDIER,
   FOOL,
+  CHECKERS,
 
   // Tier 2: Pieces
   CATAPULT,
@@ -858,6 +905,7 @@ export const ALL_PIECES: PieceType[] = [
   GRASSHOPPER,
   NIGHTRIDER,
   CANNON,
+  CHECKERS_KING,
 
   // Tier 3: Royalty
   KING,

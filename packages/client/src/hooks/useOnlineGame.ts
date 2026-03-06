@@ -5,6 +5,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useSocket } from './useSocket';
+import { saveSession, clearSession } from '../utils/sessionStorage';
 import type {
   RoomPhase,
   PlayerColor,
@@ -131,8 +132,11 @@ export function useOnlineGame() {
   }, [addMessageListener]);
 
   const handleMessage = useCallback((message: ServerToClientMessage) => {
+    console.log('[useOnlineGame] Received message:', message.type, message);
+
     switch (message.type) {
       case 'ROOM_CREATED':
+        console.log('[useOnlineGame] ROOM_CREATED settings:', message.settings);
         setState(prev => ({
           ...prev,
           roomCode: message.roomCode,
@@ -143,11 +147,11 @@ export function useOnlineGame() {
           error: null,
         }));
         // Store for reconnection
-        localStorage.setItem('hfc_roomCode', message.roomCode);
-        localStorage.setItem('hfc_playerId', message.playerId);
+        saveSession(message.roomCode, message.playerId);
         break;
 
       case 'ROOM_JOINED':
+        console.log('[useOnlineGame] ROOM_JOINED settings:', message.settings);
         setState(prev => ({
           ...prev,
           roomCode: message.roomCode,
@@ -158,8 +162,7 @@ export function useOnlineGame() {
           phase: message.phase,
           error: null,
         }));
-        localStorage.setItem('hfc_roomCode', message.roomCode);
-        localStorage.setItem('hfc_playerId', message.playerId);
+        saveSession(message.roomCode, message.playerId);
         break;
 
       case 'PLAYER_JOINED':
@@ -178,6 +181,12 @@ export function useOnlineGame() {
         break;
 
       case 'ROOM_ERROR':
+        console.log('[useOnlineGame] ROOM_ERROR received:', message.error, message.message);
+        // If room not found, clear stale session data
+        if (message.error === 'NOT_FOUND') {
+          console.log('[useOnlineGame] Clearing stale session data');
+          clearSession();
+        }
         setState(prev => ({
           ...prev,
           error: message.message,
@@ -185,16 +194,20 @@ export function useOnlineGame() {
         break;
 
       case 'DRAFT_START':
-        setState(prev => ({
-          ...prev,
-          phase: 'drafting',
-          // 0 means no time limit, store as null
-          draftTimeRemaining: message.timeLimit > 0 ? message.timeLimit : null,
-          opponentReady: false,
-          draftRevealed: false,
-          whiteDraft: null,
-          blackDraft: null,
-        }));
+        console.log('[useOnlineGame] DRAFT_START - budget from msg:', message.budget, 'boardSize:', message.boardSize);
+        setState(prev => {
+          console.log('[useOnlineGame] DRAFT_START - current settings.budget:', prev.settings?.budget);
+          return {
+            ...prev,
+            phase: 'drafting',
+            // 0 means no time limit, store as null
+            draftTimeRemaining: message.timeLimit > 0 ? message.timeLimit : null,
+            opponentReady: false,
+            draftRevealed: false,
+            whiteDraft: null,
+            blackDraft: null,
+          };
+        });
         break;
 
       case 'DRAFT_COUNTDOWN':
@@ -205,10 +218,14 @@ export function useOnlineGame() {
         break;
 
       case 'DRAFT_SUBMITTED':
-        setState(prev => ({
-          ...prev,
-          opponentReady: message.playerId !== prev.playerId,
-        }));
+        setState(prev => {
+          const isOpponent = message.playerId !== prev.playerId;
+          console.log('[useOnlineGame] DRAFT_SUBMITTED - submitterId:', message.playerId, 'myPlayerId:', prev.playerId, 'isOpponent:', isOpponent);
+          return {
+            ...prev,
+            opponentReady: isOpponent,
+          };
+        });
         break;
 
       case 'DRAFT_REVEAL':
@@ -368,6 +385,8 @@ export function useOnlineGame() {
         break;
 
       case 'GAME_OVER':
+        // Clear session data - game is finished, no need to reconnect
+        clearSession();
         setState(prev => ({
           ...prev,
           phase: 'ended',
@@ -453,8 +472,7 @@ export function useOnlineGame() {
       type: 'LEAVE_ROOM',
       timestamp: Date.now(),
     });
-    localStorage.removeItem('hfc_roomCode');
-    localStorage.removeItem('hfc_playerId');
+    clearSession();
     setState(initialState);
   }, [sendMessage]);
 

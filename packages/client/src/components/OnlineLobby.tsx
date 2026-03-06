@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import type { RoomSettings } from '@hyper-fairy-chess/shared';
+import { getValidSession, clearSession, getSavedPlayerName, savePlayerName } from '../utils/sessionStorage';
 import './OnlineLobby.css';
 
 interface OnlineLobbyProps {
@@ -13,6 +14,7 @@ interface OnlineLobbyProps {
   error: string | null;
   onCreateRoom: (playerName: string, settings: RoomSettings) => void;
   onJoinRoom: (roomCode: string, playerName: string) => void;
+  onRejoinGame: () => void;
   onBack: () => void;
 }
 
@@ -22,12 +24,11 @@ export function OnlineLobby({
   error,
   onCreateRoom,
   onJoinRoom,
+  onRejoinGame,
   onBack,
 }: OnlineLobbyProps) {
   const [mode, setMode] = useState<'menu' | 'create' | 'join'>('menu');
-  const [playerName, setPlayerName] = useState(() =>
-    localStorage.getItem('hfc_playerName') || ''
-  );
+  const [playerName, setPlayerName] = useState(getSavedPlayerName);
   const [roomCode, setRoomCode] = useState('');
   const [settings, setSettings] = useState<RoomSettings>({
     budget: 360,
@@ -38,16 +39,31 @@ export function OnlineLobby({
   });
   const [budgetOption, setBudgetOption] = useState<string>('360');
 
+  // Check for valid session on each render
+  const validSession = getValidSession();
+
   const handleCreateRoom = () => {
     if (!playerName.trim()) return;
-    localStorage.setItem('hfc_playerName', playerName.trim());
+    // Clear any existing session before creating new room
+    clearSession();
+    savePlayerName(playerName.trim());
     onCreateRoom(playerName.trim(), settings);
   };
 
   const handleJoinRoom = () => {
     if (!playerName.trim() || !roomCode.trim()) return;
-    localStorage.setItem('hfc_playerName', playerName.trim());
-    onJoinRoom(roomCode.trim().toUpperCase(), playerName.trim());
+    savePlayerName(playerName.trim());
+
+    const enteredCode = roomCode.trim().toUpperCase();
+
+    // If entering the same room code as saved session, use rejoin
+    if (validSession && validSession.roomCode === enteredCode) {
+      onRejoinGame();
+    } else {
+      // Clear any existing session and join as new player
+      clearSession();
+      onJoinRoom(enteredCode, playerName.trim());
+    }
   };
 
   const handleRoomCodeInput = (value: string) => {
@@ -98,6 +114,15 @@ export function OnlineLobby({
             </button>
             <button className="btn-primary large" onClick={() => setMode('join')}>
               Join Game
+            </button>
+            <button
+              className={`btn-rejoin large ${validSession ? '' : 'disabled'}`}
+              onClick={() => validSession && onRejoinGame()}
+              disabled={!validSession}
+              title={validSession ? `Rejoin room ${validSession.roomCode}` : 'No active game to rejoin'}
+            >
+              Rejoin Game
+              {validSession && <span className="rejoin-code">({validSession.roomCode})</span>}
             </button>
           </div>
 

@@ -103,16 +103,7 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [pieceInfo, promotionPending]);
 
-  // Try to reconnect on mount
-  useEffect(() => {
-    if (state.isConnected && !state.roomCode) {
-      const savedRoom = localStorage.getItem('hfc_roomCode');
-      const savedPlayer = localStorage.getItem('hfc_playerId');
-      if (savedRoom && savedPlayer) {
-        actions.reconnect();
-      }
-    }
-  }, [state.isConnected, state.roomCode, actions]);
+  // No automatic reconnection - user must explicitly click "Rejoin Game"
 
   const handlePieceRightClick = useCallback((pieceTypeId: string, color: PlayerColor, x: number, y: number) => {
     const pieceType = PIECE_BY_ID[pieceTypeId];
@@ -232,6 +223,7 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
         error={state.error}
         onCreateRoom={actions.createRoom}
         onJoinRoom={actions.joinRoom}
+        onRejoinGame={actions.reconnect}
         onBack={onBack}
       />
     );
@@ -252,6 +244,7 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
 
   // Drafting phase
   if (state.phase === 'drafting') {
+    console.log('[OnlineGame] Rendering draft UI with budget:', state.settings?.budget, 'settings:', state.settings);
     return (
       <OnlineDraftUI
         playerColor={state.playerColor!}
