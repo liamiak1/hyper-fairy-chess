@@ -473,13 +473,14 @@ export function useOnlineGame() {
       timestamp: Date.now(),
     });
     clearSession();
-    // Reset to initial state but preserve actual connection status
-    setState({
+    // Reset game state but preserve connection status from previous state
+    // (the useEffect will sync it with actual socket state)
+    setState(prev => ({
       ...initialState,
-      isConnected,
-      connectionError,
-    });
-  }, [sendMessage, isConnected, connectionError]);
+      isConnected: prev.isConnected,
+      connectionError: prev.connectionError,
+    }));
+  }, [sendMessage]);
 
   const submitDraft = useCallback((draft: DraftPick[]) => {
     sendMessage({
