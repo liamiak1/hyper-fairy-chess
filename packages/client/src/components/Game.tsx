@@ -5,8 +5,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useChessGame } from '../hooks/useChessGame';
 import type { GameMode } from '../hooks/useChessGame';
-import type { Position, PlayerColor, PieceType } from '../game/types';
-import { PIECE_BY_ID } from '../game/pieces/pieceDefinitions';
+import type { Position, PlayerColor, PieceType } from '@hyper-fairy-chess/shared';
+import { PIECE_BY_ID } from '@hyper-fairy-chess/shared';
 import { Board } from './Board';
 import { GameInfo } from './GameInfo';
 import { PromotionDialog } from './PromotionDialog';

@@ -2,7 +2,7 @@
  * Game info display - shows turn, check status, and result
  */
 
-import type { PlayerColor } from '../game/types';
+import type { PlayerColor } from '@hyper-fairy-chess/shared';
 import './GameInfo.css';
 
 interface GameInfoProps {

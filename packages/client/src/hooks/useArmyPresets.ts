@@ -4,8 +4,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import type { BoardSize } from '@hyper-fairy-chess/shared';
-import type { DraftSelection } from '../game/rules/draft';
+import type { BoardSize, DraftSelection } from '@hyper-fairy-chess/shared';
 
 export interface ArmyPreset {
   id: string;

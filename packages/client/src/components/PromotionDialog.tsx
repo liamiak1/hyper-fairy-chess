@@ -2,7 +2,7 @@
  * Promotion dialog - allows user to select promotion piece
  */
 
-import type { PieceType, PlayerColor } from '../game/types';
+import type { PieceType, PlayerColor } from '@hyper-fairy-chess/shared';
 import './PromotionDialog.css';
 
 interface PromotionDialogProps {

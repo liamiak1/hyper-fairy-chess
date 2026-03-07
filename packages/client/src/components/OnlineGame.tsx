@@ -25,9 +25,10 @@ import {
   getWithdrawerCapture,
   getThiefCapture,
   getLongLeaperCaptures,
+  getCheckersCaptures,
   getChameleonCaptures,
+  PIECE_BY_ID,
 } from '@hyper-fairy-chess/shared';
-import { PIECE_BY_ID } from '../game/pieces/pieceDefinitions';
 import { OnlineLobby } from './OnlineLobby';
 import { WaitingRoom } from './WaitingRoom';
 import { OnlineDraftUI } from './OnlineDraftUI';
@@ -193,6 +194,11 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
         case 'long-leap':
           if (selectedPieceForGame.position) {
             captures = getLongLeaperCaptures(board, selectedPieceForGame.owner, selectedPieceForGame.position, move);
+          }
+          break;
+        case 'checkers':
+          if (selectedPieceForGame.position) {
+            captures = getCheckersCaptures(board, selectedPieceForGame, selectedPieceForGame.position, move);
           }
           break;
         case 'chameleon':

@@ -2,8 +2,8 @@
  * Placement UI - piece selection panel for placement phase
  */
 
-import type { PieceInstance, PlayerColor, PieceTier } from '../game/types';
-import { PIECE_BY_ID } from '../game/pieces/pieceDefinitions';
+import type { PieceInstance, PlayerColor, PieceTier } from '@hyper-fairy-chess/shared';
+import { PIECE_BY_ID } from '@hyper-fairy-chess/shared';
 import './PlacementUI.css';
 
 interface PlacementUIProps {

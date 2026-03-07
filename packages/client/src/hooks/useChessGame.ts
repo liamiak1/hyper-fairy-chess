@@ -10,13 +10,16 @@ import type {
   PieceType,
   PlayerColor,
   GameResult,
-} from '../game/types';
-import { arePositionsEqual } from '../game/types';
-import { PIECE_BY_ID } from '../game/pieces/pieceDefinitions';
-import { getPieceAt, initializeRoyalTracking } from '../game/board/boardUtils';
-import { generateLegalMoves } from '../game/rules/checkDetection';
-import { getCastlingDestinations } from '../game/rules/castling';
+  PlacementState,
+  PlayerDraft,
+} from '@hyper-fairy-chess/shared';
 import {
+  arePositionsEqual,
+  PIECE_BY_ID,
+  getPieceAt,
+  initializeRoyalTracking,
+  generateLegalMoves,
+  getCastlingDestinations,
   executeMove,
   prepareMoveFromPositions,
   createInitialGameState,
@@ -29,11 +32,11 @@ import {
   getLongLeaperCaptures,
   getCheckersCaptures,
   getChameleonCaptures,
-} from '../game/rules/moveExecution';
-import { isPromotionMove, getPromotionOptionsForPiece } from '../game/rules/promotion';
-import { getGameResult, getResultDescription, createResignationResult } from '../game/rules/gameEndDetection';
-import type { PlacementState } from '../game/rules/placement';
-import {
+  isPromotionMove,
+  getPromotionOptionsForPiece,
+  getGameResult,
+  getResultDescription,
+  createResignationResult,
   createPlacementStateFromDrafts,
   getPlacementZones,
   getValidPlacementSquares,
@@ -45,16 +48,13 @@ import {
   getHeraldActualPosition,
   shouldPawnSwapToBackRank,
   getPawnSwapPosition,
-} from '../game/rules/placement';
-import type { PlayerDraft } from '../game/rules/draft';
-import {
   createEmptyDraft,
   getAvailablePieces,
   canAddPiece,
   addPieceToDraft,
   removePieceFromDraft,
   resetDraftPieceIdCounter,
-} from '../game/rules/draft';
+} from '@hyper-fairy-chess/shared';
 
 // =============================================================================
 // Types

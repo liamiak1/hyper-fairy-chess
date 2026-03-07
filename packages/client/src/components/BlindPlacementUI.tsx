@@ -3,10 +3,8 @@
  */
 
 import { useState } from 'react';
-import type { PieceInstance, PlayerColor, Position, BoardSize, PieceTier } from '../game/types';
-import { BOARD_CONFIGS } from '../game/types';
-import { PIECE_BY_ID } from '../game/pieces/pieceDefinitions';
-import { getPlacementZones, getValidPlacementSquares } from '../game/rules/placement';
+import type { PieceInstance, PlayerColor, Position, BoardSize, PieceTier } from '@hyper-fairy-chess/shared';
+import { BOARD_CONFIGS, PIECE_BY_ID, getPlacementZones, getValidPlacementSquares } from '@hyper-fairy-chess/shared';
 import { Board } from './Board';
 import './BlindPlacementUI.css';
 

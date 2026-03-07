@@ -2,8 +2,8 @@
  * Opponent Pieces Panel - shows opponent's remaining pieces during placement
  */
 
-import type { PieceInstance, PlayerColor, PieceTier } from '../game/types';
-import { PIECE_BY_ID } from '../game/pieces/pieceDefinitions';
+import type { PieceInstance, PlayerColor, PieceTier } from '@hyper-fairy-chess/shared';
+import { PIECE_BY_ID } from '@hyper-fairy-chess/shared';
 import './OpponentPiecesPanel.css';
 
 interface OpponentPiecesPanelProps {

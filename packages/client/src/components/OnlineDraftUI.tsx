@@ -9,8 +9,8 @@ import type {
   PlayerColor,
   BoardSize,
   DraftPick,
+  PlayerDraft,
 } from '@hyper-fairy-chess/shared';
-import type { PlayerDraft } from '../game/rules/draft';
 import {
   createEmptyDraft,
   addPieceToDraft,
@@ -21,8 +21,8 @@ import {
   getDraftPieceCount,
   hasKingReplacer,
   getAvailablePieces,
-} from '../game/rules/draft';
-import { PIECE_BY_ID } from '../game/pieces/pieceDefinitions';
+  PIECE_BY_ID,
+} from '@hyper-fairy-chess/shared';
 import { PieceInfoPopup } from './PieceInfoPopup';
 import { useArmyPresets } from '../hooks/useArmyPresets';
 import type { ArmyPreset } from '../hooks/useArmyPresets';

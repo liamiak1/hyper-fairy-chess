@@ -2,7 +2,7 @@
  * Handoff screen - transition between players during draft
  */
 
-import type { PlayerColor } from '../game/types';
+import type { PlayerColor } from '@hyper-fairy-chess/shared';
 import './HandoffScreen.css';
 
 interface HandoffScreenProps {

@@ -2,9 +2,8 @@
  * Chess board component
  */
 
-import type { BoardSize, Position, PieceInstance, Move, PlayerColor } from '../game/types';
-import { BOARD_CONFIGS, positionToString } from '../game/types';
-import { PIECE_BY_ID } from '../game/pieces/pieceDefinitions';
+import type { BoardSize, Position, PieceInstance, Move, PlayerColor } from '@hyper-fairy-chess/shared';
+import { BOARD_CONFIGS, positionToString, PIECE_BY_ID } from '@hyper-fairy-chess/shared';
 import './Board.css';
 
 interface SpecialCaptureTarget {

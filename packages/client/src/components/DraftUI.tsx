@@ -3,16 +3,15 @@
  */
 
 import { useState } from 'react';
-import type { PieceType, PlayerColor, BoardSize, PieceTier } from '../game/types';
-import type { PlayerDraft } from '../game/rules/draft';
+import type { PieceType, PlayerColor, BoardSize, PieceTier, PlayerDraft } from '@hyper-fairy-chess/shared';
 import {
   canAddPiece,
   getSlotLimits,
   getPieceCountInDraft,
   getDraftPieceCount,
   hasKingReplacer,
-} from '../game/rules/draft';
-import { PIECE_BY_ID } from '../game/pieces/pieceDefinitions';
+  PIECE_BY_ID,
+} from '@hyper-fairy-chess/shared';
 import { PieceInfoPopup } from './PieceInfoPopup';
 import './DraftUI.css';
 

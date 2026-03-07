@@ -2,7 +2,7 @@
  * PieceInfoPopup - right-click popup showing piece details
  */
 
-import type { PieceType, PlayerColor } from '../game/types';
+import type { PieceType, PlayerColor } from '@hyper-fairy-chess/shared';
 import './PieceInfoPopup.css';
 
 interface PieceInfoPopupProps {

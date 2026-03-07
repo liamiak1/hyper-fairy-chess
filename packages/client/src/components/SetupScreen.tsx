@@ -3,7 +3,7 @@
  */
 
 import { useState } from 'react';
-import { MIN_BUDGET, MAX_BUDGET, BUDGET_STEP, BUDGET_PRESETS } from '../game/rules/draft';
+import { MIN_BUDGET, MAX_BUDGET, BUDGET_STEP, BUDGET_PRESETS } from '@hyper-fairy-chess/shared';
 import './SetupScreen.css';
 
 interface SetupScreenProps {
