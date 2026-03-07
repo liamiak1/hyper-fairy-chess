@@ -1964,6 +1964,7 @@ export function getAttackedSquares(
   piece: PieceInstance
 ): Position[] {
   if (!piece.position) return [];
+  if (piece.isFrozen) return []; // Frozen pieces cannot attack
 
   const pType = PIECE_BY_ID[piece.typeId];
   if (!pType) return [];

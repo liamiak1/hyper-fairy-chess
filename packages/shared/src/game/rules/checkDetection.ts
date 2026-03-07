@@ -180,6 +180,48 @@ function canThiefThreaten(
 }
 
 /**
+ * Check if a Cannon can capture the target position
+ * Cannon captures by hopping over exactly one piece (screen) orthogonally to hit a target beyond
+ */
+function canCannonThreaten(
+  board: BoardState,
+  cannon: PieceInstance,
+  targetPos: Position
+): boolean {
+  if (!cannon.position || cannon.isFrozen) return false;
+
+  // Check if cannon and target are on the same orthogonal line
+  const dx = fileToIndex(targetPos.file) - fileToIndex(cannon.position.file);
+  const dy = targetPos.rank - cannon.position.rank;
+
+  // Must be orthogonal (same file or same rank, but not same square)
+  if ((dx !== 0 && dy !== 0) || (dx === 0 && dy === 0)) return false;
+
+  const stepX = dx === 0 ? 0 : dx > 0 ? 1 : -1;
+  const stepY = dy === 0 ? 0 : dy > 0 ? 1 : -1;
+
+  // Count pieces between cannon and target - need exactly one (the screen)
+  let piecesInBetween = 0;
+  let currentPos = cannon.position;
+
+  while (true) {
+    currentPos = offsetPosition(currentPos, stepX, stepY, board.dimensions)!;
+    if (!currentPos) return false;
+
+    // Reached target position - check if we had exactly one screen piece
+    if (currentPos.file === targetPos.file && currentPos.rank === targetPos.rank) {
+      return piecesInBetween === 1;
+    }
+
+    // Count pieces in between
+    if (!isSquareEmpty(board, currentPos)) {
+      piecesInBetween++;
+      if (piecesInBetween > 1) return false; // Too many pieces, can't cannon-capture
+    }
+  }
+}
+
+/**
  * Check if a Long Leaper can capture the target position
  * Long Leaper captures by jumping over pieces (like checkers)
  */
@@ -462,6 +504,8 @@ function canSpecialCaptureThreaten(
       return canLongLeaperThreaten(board, piece, targetPos);
     case 'chameleon':
       return canChameleonThreaten(board, piece, targetPos);
+    case 'cannon':
+      return canCannonThreaten(board, piece, targetPos);
     default:
       return false;
   }
