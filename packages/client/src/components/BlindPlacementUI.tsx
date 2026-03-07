@@ -3,10 +3,18 @@
  */
 
 import { useState } from 'react';
-import type { PieceInstance, PlayerColor, Position, BoardSize, PieceTier } from '@hyper-fairy-chess/shared';
+import type { PieceInstance, PlayerColor, Position, BoardSize, PieceTier, PieceType } from '@hyper-fairy-chess/shared';
 import { BOARD_CONFIGS, PIECE_BY_ID, getPlacementZones, getValidPlacementSquares } from '@hyper-fairy-chess/shared';
 import { Board } from './Board';
+import { PieceInfoPopup } from './PieceInfoPopup';
 import './BlindPlacementUI.css';
+
+interface PieceInfoState {
+  pieceType: PieceType;
+  color: PlayerColor;
+  x: number;
+  y: number;
+}
 
 interface BlindPlacementUIProps {
   playerColor: PlayerColor;
@@ -40,6 +48,22 @@ export function BlindPlacementUI({
   roomCode,
 }: BlindPlacementUIProps) {
   const [selectedPiece, setSelectedPiece] = useState<PieceInstance | null>(null);
+  const [pieceInfo, setPieceInfo] = useState<PieceInfoState | null>(null);
+
+  const opponentColor = playerColor === 'white' ? 'black' : 'white';
+
+  const handleOpponentPieceRightClick = (typeId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    const pieceType = PIECE_BY_ID[typeId];
+    if (pieceType) {
+      setPieceInfo({
+        pieceType,
+        color: opponentColor,
+        x: e.clientX,
+        y: e.clientY,
+      });
+    }
+  };
 
   const boardConfig = BOARD_CONFIGS[boardSize];
 
@@ -143,9 +167,9 @@ export function BlindPlacementUI({
             {opponentArmy.length} pieces drafted
           </p>
           <div className="army-pieces">
-            <ArmyTierGroup tier="Royalty" pieces={opponentPiecesByTier.royalty} />
-            <ArmyTierGroup tier="Pieces" pieces={opponentPiecesByTier.piece} />
-            <ArmyTierGroup tier="Pawns" pieces={opponentPiecesByTier.pawn} />
+            <ArmyTierGroup tier="Royalty" pieces={opponentPiecesByTier.royalty} onRightClick={handleOpponentPieceRightClick} />
+            <ArmyTierGroup tier="Pieces" pieces={opponentPiecesByTier.piece} onRightClick={handleOpponentPieceRightClick} />
+            <ArmyTierGroup tier="Pawns" pieces={opponentPiecesByTier.pawn} onRightClick={handleOpponentPieceRightClick} />
           </div>
           <div className="opponent-status">
             <span className={`ready-indicator ${opponentReady ? 'ready' : 'placing'}`}>
@@ -251,6 +275,17 @@ export function BlindPlacementUI({
           )}
         </div>
       </div>
+
+      {/* Piece Info Popup */}
+      {pieceInfo && (
+        <PieceInfoPopup
+          pieceType={pieceInfo.pieceType}
+          color={pieceInfo.color}
+          x={pieceInfo.x}
+          y={pieceInfo.y}
+          onClose={() => setPieceInfo(null)}
+        />
+      )}
     </div>
   );
 }
@@ -291,18 +326,19 @@ function PieceTierGroup({ tier, pieces, selectedPiece, onSelectPiece }: PieceTie
 interface ArmyTierGroupProps {
   tier: string;
   pieces: PieceInstance[];
+  onRightClick?: (typeId: string, e: React.MouseEvent) => void;
 }
 
-function ArmyTierGroup({ tier, pieces }: ArmyTierGroupProps) {
+function ArmyTierGroup({ tier, pieces, onRightClick }: ArmyTierGroupProps) {
   if (pieces.length === 0) return null;
 
   // Group by piece type and count
-  const pieceCounts: Record<string, { symbol: string; count: number }> = {};
+  const pieceCounts: Record<string, { symbol: string; name: string; count: number }> = {};
   for (const piece of pieces) {
     const pieceType = PIECE_BY_ID[piece.typeId];
     if (pieceType) {
       if (!pieceCounts[piece.typeId]) {
-        pieceCounts[piece.typeId] = { symbol: pieceType.symbol, count: 0 };
+        pieceCounts[piece.typeId] = { symbol: pieceType.symbol, name: pieceType.name, count: 0 };
       }
       pieceCounts[piece.typeId].count++;
     }
@@ -312,8 +348,14 @@ function ArmyTierGroup({ tier, pieces }: ArmyTierGroupProps) {
     <div className="army-tier-group">
       <h4>{tier}</h4>
       <div className="army-piece-list">
-        {Object.entries(pieceCounts).map(([typeId, { symbol, count }]) => (
-          <span key={typeId} className="army-piece">
+        {Object.entries(pieceCounts).map(([typeId, { symbol, name, count }]) => (
+          <span
+            key={typeId}
+            className="army-piece"
+            title={`${name} - Right-click for details`}
+            onContextMenu={(e) => onRightClick?.(typeId, e)}
+            style={{ cursor: 'help' }}
+          >
             <span className="army-piece-symbol">{symbol}</span>
             {count > 1 && <span className="army-piece-count">x{count}</span>}
           </span>
