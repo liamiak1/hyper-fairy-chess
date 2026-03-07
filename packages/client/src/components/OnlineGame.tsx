@@ -133,16 +133,15 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
 
   // Find selected piece (for playing phase)
   const isPlayingPhase = (state.phase === 'playing' || state.phase === 'ended') && state.gameState;
-  const isMyTurnPlaying = isPlayingPhase && state.gameState?.currentTurn === state.playerColor;
 
+  // Find selected piece (for playing phase) - can be own or enemy piece for viewing
   const selectedPieceForGame = useMemo(() => {
-    if (!selectedSquare || !isMyTurnPlaying || !state.gameState?.board?.pieces) return null;
+    if (!selectedSquare || !isPlayingPhase || !state.gameState?.board?.pieces) return null;
     return state.gameState.board.pieces.find(
       p => p.position && p.position.file === selectedSquare.file &&
-           p.position.rank === selectedSquare.rank &&
-           p.owner === state.playerColor
+           p.position.rank === selectedSquare.rank
     ) || null;
-  }, [selectedSquare, isMyTurnPlaying, state.gameState?.board?.pieces, state.playerColor]);
+  }, [selectedSquare, isPlayingPhase, state.gameState?.board?.pieces]);
 
   // Calculate valid moves for selected piece
   const validMovesForGame = useMemo(() => {
@@ -421,10 +420,56 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
     const isGameOver = state.gameState.result !== null;
 
     const handleSquareClick = (position: Position) => {
-      if (isGameOver || !isMyTurn) return;
-
       if (selectedSquare) {
-        // Try to make a move
+        // If viewing enemy piece, allow switching to any piece or deselecting
+        const currentSelectedPiece = state.gameState!.board.pieces.find(
+          p => p.position && p.position.file === selectedSquare.file &&
+               p.position.rank === selectedSquare.rank
+        );
+
+        // If selected piece is enemy piece (viewing mode), just allow reselection
+        if (currentSelectedPiece && currentSelectedPiece.owner !== state.playerColor) {
+          const clickedPiece = state.gameState!.board.pieces.find(
+            p => p.position && p.position.file === position.file &&
+                 p.position.rank === position.rank
+          );
+          if (clickedPiece) {
+            setSelectedSquare(position);
+          } else {
+            setSelectedSquare(null);
+          }
+          return;
+        }
+
+        // If game over, allow viewing but no moves
+        if (isGameOver) {
+          const clickedPiece = state.gameState!.board.pieces.find(
+            p => p.position && p.position.file === position.file &&
+                 p.position.rank === position.rank
+          );
+          if (clickedPiece) {
+            setSelectedSquare(position);
+          } else {
+            setSelectedSquare(null);
+          }
+          return;
+        }
+
+        // Not my turn - just allow viewing
+        if (!isMyTurn) {
+          const clickedPiece = state.gameState!.board.pieces.find(
+            p => p.position && p.position.file === position.file &&
+                 p.position.rank === position.rank
+          );
+          if (clickedPiece) {
+            setSelectedSquare(position);
+          } else {
+            setSelectedSquare(null);
+          }
+          return;
+        }
+
+        // Try to make a move with own piece
         const movingPiece = state.gameState!.board.pieces.find(
           p => p.position && p.position.file === selectedSquare.file &&
                p.position.rank === selectedSquare.rank
@@ -461,11 +506,10 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
         }
         setSelectedSquare(null);
       } else {
-        // Select a piece
+        // Select any piece (own for moving, enemy for viewing)
         const piece = state.gameState!.board.pieces.find(
           p => p.position && p.position.file === position.file &&
-               p.position.rank === position.rank &&
-               p.owner === state.playerColor
+               p.position.rank === position.rank
         );
         if (piece) {
           setSelectedSquare(position);

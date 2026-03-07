@@ -320,9 +320,6 @@ export function useChessGame(
    */
   const selectSquare = useCallback(
     (position: Position) => {
-      // Game over - no more moves
-      if (result) return;
-
       // Promotion pending - ignore clicks
       if (promotionPending) return;
 
@@ -330,9 +327,20 @@ export function useChessGame(
 
       // If no piece selected
       if (!selectedPiece) {
-        // Select own piece
-        if (clickedPiece && clickedPiece.owner === gameState.currentTurn) {
+        // Select any piece (own for moving, enemy for viewing)
+        if (clickedPiece) {
           setSelectedPieceId(clickedPiece.id);
+        }
+        return;
+      }
+
+      // Game over - allow viewing but no moves
+      if (result) {
+        // Can still select pieces to view their moves
+        if (clickedPiece) {
+          setSelectedPieceId(clickedPiece.id);
+        } else {
+          setSelectedPieceId(null);
         }
         return;
       }
@@ -347,8 +355,18 @@ export function useChessGame(
       // This handles swaps with friendly pieces (Phantom King, etc.)
       const isValidMove = validMoves.some((m) => arePositionsEqual(m, position));
 
-      // If NOT a valid move and clicking another own piece, switch selection
-      if (!isValidMove && clickedPiece && clickedPiece.owner === gameState.currentTurn) {
+      // If we have an enemy piece selected (viewing mode), allow switching to any piece
+      if (selectedPiece.owner !== gameState.currentTurn) {
+        if (clickedPiece) {
+          setSelectedPieceId(clickedPiece.id);
+        } else {
+          setSelectedPieceId(null);
+        }
+        return;
+      }
+
+      // If NOT a valid move and clicking another piece, switch selection
+      if (!isValidMove && clickedPiece) {
         setSelectedPieceId(clickedPiece.id);
         return;
       }
