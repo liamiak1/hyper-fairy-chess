@@ -207,6 +207,7 @@ export const CHECKERS_KING: PieceType = {
   description: 'Promoted Checkers piece. Moves diagonally 1 square any direction. Captures by jumping diagonally over enemies.',
   isRoyal: false,
   isMandatory: false,
+  promotionOnly: true, // Can only be obtained by promoting a Checkers piece
   canCastle: false,
   canBeCaptured: true,
   canFreeze: false,

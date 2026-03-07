@@ -73,10 +73,10 @@ export function createEmptyDraft(): PlayerDraft {
 // =============================================================================
 
 /**
- * Get all pieces available for drafting (excludes mandatory pieces like King)
+ * Get all pieces available for drafting (excludes mandatory pieces like King and promotion-only pieces like Checkers King)
  */
 export function getAvailablePieces(): PieceType[] {
-  return ALL_PIECES.filter((p) => !p.isMandatory);
+  return ALL_PIECES.filter((p) => !p.isMandatory && !p.promotionOnly);
 }
 
 /**

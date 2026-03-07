@@ -59,6 +59,7 @@ export interface PieceType {
   isRoyal: boolean;        // Can be checkmated (King, Phantom King)
   isMandatory: boolean;    // Must be included (King)
   replacesKing?: boolean;  // Can be selected instead of King (Phantom King, Regent)
+  promotionOnly?: boolean; // Cannot be drafted, only obtained via promotion (Checkers King)
   canCastle: boolean;      // Can participate in castling
   canBeCaptured: boolean;  // Fool, Jester cannot be captured
   canFreeze: boolean;      // Immobilizer, Inquisitor, Herald

@@ -42,7 +42,8 @@ export function isPawnType(pieceType: PieceType): boolean {
     pieceType.movement.special.includes('pawn-forward') ||
     pieceType.movement.special.includes('shogi-pawn') ||
     pieceType.movement.special.includes('berolina') ||
-    pieceType.movement.special.includes('peasant-diagonal')
+    pieceType.movement.special.includes('peasant-diagonal') ||
+    pieceType.movement.special.includes('checkers-forward')
   );
 }
 
@@ -97,7 +98,9 @@ export function getPromotionOptions(gameState: GameState): PieceType[] {
 
 /**
  * Get promotion options for a specific piece type
- * Special case: Fool can only promote to Jester
+ * Special cases:
+ * - Fool can only promote to Jester
+ * - Checkers can only promote to Checkers King
  */
 export function getPromotionOptionsForPiece(
   pieceType: PieceType,
@@ -107,6 +110,12 @@ export function getPromotionOptionsForPiece(
   if (pieceType.id === 'fool') {
     const jester = PIECE_BY_ID['jester'];
     return jester ? [jester] : [];
+  }
+
+  // Checkers special rule: can only promote to Checkers King
+  if (pieceType.id === 'checkers') {
+    const checkersKing = PIECE_BY_ID['checkers-king'];
+    return checkersKing ? [checkersKing] : [];
   }
 
   // Use game-aware promotion options (fairy pieces in current game)

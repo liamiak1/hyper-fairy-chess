@@ -253,6 +253,14 @@ export function generateSpecialMoves(
       case 'berolina':
         // Future fairy piece implementations
         break;
+
+      case 'checkers-forward':
+        moves.push(...generateCheckersForwardMoves(board, piece));
+        break;
+
+      case 'checkers-king':
+        moves.push(...generateCheckersKingMoves(board, piece));
+        break;
     }
   }
 
@@ -1716,6 +1724,16 @@ export function getAttackedSquares(
         // Cannon attacks by hopping over a screen piece to hit target
         attacked.push(...getCannonAttackSquares(board, piece));
         break;
+
+      case 'checkers-forward':
+        // Checkers attacks by jumping diagonally forward
+        attacked.push(...getCheckersAttackSquares(board, piece, true));
+        break;
+
+      case 'checkers-king':
+        // Checkers King attacks by jumping diagonally in any direction
+        attacked.push(...getCheckersAttackSquares(board, piece, false));
+        break;
     }
   }
 
@@ -1751,6 +1769,42 @@ function getShogiPawnAttackSquares(board: BoardState, piece: PieceInstance): Pos
   const attackPos = offsetPosition(piece.position, 0, direction, board.dimensions);
 
   return attackPos ? [attackPos] : [];
+}
+
+/**
+ * Get squares a Checkers piece attacks (jump captures)
+ * @param forwardOnly - true for regular checkers (forward diagonals only), false for checkers king (all diagonals)
+ */
+function getCheckersAttackSquares(board: BoardState, piece: PieceInstance, forwardOnly: boolean): Position[] {
+  if (!piece.position) return [];
+
+  const squares: Position[] = [];
+  const direction = getPawnDirection(piece.owner);
+
+  // Diagonal directions (forward only for regular checkers, all for king)
+  const diagonals = forwardOnly
+    ? [{ dx: -1, dy: direction }, { dx: 1, dy: direction }]
+    : [{ dx: -1, dy: -1 }, { dx: -1, dy: 1 }, { dx: 1, dy: -1 }, { dx: 1, dy: 1 }];
+
+  for (const dir of diagonals) {
+    // Position of potential enemy to jump over
+    const enemyPos = offsetPosition(piece.position, dir.dx, dir.dy, board.dimensions);
+    if (!enemyPos) continue;
+
+    // Must have an enemy piece to jump over
+    if (!hasEnemyPiece(board, enemyPos, piece.owner)) continue;
+
+    // Position to land on (the attacked square)
+    const landingPos = offsetPosition(enemyPos, dir.dx, dir.dy, board.dimensions);
+    if (!landingPos) continue;
+
+    // Landing square must be empty for the attack to be valid
+    if (!isSquareEmpty(board, landingPos)) continue;
+
+    squares.push(landingPos);
+  }
+
+  return squares;
 }
 
 /**
@@ -1794,6 +1848,115 @@ function getCannonAttackSquares(board: BoardState, piece: PieceInstance): Positi
   }
 
   return attacked;
+}
+
+// =============================================================================
+// Checkers Moves
+// =============================================================================
+
+/**
+ * Generate Checkers piece moves (forward diagonal movement)
+ * - Non-capturing: move diagonally forward 1 square
+ * - Capturing: jump diagonally forward over an enemy to empty square beyond
+ * - Can chain multiple captures in one turn
+ */
+function generateCheckersForwardMoves(board: BoardState, piece: PieceInstance): Position[] {
+  if (!piece.position) return [];
+
+  const moves: Position[] = [];
+  const visited = new Set<string>();
+  const direction = getPawnDirection(piece.owner); // +1 for white, -1 for black
+
+  // Forward diagonal directions only
+  const forwardDiagonals = [
+    { dx: -1, dy: direction },
+    { dx: 1, dy: direction },
+  ];
+
+  // 1. Non-capturing moves: 1 square diagonally forward
+  for (const dir of forwardDiagonals) {
+    const targetPos = offsetPosition(piece.position, dir.dx, dir.dy, board.dimensions);
+    if (!targetPos) continue;
+
+    if (isSquareEmpty(board, targetPos)) {
+      moves.push(targetPos);
+    }
+  }
+
+  // 2. Capturing moves: jump over enemy to empty square beyond (can chain)
+  generateCheckersJumps(board, piece, piece.position, forwardDiagonals, moves, visited);
+
+  return moves;
+}
+
+/**
+ * Generate Checkers King moves (diagonal movement in any direction)
+ * - Non-capturing: move diagonally 1 square in any direction
+ * - Capturing: jump diagonally over an enemy to empty square beyond (any direction)
+ * - Can chain multiple captures in one turn
+ */
+function generateCheckersKingMoves(board: BoardState, piece: PieceInstance): Position[] {
+  if (!piece.position) return [];
+
+  const moves: Position[] = [];
+  const visited = new Set<string>();
+
+  // All 4 diagonal directions
+  const allDiagonals = [
+    { dx: -1, dy: -1 },
+    { dx: -1, dy: 1 },
+    { dx: 1, dy: -1 },
+    { dx: 1, dy: 1 },
+  ];
+
+  // 1. Non-capturing moves: 1 square diagonally (any direction)
+  // Note: This is handled by the leaps defined on CHECKERS_KING, so we don't duplicate here
+
+  // 2. Capturing moves: jump over enemy to empty square beyond (can chain)
+  generateCheckersJumps(board, piece, piece.position, allDiagonals, moves, visited);
+
+  return moves;
+}
+
+/**
+ * Recursively generate all possible checker-style jump captures
+ * @param fromPos - Current position (may differ from piece.position during chain captures)
+ * @param allowedDirections - Which diagonal directions are allowed (forward-only for regular checkers, all for king)
+ */
+function generateCheckersJumps(
+  board: BoardState,
+  piece: PieceInstance,
+  fromPos: Position,
+  allowedDirections: { dx: number; dy: number }[],
+  moves: Position[],
+  visited: Set<string>
+): void {
+  for (const dir of allowedDirections) {
+    // Position of potential enemy to jump over
+    const enemyPos = offsetPosition(fromPos, dir.dx, dir.dy, board.dimensions);
+    if (!enemyPos) continue;
+
+    // Must have a capturable enemy piece to jump over
+    if (!hasCapturableEnemyPiece(board, enemyPos, piece.owner)) continue;
+
+    // Position to land on (beyond the enemy)
+    const landingPos = offsetPosition(enemyPos, dir.dx, dir.dy, board.dimensions);
+    if (!landingPos) continue;
+
+    // Landing square must be empty
+    if (!isSquareEmpty(board, landingPos)) continue;
+
+    const landingKey = positionToString(landingPos);
+    if (visited.has(landingKey)) continue;
+
+    // Valid jump capture!
+    moves.push(landingPos);
+    visited.add(landingKey);
+
+    // Recursively check for chain captures from the landing position
+    // Note: In traditional checkers, you can change direction during chain captures
+    generateCheckersJumps(board, piece, landingPos, allowedDirections, moves, visited);
+  }
 }
 
 // =============================================================================
