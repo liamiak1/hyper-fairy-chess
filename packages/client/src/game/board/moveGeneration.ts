@@ -1772,7 +1772,9 @@ function getShogiPawnAttackSquares(board: BoardState, piece: PieceInstance): Pos
 }
 
 /**
- * Get squares a Checkers piece attacks (jump captures)
+ * Get squares a Checkers piece attacks (for check detection)
+ * For checkers, the "attacked" square is the position that can be JUMPED OVER (captured),
+ * not the landing position. This is because checkers capture by jumping over pieces.
  * @param forwardOnly - true for regular checkers (forward diagonals only), false for checkers king (all diagonals)
  */
 function getCheckersAttackSquares(board: BoardState, piece: PieceInstance, forwardOnly: boolean): Position[] {
@@ -1787,21 +1789,19 @@ function getCheckersAttackSquares(board: BoardState, piece: PieceInstance, forwa
     : [{ dx: -1, dy: -1 }, { dx: -1, dy: 1 }, { dx: 1, dy: -1 }, { dx: 1, dy: 1 }];
 
   for (const dir of diagonals) {
-    // Position of potential enemy to jump over
-    const enemyPos = offsetPosition(piece.position, dir.dx, dir.dy, board.dimensions);
-    if (!enemyPos) continue;
+    // Position that would be jumped over (this is the "attacked" position for check detection)
+    const jumpedPos = offsetPosition(piece.position, dir.dx, dir.dy, board.dimensions);
+    if (!jumpedPos) continue;
 
-    // Must have an enemy piece to jump over
-    if (!hasEnemyPiece(board, enemyPos, piece.owner)) continue;
-
-    // Position to land on (the attacked square)
-    const landingPos = offsetPosition(enemyPos, dir.dx, dir.dy, board.dimensions);
+    // Position to land on (must be empty for the jump to be valid)
+    const landingPos = offsetPosition(jumpedPos, dir.dx, dir.dy, board.dimensions);
     if (!landingPos) continue;
 
-    // Landing square must be empty for the attack to be valid
+    // Landing square must be empty for the capture to be possible
     if (!isSquareEmpty(board, landingPos)) continue;
 
-    squares.push(landingPos);
+    // The jumped-over position is "attacked" (a piece there can be captured)
+    squares.push(jumpedPos);
   }
 
   return squares;
