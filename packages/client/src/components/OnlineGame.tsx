@@ -165,7 +165,7 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
     const targets: SpecialCaptureTarget[] = [];
 
     // Only calculate for pieces with special capture types
-    if (!['coordinator', 'boxer', 'withdrawal', 'thief', 'long-leap', 'chameleon'].includes(pieceType.captureType)) {
+    if (!['coordinator', 'boxer', 'withdrawal', 'thief', 'long-leap', 'checkers', 'chameleon'].includes(pieceType.captureType)) {
       return [];
     }
 
