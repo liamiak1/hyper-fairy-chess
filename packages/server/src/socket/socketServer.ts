@@ -23,23 +23,23 @@ import { verifyToken } from '../auth/jwt.js';
 
 /**
  * Validate a session token and extract user info.
- * Returns { isAccountUser, username } if valid, or { isAccountUser: false } if invalid.
+ * Returns { isAccountUser, username, userId } if valid, or { isAccountUser: false } if invalid.
  */
 function validateSessionToken(
   sessionToken: string | undefined,
   fallbackName: string
-): { isAccountUser: boolean; verifiedName: string } {
+): { isAccountUser: boolean; verifiedName: string; userId: string | null } {
   if (!sessionToken) {
-    return { isAccountUser: false, verifiedName: fallbackName };
+    return { isAccountUser: false, verifiedName: fallbackName, userId: null };
   }
 
   const payload = verifyToken(sessionToken);
   if (!payload) {
-    return { isAccountUser: false, verifiedName: fallbackName };
+    return { isAccountUser: false, verifiedName: fallbackName, userId: null };
   }
 
-  // Token is valid - use the username from the token
-  return { isAccountUser: true, verifiedName: payload.username };
+  // Token is valid - use the username and userId from the token
+  return { isAccountUser: true, verifiedName: payload.username, userId: payload.userId };
 }
 
 export function setupSocketHandlers(io: Server, roomManager: RoomManager): void {
@@ -175,13 +175,13 @@ function handleCreateRoom(
   state: SocketState
 ): void {
   // Validate token and get verified name
-  const { isAccountUser, verifiedName } = validateSessionToken(
+  const { isAccountUser, verifiedName, userId } = validateSessionToken(
     msg.sessionToken,
     msg.playerName
   );
 
   const room = roomManager.createRoom(msg.settings);
-  const result = room.addPlayer(socket, verifiedName, isAccountUser);
+  const result = room.addPlayer(socket, verifiedName, isAccountUser, userId);
 
   if (!result.success) {
     socket.emit('message', {
@@ -225,12 +225,12 @@ function handleJoinRoom(
   }
 
   // Validate token and get verified name
-  const { isAccountUser, verifiedName } = validateSessionToken(
+  const { isAccountUser, verifiedName, userId } = validateSessionToken(
     msg.sessionToken,
     msg.playerName
   );
 
-  const result = room.addPlayer(socket, verifiedName, isAccountUser);
+  const result = room.addPlayer(socket, verifiedName, isAccountUser, userId);
 
   if (!result.success) {
     socket.emit('message', {

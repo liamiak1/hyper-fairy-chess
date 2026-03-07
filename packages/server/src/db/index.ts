@@ -43,6 +43,32 @@ export async function initDatabase(): Promise<pg.Pool | null> {
       CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
       CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
     `);
+
+    // Add ELO columns (idempotent)
+    await pool.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS elo_rating INT DEFAULT 1200;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS games_played INT DEFAULT 0;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS wins INT DEFAULT 0;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS losses INT DEFAULT 0;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS draws INT DEFAULT 0;
+    `);
+
+    // Create games history table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS games (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        white_user_id UUID REFERENCES users(id),
+        black_user_id UUID REFERENCES users(id),
+        result_type VARCHAR(30) NOT NULL,
+        winner_color VARCHAR(5),
+        white_elo_before INT,
+        black_elo_before INT,
+        white_elo_change INT,
+        black_elo_change INT,
+        played_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     console.log('[DB] Migrations complete');
 
     return pool;

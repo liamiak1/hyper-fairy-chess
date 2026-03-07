@@ -10,6 +10,7 @@ import { setupSocketHandlers } from './socket/socketServer.js';
 import { RoomManager } from './rooms/RoomManager.js';
 import { initDatabase, isDatabaseAvailable } from './db/index.js';
 import { authRouter } from './routes/auth.js';
+import { statsRouter } from './routes/stats.js';
 
 const PORT = process.env.PORT || 3001;
 // Allow all origins in development for LAN play
@@ -22,6 +23,9 @@ app.use(express.json());
 
 // Auth routes
 app.use('/auth', authRouter);
+
+// Player stats routes
+app.use('/stats/player', statsRouter);
 
 // Health check endpoint
 app.get('/health', (_req, res) => {

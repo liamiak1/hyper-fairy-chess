@@ -122,15 +122,21 @@ export async function createUser(
     const result = await pool.query(
       `INSERT INTO users (username, email, password_hash)
        VALUES ($1, $2, $3)
-       RETURNING id, username, email, created_at`,
+       RETURNING id, username, email, elo_rating, games_played, wins, losses, draws, created_at`,
       [normalizedUsername, normalizedEmail, passwordHash]
     );
 
+    const row = result.rows[0];
     const user: User = {
-      id: result.rows[0].id,
-      username: result.rows[0].username,
-      email: result.rows[0].email,
-      createdAt: result.rows[0].created_at,
+      id: row.id,
+      username: row.username,
+      email: row.email,
+      eloRating: row.elo_rating,
+      gamesPlayed: row.games_played,
+      wins: row.wins,
+      losses: row.losses,
+      draws: row.draws,
+      createdAt: row.created_at,
     };
 
     const token = generateToken(user);
@@ -163,7 +169,7 @@ export async function authenticateUser(
   try {
     // Find user by email or username
     const result = await pool.query(
-      `SELECT id, username, email, password_hash, created_at
+      `SELECT id, username, email, password_hash, elo_rating, games_played, wins, losses, draws, created_at
        FROM users
        WHERE LOWER(email) = $1 OR LOWER(username) = $1`,
       [normalized]
@@ -184,6 +190,11 @@ export async function authenticateUser(
       id: row.id,
       username: row.username,
       email: row.email,
+      eloRating: row.elo_rating,
+      gamesPlayed: row.games_played,
+      wins: row.wins,
+      losses: row.losses,
+      draws: row.draws,
       createdAt: row.created_at,
     };
 
@@ -208,7 +219,7 @@ export async function findUserById(id: string): Promise<User | null> {
 
   try {
     const result = await pool.query(
-      'SELECT id, username, email, created_at FROM users WHERE id = $1',
+      'SELECT id, username, email, elo_rating, games_played, wins, losses, draws, created_at FROM users WHERE id = $1',
       [id]
     );
 
@@ -221,6 +232,11 @@ export async function findUserById(id: string): Promise<User | null> {
       id: row.id,
       username: row.username,
       email: row.email,
+      eloRating: row.elo_rating,
+      gamesPlayed: row.games_played,
+      wins: row.wins,
+      losses: row.losses,
+      draws: row.draws,
       createdAt: row.created_at,
     };
   } catch (error) {
@@ -243,7 +259,7 @@ export async function findUserByUsername(
 
   try {
     const result = await pool.query(
-      'SELECT id, username, email, created_at FROM users WHERE LOWER(username) = LOWER($1)',
+      'SELECT id, username, email, elo_rating, games_played, wins, losses, draws, created_at FROM users WHERE LOWER(username) = LOWER($1)',
       [username.trim()]
     );
 
@@ -256,6 +272,11 @@ export async function findUserByUsername(
       id: row.id,
       username: row.username,
       email: row.email,
+      eloRating: row.elo_rating,
+      gamesPlayed: row.games_played,
+      wins: row.wins,
+      losses: row.losses,
+      draws: row.draws,
       createdAt: row.created_at,
     };
   } catch (error) {
@@ -276,7 +297,7 @@ export async function findUserByEmail(email: string): Promise<User | null> {
 
   try {
     const result = await pool.query(
-      'SELECT id, username, email, created_at FROM users WHERE LOWER(email) = LOWER($1)',
+      'SELECT id, username, email, elo_rating, games_played, wins, losses, draws, created_at FROM users WHERE LOWER(email) = LOWER($1)',
       [email.toLowerCase().trim()]
     );
 
@@ -289,6 +310,11 @@ export async function findUserByEmail(email: string): Promise<User | null> {
       id: row.id,
       username: row.username,
       email: row.email,
+      eloRating: row.elo_rating,
+      gamesPlayed: row.games_played,
+      wins: row.wins,
+      losses: row.losses,
+      draws: row.draws,
       createdAt: row.created_at,
     };
   } catch (error) {

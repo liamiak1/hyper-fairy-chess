@@ -33,6 +33,7 @@ export interface PlayerInfo {
   color: PlayerColor | null;
   connected: boolean;
   isAccountUser: boolean;
+  eloRating?: number; // ELO rating for account users
 }
 
 export interface RoomSettings {
@@ -324,6 +325,14 @@ export interface GameOverMessage extends ServerMessage {
   finalState: GameState;
 }
 
+export interface EloUpdateMessage extends ServerMessage {
+  type: 'ELO_UPDATE';
+  whiteEloChange: number;
+  blackEloChange: number;
+  whiteNewElo: number;
+  blackNewElo: number;
+}
+
 // =============================================================================
 // Connection & Sync Messages
 // =============================================================================
@@ -428,6 +437,7 @@ export type ServerToClientMessage =
   | DrawOfferedMessage
   | DrawDeclinedMessage
   | GameOverMessage
+  | EloUpdateMessage
   | SyncStateMessage
   | PlayerDisconnectedMessage
   | PongMessage;

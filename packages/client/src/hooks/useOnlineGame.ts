@@ -84,6 +84,14 @@ export interface OnlineGameState {
 
   // Opponent status notification
   opponentStatus: 'connected' | 'disconnected' | 'left' | null;
+
+  // ELO update after game ends
+  eloUpdate: {
+    whiteEloChange: number;
+    blackEloChange: number;
+    whiteNewElo: number;
+    blackNewElo: number;
+  } | null;
 }
 
 const initialState: OnlineGameState = {
@@ -109,6 +117,7 @@ const initialState: OnlineGameState = {
   drawOfferedBy: null,
   error: null,
   opponentStatus: null,
+  eloUpdate: null,
 };
 
 export function useOnlineGame() {
@@ -444,6 +453,18 @@ export function useOnlineGame() {
         setState(prev => ({
           ...prev,
           drawOfferedBy: null,
+        }));
+        break;
+
+      case 'ELO_UPDATE':
+        setState(prev => ({
+          ...prev,
+          eloUpdate: {
+            whiteEloChange: message.whiteEloChange,
+            blackEloChange: message.blackEloChange,
+            whiteNewElo: message.whiteNewElo,
+            blackNewElo: message.blackNewElo,
+          },
         }));
         break;
     }

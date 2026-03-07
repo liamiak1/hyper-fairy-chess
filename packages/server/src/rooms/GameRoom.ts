@@ -55,10 +55,12 @@ import {
   getGameResult,
   createDrawAgreementResult,
 } from '@hyper-fairy-chess/shared';
+import { recordGameResult, type EloUpdateResult } from '../services/eloService.js';
 
 interface RoomPlayer extends PlayerInfo {
   socketId: string;
   lastSeen: number;
+  userId: string | null; // Database user ID for ELO tracking
 }
 
 const DISCONNECT_TIMEOUT = 60000; // 60 seconds
@@ -106,7 +108,12 @@ export class GameRoom {
   // Player Management
   // =========================================================================
 
-  addPlayer(socket: Socket, name: string, isAccountUser: boolean = false): {
+  addPlayer(
+    socket: Socket,
+    name: string,
+    isAccountUser: boolean = false,
+    userId: string | null = null
+  ): {
     success: boolean;
     playerId?: string;
     color?: PlayerColor;
@@ -134,6 +141,7 @@ export class GameRoom {
       color,
       connected: true,
       isAccountUser,
+      userId,
       lastSeen: Date.now(),
     };
 
@@ -240,6 +248,9 @@ export class GameRoom {
       result: this.gameState.result,
       finalState: this.gameState,
     } as GameOverMessage);
+
+    // Update ELO ratings
+    this.updateEloRatings('timeout', winner);
   }
 
   // =========================================================================
@@ -1014,6 +1025,9 @@ export class GameRoom {
         result,
         finalState: this.gameState,
       } as GameOverMessage);
+
+      // Update ELO ratings
+      this.updateEloRatings(result.type, result.winner);
     }
   }
 
@@ -1055,6 +1069,9 @@ export class GameRoom {
       result: this.gameState.result,
       finalState: this.gameState,
     } as GameOverMessage);
+
+    // Update ELO ratings
+    this.updateEloRatings('resignation', winner);
   }
 
   // =========================================================================
@@ -1102,6 +1119,9 @@ export class GameRoom {
         result: this.gameState.result,
         finalState: this.gameState,
       } as GameOverMessage);
+
+      // Update ELO ratings (draw = null winner)
+      this.updateEloRatings('draw-agreement', null);
     } else {
       // Draw declined
       this.drawOffer = null;
@@ -1110,6 +1130,51 @@ export class GameRoom {
         type: 'DRAW_DECLINED',
         timestamp: Date.now(),
       });
+    }
+  }
+
+  // =========================================================================
+  // ELO Updates
+  // =========================================================================
+
+  private async updateEloRatings(
+    resultType: string,
+    winnerColor: 'white' | 'black' | null
+  ): Promise<void> {
+    // Get players by color
+    const whitePlayers = Array.from(this.players.values()).filter(p => p.color === 'white');
+    const blackPlayers = Array.from(this.players.values()).filter(p => p.color === 'black');
+
+    const whitePlayer = whitePlayers[0];
+    const blackPlayer = blackPlayers[0];
+
+    // Only update ELO if both players are authenticated account users
+    if (!whitePlayer?.userId || !blackPlayer?.userId) {
+      console.log('[ELO] Skipping ELO update - not both players are authenticated');
+      return;
+    }
+
+    try {
+      const eloResult = await recordGameResult(
+        whitePlayer.userId,
+        blackPlayer.userId,
+        resultType,
+        winnerColor
+      );
+
+      if (eloResult) {
+        // Broadcast ELO update to both players
+        this.broadcast({
+          type: 'ELO_UPDATE',
+          timestamp: Date.now(),
+          whiteEloChange: eloResult.whiteEloChange,
+          blackEloChange: eloResult.blackEloChange,
+          whiteNewElo: eloResult.whiteNewElo,
+          blackNewElo: eloResult.blackNewElo,
+        });
+      }
+    } catch (error) {
+      console.error('[ELO] Error updating ELO ratings:', error);
     }
   }
 

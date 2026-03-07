@@ -536,6 +536,21 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
           moveCount={state.gameState.moveHistory.length}
         />
 
+        {/* ELO change display */}
+        {isGameOver && state.eloUpdate && (
+          <div className="elo-update-banner">
+            <span className="elo-label">Rating Change:</span>
+            <span className={`elo-change ${state.playerColor === 'white' ? (state.eloUpdate.whiteEloChange >= 0 ? 'positive' : 'negative') : (state.eloUpdate.blackEloChange >= 0 ? 'positive' : 'negative')}`}>
+              {state.playerColor === 'white'
+                ? (state.eloUpdate.whiteEloChange >= 0 ? '+' : '') + state.eloUpdate.whiteEloChange
+                : (state.eloUpdate.blackEloChange >= 0 ? '+' : '') + state.eloUpdate.blackEloChange}
+            </span>
+            <span className="elo-new">
+              (New: {state.playerColor === 'white' ? state.eloUpdate.whiteNewElo : state.eloUpdate.blackNewElo})
+            </span>
+          </div>
+        )}
+
         <div className="online-game-main">
           <div className="board-wrapper">
             <Board

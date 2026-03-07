@@ -3,8 +3,20 @@
  * Shows room code and waits for opponent to join
  */
 
+import { useState, useEffect } from 'react';
 import type { PlayerInfo, RoomSettings, PlayerColor } from '@hyper-fairy-chess/shared';
 import './WaitingRoom.css';
+
+// Get the server URL from environment or default to localhost
+const getApiBase = (): string => {
+  if (import.meta.env.VITE_SERVER_URL) {
+    return import.meta.env.VITE_SERVER_URL;
+  }
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    return `http://${window.location.hostname}:3001`;
+  }
+  return 'http://localhost:3001';
+};
 
 interface WaitingRoomProps {
   roomCode: string;
@@ -12,6 +24,10 @@ interface WaitingRoomProps {
   players: PlayerInfo[];
   settings: RoomSettings;
   onLeave: () => void;
+}
+
+interface PlayerElo {
+  [username: string]: number | null;
 }
 
 export function WaitingRoom({
@@ -22,6 +38,42 @@ export function WaitingRoom({
   onLeave,
 }: WaitingRoomProps) {
   const opponent = players.find(p => p.color !== playerColor);
+  const [eloRatings, setEloRatings] = useState<PlayerElo>({});
+
+  // Fetch ELO ratings for account users
+  useEffect(() => {
+    const fetchElo = async (player: PlayerInfo) => {
+      if (!player.isAccountUser) return;
+
+      try {
+        const response = await fetch(`${getApiBase()}/stats/player/${player.name}`);
+        if (response.ok) {
+          const data = await response.json();
+          setEloRatings(prev => ({ ...prev, [player.name]: data.eloRating }));
+        }
+      } catch (error) {
+        console.error('Failed to fetch ELO for', player.name, error);
+      }
+    };
+
+    for (const player of players) {
+      if (player.isAccountUser && eloRatings[player.name] === undefined) {
+        fetchElo(player);
+      }
+    }
+  }, [players, eloRatings]);
+
+  const getPlayerDisplay = (player: PlayerInfo | undefined) => {
+    if (!player) return 'Waiting...';
+    const elo = player.isAccountUser ? eloRatings[player.name] : null;
+    if (elo !== null && elo !== undefined) {
+      return `${player.name} (${elo})`;
+    }
+    if (player.isAccountUser) {
+      return `${player.name} (...)`;
+    }
+    return player.name;
+  };
 
   return (
     <div className="waiting-room">
@@ -71,14 +123,14 @@ export function WaitingRoom({
             <div className={`player-slot ${playerColor === 'white' ? 'you' : ''}`}>
               <span className="player-color white">♔</span>
               <span className="player-name">
-                {players.find(p => p.color === 'white')?.name || 'Waiting...'}
+                {getPlayerDisplay(players.find(p => p.color === 'white'))}
               </span>
               {playerColor === 'white' && <span className="you-badge">You</span>}
             </div>
             <div className={`player-slot ${playerColor === 'black' ? 'you' : ''}`}>
               <span className="player-color black">♚</span>
               <span className="player-name">
-                {players.find(p => p.color === 'black')?.name || 'Waiting...'}
+                {getPlayerDisplay(players.find(p => p.color === 'black'))}
               </span>
               {playerColor === 'black' && <span className="you-badge">You</span>}
             </div>

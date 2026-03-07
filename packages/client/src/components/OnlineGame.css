@@ -307,3 +307,43 @@
   color: #888;
   cursor: not-allowed;
 }
+
+/* ELO update banner */
+.elo-update-banner {
+  width: 100%;
+  max-width: 800px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(76, 175, 80, 0.15);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  animation: slideIn 0.3s ease-out;
+}
+
+.elo-update-banner .elo-label {
+  color: #b0b0c0;
+  font-weight: 500;
+}
+
+.elo-update-banner .elo-change {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.elo-update-banner .elo-change.positive {
+  color: #4caf50;
+}
+
+.elo-update-banner .elo-change.negative {
+  color: #f44336;
+}
+
+.elo-update-banner .elo-new {
+  color: #888;
+  font-size: 0.9rem;
+}
