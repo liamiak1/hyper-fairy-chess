@@ -43,7 +43,7 @@ export function OnlineLobby({
     boardSize: '8x8',
     draftTimeLimit: 180,
     moveTimeLimit: null,
-    placementMode: 'alternating',
+    placementMode: 'blind',
   });
   const [budgetOption, setBudgetOption] = useState<string>('360');
 
@@ -199,8 +199,8 @@ export function OnlineLobby({
                 const value = e.target.value;
                 setBudgetOption(value);
                 if (value === 'random') {
-                  const options = [260, 360, 500, 700, 900];
-                  const randomBudget = options[Math.floor(Math.random() * options.length)];
+                  // Random budget between 260 and 900
+                  const randomBudget = Math.floor(Math.random() * (900 - 260 + 1)) + 260;
                   setSettings({ ...settings, budget: randomBudget });
                 } else {
                   setSettings({ ...settings, budget: Number(value) });
