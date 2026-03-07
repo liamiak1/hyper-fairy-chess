@@ -73,10 +73,11 @@ export function OnlineDraftUI({
   const piecesByTier = useMemo(() => {
     // Use getAvailablePieces() which filters out mandatory pieces like King
     const available = getAvailablePieces();
+    const sortByCost = (a: PieceType, b: PieceType) => a.cost - b.cost;
     return {
-      pawn: available.filter((p: PieceType) => p.tier === 'pawn'),
-      piece: available.filter((p: PieceType) => p.tier === 'piece'),
-      royalty: available.filter((p: PieceType) => p.tier === 'royalty'),
+      pawn: available.filter((p: PieceType) => p.tier === 'pawn').sort(sortByCost),
+      piece: available.filter((p: PieceType) => p.tier === 'piece').sort(sortByCost),
+      royalty: available.filter((p: PieceType) => p.tier === 'royalty').sort(sortByCost),
     };
   }, []);
 

@@ -245,10 +245,11 @@ function TierSection({
 }
 
 function groupByTier(pieces: PieceType[]): Record<PieceTier, PieceType[]> {
+  const sortByCost = (a: PieceType, b: PieceType) => a.cost - b.cost;
   return {
-    pawn: pieces.filter((p) => p.tier === 'pawn'),
-    piece: pieces.filter((p) => p.tier === 'piece'),
-    royalty: pieces.filter((p) => p.tier === 'royalty'),
-    other: pieces.filter((p) => p.tier === 'other'),
+    pawn: pieces.filter((p) => p.tier === 'pawn').sort(sortByCost),
+    piece: pieces.filter((p) => p.tier === 'piece').sort(sortByCost),
+    royalty: pieces.filter((p) => p.tier === 'royalty').sort(sortByCost),
+    other: pieces.filter((p) => p.tier === 'other').sort(sortByCost),
   };
 }
