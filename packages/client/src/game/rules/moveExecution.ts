@@ -356,6 +356,12 @@ export function getChameleonCaptures(
     return longLeaperCaptures;
   }
 
+  // Check for checkers-style capture (diagonal jump over enemy checker)
+  const checkersCaptures = getChameleonCheckersCapture(board, chameleon, from, to);
+  if (checkersCaptures.length > 0) {
+    return checkersCaptures;
+  }
+
   // Standard displacement capture - handled by default move logic
   return undefined;
 }
@@ -559,6 +565,71 @@ function getChameleonLongLeaperCapture(
 
   // Only return captures if at least one piece was a long leaper
   return hasLongLeaper ? allJumpedPieces : [];
+}
+
+/**
+ * Check if chameleon is making a checkers-style capture.
+ * Returns the captured checker(s) if chameleon made a diagonal jump.
+ * Checkers-style jumps must be exactly 2 squares diagonally (jumping over 1 enemy).
+ */
+function getChameleonCheckersCapture(
+  board: BoardState,
+  chameleon: PieceInstance,
+  from: Position,
+  to: Position
+): { pieceId: string; position: Position }[] {
+  const files: File[] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'];
+
+  // Calculate direction of movement
+  const fromFileIndex = files.indexOf(from.file);
+  const toFileIndex = files.indexOf(to.file);
+  const dx = toFileIndex - fromFileIndex;
+  const dy = to.rank - from.rank;
+
+  // Must be diagonal
+  if (Math.abs(dx) !== Math.abs(dy) || dx === 0) {
+    return [];
+  }
+
+  const distance = Math.abs(dx);
+  const stepX = dx / Math.abs(dx);
+  const stepY = dy / Math.abs(dy);
+
+  // Walk the path and collect all jumped enemy pieces
+  // Also check if any of them are checkers
+  const allJumpedPieces: { pieceId: string; position: Position }[] = [];
+  let hasChecker = false;
+
+  let currentFileIndex = fromFileIndex;
+  let currentRank = from.rank;
+
+  for (let i = 0; i < distance; i++) {
+    currentFileIndex += stepX;
+    currentRank += stepY;
+
+    // Don't include the landing position
+    if (i === distance - 1) continue;
+
+    const pos: Position = {
+      file: files[currentFileIndex],
+      rank: currentRank as Rank,
+    };
+
+    const piece = getPieceAt(board, pos);
+    if (piece && piece.owner !== chameleon.owner) {
+      const pieceType = PIECE_BY_ID[piece.typeId];
+      if (pieceType?.canBeCaptured !== false) {
+        allJumpedPieces.push({ pieceId: piece.id, position: pos });
+        // Track if at least one is a checker
+        if (pieceType?.captureType === 'checkers') {
+          hasChecker = true;
+        }
+      }
+    }
+  }
+
+  // Only return captures if at least one piece was a checker
+  return hasChecker ? allJumpedPieces : [];
 }
 
 // =============================================================================
@@ -892,6 +963,11 @@ export function prepareMoveFromPositions(
     const longLeapCaptures = getLongLeaperCaptures(gameState.board, piece.owner, from, to);
     if (longLeapCaptures.length > 0) {
       additionalCaptures = longLeapCaptures;
+    }
+  } else if (pieceType.captureType === 'checkers') {
+    const checkersCaptures = getCheckersCaptures(gameState.board, piece, from, to);
+    if (checkersCaptures.length > 0) {
+      additionalCaptures = checkersCaptures;
     }
   } else if (pieceType.captureType === 'chameleon') {
     const chameleonCaptures = getChameleonCaptures(gameState.board, piece, from, to);
