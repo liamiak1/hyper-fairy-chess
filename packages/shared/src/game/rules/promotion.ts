@@ -112,10 +112,10 @@ export function getPromotionOptionsForPiece(
     return jester ? [jester] : [];
   }
 
-  // Checkers special rule: can only promote to Checkers King
-  if (pieceType.id === 'checkers') {
-    const checkersKing = PIECE_BY_ID['checkers-king'];
-    return checkersKing ? [checkersKing] : [];
+  // Checker special rule: can only promote to Checker King
+  if (pieceType.id === 'checker') {
+    const checkerKing = PIECE_BY_ID['checker-king'];
+    return checkerKing ? [checkerKing] : [];
   }
 
   // Use game-aware promotion options (fairy pieces in current game)

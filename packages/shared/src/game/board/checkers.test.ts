@@ -44,7 +44,7 @@ function hasMove(moves: Position[], file: string, rank: number): boolean {
 describe('Checkers piece', () => {
   describe('Non-capturing movement', () => {
     it('white checker moves diagonally forward (1 square)', () => {
-      const checker = createPiece('wc1', 'checkers', 'white', { file: 'd', rank: 3 } as Position);
+      const checker = createPiece('wc1', 'checker', 'white', { file: 'd', rank: 3 } as Position);
       const board = createBoard([checker]);
 
       const moves = generatePseudoLegalMoves(board, checker, null);
@@ -59,7 +59,7 @@ describe('Checkers piece', () => {
     });
 
     it('black checker moves diagonally forward (downward on board)', () => {
-      const checker = createPiece('bc1', 'checkers', 'black', { file: 'd', rank: 6 } as Position);
+      const checker = createPiece('bc1', 'checker', 'black', { file: 'd', rank: 6 } as Position);
       const board = createBoard([checker]);
 
       const moves = generatePseudoLegalMoves(board, checker, null);
@@ -73,7 +73,7 @@ describe('Checkers piece', () => {
     });
 
     it('checker at edge of board has limited moves', () => {
-      const checker = createPiece('wc1', 'checkers', 'white', { file: 'a', rank: 3 } as Position);
+      const checker = createPiece('wc1', 'checker', 'white', { file: 'a', rank: 3 } as Position);
       const board = createBoard([checker]);
 
       const moves = generatePseudoLegalMoves(board, checker, null);
@@ -85,7 +85,7 @@ describe('Checkers piece', () => {
     });
 
     it('checker cannot move to occupied square', () => {
-      const checker = createPiece('wc1', 'checkers', 'white', { file: 'd', rank: 3 } as Position);
+      const checker = createPiece('wc1', 'checker', 'white', { file: 'd', rank: 3 } as Position);
       const blocker = createPiece('wp1', 'pawn', 'white', { file: 'c', rank: 4 } as Position);
       const board = createBoard([checker, blocker]);
 
@@ -100,7 +100,7 @@ describe('Checkers piece', () => {
 
   describe('Jump captures', () => {
     it('white checker captures by jumping over enemy diagonally forward', () => {
-      const checker = createPiece('wc1', 'checkers', 'white', { file: 'd', rank: 3 } as Position);
+      const checker = createPiece('wc1', 'checker', 'white', { file: 'd', rank: 3 } as Position);
       const enemy = createPiece('bp1', 'pawn', 'black', { file: 'c', rank: 4 } as Position);
       const board = createBoard([checker, enemy]);
 
@@ -115,7 +115,7 @@ describe('Checkers piece', () => {
     });
 
     it('checker cannot jump backward', () => {
-      const checker = createPiece('wc1', 'checkers', 'white', { file: 'd', rank: 5 } as Position);
+      const checker = createPiece('wc1', 'checker', 'white', { file: 'd', rank: 5 } as Position);
       const enemy = createPiece('bp1', 'pawn', 'black', { file: 'c', rank: 4 } as Position);
       const board = createBoard([checker, enemy]);
 
@@ -126,7 +126,7 @@ describe('Checkers piece', () => {
     });
 
     it('checker cannot jump if landing square is occupied', () => {
-      const checker = createPiece('wc1', 'checkers', 'white', { file: 'd', rank: 3 } as Position);
+      const checker = createPiece('wc1', 'checker', 'white', { file: 'd', rank: 3 } as Position);
       const enemy = createPiece('bp1', 'pawn', 'black', { file: 'c', rank: 4 } as Position);
       const blocker = createPiece('bp2', 'pawn', 'black', { file: 'b', rank: 5 } as Position);
       const board = createBoard([checker, enemy, blocker]);
@@ -138,7 +138,7 @@ describe('Checkers piece', () => {
     });
 
     it('checker can chain multiple captures', () => {
-      const checker = createPiece('wc1', 'checkers', 'white', { file: 'a', rank: 1 } as Position);
+      const checker = createPiece('wc1', 'checker', 'white', { file: 'a', rank: 1 } as Position);
       const enemy1 = createPiece('bp1', 'pawn', 'black', { file: 'b', rank: 2 } as Position);
       const enemy2 = createPiece('bp2', 'pawn', 'black', { file: 'd', rank: 4 } as Position);
       const board = createBoard([checker, enemy1, enemy2]);
@@ -153,10 +153,10 @@ describe('Checkers piece', () => {
   });
 });
 
-describe('Checkers King piece', () => {
+describe('Checker King piece', () => {
   describe('Non-capturing movement', () => {
-    it('checkers king moves diagonally in any direction (via leaps)', () => {
-      const king = createPiece('wck1', 'checkers-king', 'white', { file: 'd', rank: 4 } as Position);
+    it('checker king moves diagonally in any direction (via leaps)', () => {
+      const king = createPiece('wck1', 'checker-king', 'white', { file: 'd', rank: 4 } as Position);
       const board = createBoard([king]);
 
       const moves = generatePseudoLegalMoves(board, king, null);
@@ -170,8 +170,8 @@ describe('Checkers King piece', () => {
   });
 
   describe('Jump captures', () => {
-    it('checkers king can capture diagonally backward', () => {
-      const king = createPiece('wck1', 'checkers-king', 'white', { file: 'd', rank: 5 } as Position);
+    it('checker king can capture diagonally backward', () => {
+      const king = createPiece('wck1', 'checker-king', 'white', { file: 'd', rank: 5 } as Position);
       const enemy = createPiece('bp1', 'pawn', 'black', { file: 'c', rank: 4 } as Position);
       const board = createBoard([king, enemy]);
 
@@ -181,8 +181,8 @@ describe('Checkers King piece', () => {
       expect(hasMove(moves, 'b', 3)).toBe(true);
     });
 
-    it('checkers king can capture diagonally forward', () => {
-      const king = createPiece('wck1', 'checkers-king', 'white', { file: 'd', rank: 3 } as Position);
+    it('checker king can capture diagonally forward', () => {
+      const king = createPiece('wck1', 'checker-king', 'white', { file: 'd', rank: 3 } as Position);
       const enemy = createPiece('bp1', 'pawn', 'black', { file: 'c', rank: 4 } as Position);
       const board = createBoard([king, enemy]);
 
@@ -192,8 +192,8 @@ describe('Checkers King piece', () => {
       expect(hasMove(moves, 'b', 5)).toBe(true);
     });
 
-    it('checkers king can chain captures in any diagonal direction', () => {
-      const king = createPiece('wck1', 'checkers-king', 'white', { file: 'c', rank: 5 } as Position);
+    it('checker king can chain captures in any diagonal direction', () => {
+      const king = createPiece('wck1', 'checker-king', 'white', { file: 'c', rank: 5 } as Position);
       const enemy1 = createPiece('bp1', 'pawn', 'black', { file: 'b', rank: 4 } as Position);
       const enemy2 = createPiece('bp2', 'pawn', 'black', { file: 'b', rank: 2 } as Position);
       const board = createBoard([king, enemy1, enemy2]);
@@ -209,14 +209,14 @@ describe('Checkers King piece', () => {
 });
 
 describe('Draft exclusion', () => {
-  it('checkers-king has promotionOnly flag', () => {
-    const checkersKing = PIECE_BY_ID['checkers-king'];
-    expect(checkersKing).toBeDefined();
-    expect(checkersKing?.promotionOnly).toBe(true);
+  it('checker-king has promotionOnly flag', () => {
+    const checkerKing = PIECE_BY_ID['checker-king'];
+    expect(checkerKing).toBeDefined();
+    expect(checkerKing?.promotionOnly).toBe(true);
   });
 
   it('checkers does not have promotionOnly flag', () => {
-    const checkers = PIECE_BY_ID['checkers'];
+    const checkers = PIECE_BY_ID['checker'];
     expect(checkers).toBeDefined();
     expect(checkers?.promotionOnly).toBeFalsy();
   });
@@ -224,14 +224,14 @@ describe('Draft exclusion', () => {
 
 describe('Promotion', () => {
   it('checkers piece type is recognized as pawn type for promotion', () => {
-    const checkers = PIECE_BY_ID['checkers'];
+    const checkers = PIECE_BY_ID['checker'];
     expect(checkers).toBeDefined();
     expect(isPawnType(checkers!)).toBe(true);
   });
 
-  it('checkers king is not a pawn type', () => {
-    const checkersKing = PIECE_BY_ID['checkers-king'];
-    expect(checkersKing).toBeDefined();
-    expect(isPawnType(checkersKing!)).toBe(false);
+  it('checker king is not a pawn type', () => {
+    const checkerKing = PIECE_BY_ID['checker-king'];
+    expect(checkerKing).toBeDefined();
+    expect(isPawnType(checkerKing!)).toBe(false);
   });
 });
