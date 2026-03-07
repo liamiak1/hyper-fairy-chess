@@ -227,6 +227,64 @@ export function getLongLeaperCaptures(
 }
 
 /**
+ * Calculate Checkers captures - pieces jumped over between from and to positions
+ * Checkers jump exactly one square diagonally over an enemy piece to land on the square beyond.
+ * Can chain multiple jumps in one turn.
+ */
+export function getCheckersCaptures(
+  board: BoardState,
+  piece: PieceInstance,
+  from: Position,
+  to: Position
+): { pieceId: string; position: Position }[] {
+  const captures: { pieceId: string; position: Position }[] = [];
+  const files: File[] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'];
+
+  // Calculate direction of movement
+  const fromFileIndex = files.indexOf(from.file);
+  const toFileIndex = files.indexOf(to.file);
+  const dx = toFileIndex - fromFileIndex;
+  const dy = to.rank - from.rank;
+
+  // Checkers captures must be diagonal
+  if (Math.abs(dx) !== Math.abs(dy) || dx === 0) {
+    return captures;
+  }
+
+  const distance = Math.abs(dx);
+  const stepX = dx / Math.abs(dx);
+  const stepY = dy / Math.abs(dy);
+
+  // Each jump is exactly 2 squares (over 1 piece)
+  // Walk the path and find jumped pieces (at odd positions: 1, 3, 5, ...)
+  let currentFileIndex = fromFileIndex;
+  let currentRank = from.rank;
+
+  for (let i = 1; i <= distance; i++) {
+    currentFileIndex += stepX;
+    currentRank += stepY;
+
+    // Captured pieces are at the midpoints (every other square starting from 1)
+    if (i % 2 === 1 && i < distance) {
+      const pos: Position = {
+        file: files[currentFileIndex],
+        rank: currentRank as Rank,
+      };
+
+      // Check if there's a piece at this position
+      if (hasCapturableEnemyPiece(board, pos, piece.owner)) {
+        const capturedPiece = getPieceAt(board, pos);
+        if (capturedPiece) {
+          captures.push({ pieceId: capturedPiece.id, position: pos });
+        }
+      }
+    }
+  }
+
+  return captures;
+}
+
+/**
  * Calculate withdrawer capture - piece in opposite direction of movement
  */
 export function getWithdrawerCapture(

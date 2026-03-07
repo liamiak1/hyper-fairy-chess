@@ -859,8 +859,9 @@ function generateChameleonMoves(board: BoardState, piece: PieceInstance): Positi
     // Can't capture uncapturable pieces
     if (!enemyType.canBeCaptured) continue;
 
-    // Skip long-leap - handled separately above
+    // Skip long-leap and checkers - handled separately above
     if (enemyType.captureType === 'long-leap') continue;
+    if (enemyType.captureType === 'checkers') continue;
 
     // Generate moves as if Chameleon has the enemy's movement pattern
     const capturePositions = getChameleonCapturePositions(board, piece, enemy, enemyType);
@@ -1098,6 +1099,9 @@ function getChameleonCapturePositions(
       return getChameleonWithdrawerCapturePositions(board, chameleon, enemy);
     case 'long-leap':
       // Handled separately in generateAllChameleonLongLeaperCaptures (path-centric, not enemy-centric)
+      return [];
+    case 'checkers':
+      // Handled separately in generateAllChameleonCheckersCaptures (path-centric, diagonal only)
       return [];
     case 'coordinator':
       // Chameleon captures coordinator using coordinator-style capture

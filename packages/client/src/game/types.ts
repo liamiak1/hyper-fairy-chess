@@ -78,7 +78,8 @@ export type CaptureType =
   | 'coordinator'        // Capture at King-aligned squares
   | 'boxer'              // Capture "boxed in" enemies (orthogonally adjacent with friendly on opposite side)
   | 'thief'              // Capture piece on square past where thief lands
-  | 'long-leap'          // Jump over to capture (checker-style)
+  | 'long-leap'          // Long Leaper: slide then jump over enemies (any direction)
+  | 'checkers'           // Checkers: diagonal jump capture only
   | 'chameleon'          // Capture like the piece being captured
   | 'cannon'             // Hop over screen to capture
   | 'none';              // Immobilizer doesn't capture

@@ -194,7 +194,7 @@ export const CHECKERS: PieceType = {
     leaps: [],
     special: ['checkers-forward'], // Diagonal forward move, jump capture forward
   },
-  captureType: 'long-leap', // Checker-style jump capture
+  captureType: 'checkers', // Diagonal jump capture only
 };
 
 export const CHECKERS_KING: PieceType = {
@@ -219,7 +219,7 @@ export const CHECKERS_KING: PieceType = {
     ],
     special: ['checkers-king'], // Can also do checker-style jumps
   },
-  captureType: 'long-leap', // Checker-style jump capture
+  captureType: 'checkers', // Diagonal jump capture only
 };
 
 // =============================================================================

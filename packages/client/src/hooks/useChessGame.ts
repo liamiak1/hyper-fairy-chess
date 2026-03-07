@@ -27,6 +27,7 @@ import {
   getWithdrawerCapture,
   getThiefCapture,
   getLongLeaperCaptures,
+  getCheckersCaptures,
   getChameleonCaptures,
 } from '../game/rules/moveExecution';
 import { isPromotionMove, getPromotionOptionsForPiece } from '../game/rules/promotion';
@@ -206,7 +207,7 @@ export function useChessGame(
     const targets: SpecialCaptureTarget[] = [];
 
     // Only calculate for pieces with special capture types
-    if (!['coordinator', 'boxer', 'withdrawal', 'thief', 'long-leap', 'chameleon'].includes(pieceType.captureType)) {
+    if (!['coordinator', 'boxer', 'withdrawal', 'thief', 'long-leap', 'checkers', 'chameleon'].includes(pieceType.captureType)) {
       return [];
     }
 
@@ -235,6 +236,11 @@ export function useChessGame(
         case 'long-leap':
           if (selectedPiece.position) {
             captures = getLongLeaperCaptures(gameState.board, selectedPiece.owner, selectedPiece.position, move);
+          }
+          break;
+        case 'checkers':
+          if (selectedPiece.position) {
+            captures = getCheckersCaptures(gameState.board, selectedPiece, selectedPiece.position, move);
           }
           break;
         case 'chameleon':

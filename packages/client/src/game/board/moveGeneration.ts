@@ -837,6 +837,16 @@ function generateChameleonMoves(board: BoardState, piece: PieceInstance): Positi
     }
   }
 
+  // 2b. Checkers-style captures: diagonal jumps only
+  const checkersCaptures = generateAllChameleonCheckersCaptures(board, piece);
+  for (const pos of checkersCaptures) {
+    const posKey = positionToString(pos);
+    if (!visited.has(posKey)) {
+      moves.push(pos);
+      visited.add(posKey);
+    }
+  }
+
   // 3. Other capturing moves: capture like the target piece
   const enemyPieces = getAllPieces(board, piece.owner === 'white' ? 'black' : 'white');
 
@@ -849,8 +859,9 @@ function generateChameleonMoves(board: BoardState, piece: PieceInstance): Positi
     // Can't capture uncapturable pieces
     if (!enemyType.canBeCaptured) continue;
 
-    // Skip long-leap - handled separately above
+    // Skip long-leap and checkers - handled separately above
     if (enemyType.captureType === 'long-leap') continue;
+    if (enemyType.captureType === 'checkers') continue;
 
     // Generate moves as if Chameleon has the enemy's movement pattern
     const capturePositions = getChameleonCapturePositions(board, piece, enemy, enemyType);
@@ -980,6 +991,95 @@ function exploreLongLeaperJumpPath(
 }
 
 /**
+ * Generate all checkers-style capture positions for a chameleon.
+ * Explores diagonal jump paths, valid if any piece jumped is a checker.
+ */
+function generateAllChameleonCheckersCaptures(
+  board: BoardState,
+  chameleon: PieceInstance
+): Position[] {
+  if (!chameleon.position) return [];
+
+  const positions: Position[] = [];
+  const visited = new Set<string>();
+
+  // Diagonal directions only
+  const diagonalDirs = [
+    { dx: 1, dy: 1 },
+    { dx: 1, dy: -1 },
+    { dx: -1, dy: 1 },
+    { dx: -1, dy: -1 },
+  ];
+
+  // Check all 4 diagonal directions
+  for (const dir of diagonalDirs) {
+    exploreCheckersJumpPath(board, chameleon, chameleon.position, dir, [], positions, visited);
+  }
+
+  return positions;
+}
+
+/**
+ * Recursively explore jump paths for chameleon checkers-style captures.
+ * Only validates if path includes at least one checker piece.
+ */
+function exploreCheckersJumpPath(
+  board: BoardState,
+  chameleon: PieceInstance,
+  currentPos: Position,
+  dir: { dx: number; dy: number },
+  jumpedPieces: PieceInstance[],
+  positions: Position[],
+  visited: Set<string>
+): void {
+  // Look for an enemy piece immediately adjacent in this diagonal direction
+  const jumpedPos = offsetPosition(currentPos, dir.dx, dir.dy, board.dimensions);
+  if (!jumpedPos) return;
+
+  // Must have an enemy piece to jump over
+  if (!hasEnemyPiece(board, jumpedPos, chameleon.owner)) return;
+
+  const enemyPiece = getPieceAt(board, jumpedPos);
+  if (!enemyPiece) return;
+
+  const enemyType = PIECE_BY_ID[enemyPiece.typeId];
+  if (!enemyType || !enemyType.canBeCaptured) return;
+
+  // Check landing position (must be empty)
+  const landingPos = offsetPosition(jumpedPos, dir.dx, dir.dy, board.dimensions);
+  if (!landingPos) return;
+  if (!isSquareEmpty(board, landingPos)) return;
+
+  // Add this piece to our jumped list
+  const newJumpedPieces = [...jumpedPieces, enemyPiece];
+
+  // Check if path includes a checker piece
+  const hasChecker = newJumpedPieces.some((p) => {
+    const pType = PIECE_BY_ID[p.typeId];
+    return pType?.captureType === 'checkers';
+  });
+
+  if (hasChecker) {
+    const posKey = positionToString(landingPos);
+    if (!visited.has(posKey)) {
+      positions.push(landingPos);
+      visited.add(posKey);
+    }
+  }
+
+  // Continue exploring from landing position for chain jumps (all 4 directions)
+  const allDiagonalDirs = [
+    { dx: 1, dy: 1 },
+    { dx: 1, dy: -1 },
+    { dx: -1, dy: 1 },
+    { dx: -1, dy: -1 },
+  ];
+  for (const nextDir of allDiagonalDirs) {
+    exploreCheckersJumpPath(board, chameleon, landingPos, nextDir, newJumpedPieces, positions, visited);
+  }
+}
+
+/**
  * Get positions where Chameleon can capture a specific enemy piece
  * using that enemy's capture method
  */
@@ -1002,6 +1102,9 @@ function getChameleonCapturePositions(
       return getChameleonWithdrawerCapturePositions(board, chameleon, enemy);
     case 'long-leap':
       // Handled separately in generateAllChameleonLongLeaperCaptures (path-centric, not enemy-centric)
+      return [];
+    case 'checkers':
+      // Handled separately in generateAllChameleonCheckersCaptures (diagonal jumps only)
       return [];
     case 'coordinator':
       // Chameleon captures coordinator using coordinator-style capture
