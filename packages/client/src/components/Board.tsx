@@ -26,6 +26,7 @@ interface BoardProps {
   currentTurn?: PlayerColor;
   onPieceRightClick?: (pieceTypeId: string, color: PlayerColor, x: number, y: number) => void;
   flipped?: boolean;
+  isViewingEnemy?: boolean; // True when viewing enemy piece moves (not executable)
 }
 
 const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'] as const;
@@ -45,6 +46,7 @@ export function Board({
   currentTurn,
   onPieceRightClick,
   flipped = false,
+  isViewingEnemy = false,
 }: BoardProps) {
   const config = BOARD_CONFIGS[size];
   const baseFiles = FILES.slice(0, config.files);
@@ -123,7 +125,7 @@ export function Board({
             return (
               <div
                 key={posKey}
-                className={`square ${isLightSquare(fileIndex, rank) ? 'light' : 'dark'} ${isSelected ? 'selected' : ''} ${isValidMove ? 'valid-move' : ''} ${isLastMoveSquare ? 'last-move' : ''} ${isValidPlacement ? 'valid-placement' : ''} ${isCapture ? 'capturable' : ''} ${isSwap ? 'swap-target' : ''} ${isSpecialCaptureTarget ? 'special-capture-target' : ''}`}
+                className={`square ${isLightSquare(fileIndex, rank) ? 'light' : 'dark'} ${isSelected ? 'selected' : ''} ${isValidMove ? 'valid-move' : ''} ${isLastMoveSquare ? 'last-move' : ''} ${isValidPlacement ? 'valid-placement' : ''} ${isCapture ? 'capturable' : ''} ${isSwap ? 'swap-target' : ''} ${isSpecialCaptureTarget ? 'special-capture-target' : ''} ${isViewingEnemy && isValidMove ? 'viewing-enemy' : ''}`}
                 onClick={() => onSquareClick(position)}
                 onMouseEnter={() => isValidMove && onSquareHover?.(position)}
                 onMouseLeave={() => isValidMove && onSquareHover?.(null)}
@@ -142,7 +144,7 @@ export function Board({
                     {pieceType.symbol}
                   </div>
                 )}
-                {isValidMove && !piece && <div className="move-indicator" />}
+                {isValidMove && !piece && <div className={`move-indicator ${isViewingEnemy ? 'viewing-enemy' : ''}`} />}
                 {isValidPlacement && !piece && <div className="placement-indicator" />}
               </div>
             );

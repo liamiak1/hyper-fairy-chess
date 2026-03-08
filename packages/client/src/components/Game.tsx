@@ -169,6 +169,7 @@ export function Game({ mode = 'draft' }: GameProps) {
             onSquareHover={isPlacementPhase ? undefined : setHoveredMove}
             currentTurn={gameState.currentTurn}
             onPieceRightClick={handlePieceRightClick}
+            isViewingEnemy={!isPlacementPhase && selectedPiece !== null && selectedPiece.owner !== gameState.currentTurn}
           />
         </div>
 

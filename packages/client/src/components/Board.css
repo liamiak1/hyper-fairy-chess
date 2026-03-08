@@ -169,6 +169,20 @@
   background-color: rgba(0, 0, 0, 0.2);
 }
 
+/* Viewing enemy moves (not executable) - purple/blue tint */
+.square.viewing-enemy.valid-move {
+  background-color: #b39ddb !important;
+}
+
+.square.viewing-enemy.capturable {
+  background-color: #9575cd !important;
+  box-shadow: inset 0 0 0 3px #7e57c2;
+}
+
+.move-indicator.viewing-enemy {
+  background-color: rgba(103, 58, 183, 0.4);
+}
+
 /* Placement indicator */
 .square.valid-placement {
   background-color: #b3d9ff !important;

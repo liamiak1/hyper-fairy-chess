@@ -612,6 +612,7 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
               currentTurn={state.gameState.currentTurn}
               onPieceRightClick={handlePieceRightClick}
               flipped={state.playerColor === 'black'}
+              isViewingEnemy={selectedPieceForGame !== null && selectedPieceForGame.owner !== state.playerColor}
             />
           </div>
         </div>
