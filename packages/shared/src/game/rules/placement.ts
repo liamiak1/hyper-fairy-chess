@@ -137,6 +137,24 @@ export function getValidPlacementSquares(
     const posKey = positionToString(zone.position);
     if (board.positionMap.has(posKey)) continue;
 
+    // Block non-pawn pieces from back rank squares where a Herald occupies the pawn rank
+    // (those squares are reserved for pawns only once a Herald is there)
+    if (pieceType.tier === 'piece' && dimensions && heraldFiles.includes(zone.position.file)) {
+      const backRank: Rank = piece.owner === 'white' ? 1 : (dimensions.ranks as Rank);
+      if (zone.position.rank === backRank) {
+        // Check if there's a Herald on the pawn rank in this file
+        const pawnRank: Rank = piece.owner === 'white' ? 2 : ((dimensions.ranks - 1) as Rank);
+        const pawnPosKey = positionToString({ file: zone.position.file, rank: pawnRank });
+        const pieceIdOnPawnRank = board.positionMap.get(pawnPosKey);
+        if (pieceIdOnPawnRank) {
+          const pieceOnPawnRank = board.pieces.find((p) => p.id === pieceIdOnPawnRank);
+          if (pieceOnPawnRank?.typeId === 'herald') {
+            continue; // Skip this square - Herald is present, only pawns allowed here
+          }
+        }
+      }
+    }
+
     validSquares.push(zone.position);
   }
 
@@ -205,6 +223,23 @@ export function isValidPlacement(
         }
       }
       return false; // Back rank not valid without Herald
+    }
+  }
+
+  // Block non-pawn pieces from back rank squares where a Herald occupies the pawn rank
+  if (pieceType.tier === 'piece' && heraldFiles.includes(position.file)) {
+    const backRank: Rank = piece.owner === 'white' ? 1 : (board.dimensions.ranks as Rank);
+    if (position.rank === backRank) {
+      // Check if there's a Herald on the pawn rank in this file
+      const pawnRank: Rank = piece.owner === 'white' ? 2 : ((board.dimensions.ranks - 1) as Rank);
+      const pawnRankPosKey = positionToString({ file: position.file, rank: pawnRank });
+      const pieceIdOnPawnRank = board.positionMap.get(pawnRankPosKey);
+      if (pieceIdOnPawnRank) {
+        const pieceOnPawnRank = board.pieces.find((p) => p.id === pieceIdOnPawnRank);
+        if (pieceOnPawnRank?.typeId === 'herald') {
+          return false; // Invalid - Herald is present, only pawns allowed here
+        }
+      }
     }
   }
 
