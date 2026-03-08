@@ -602,7 +602,7 @@ export const ARCHBISHOP: PieceType = {
   tier: 'piece',
   cost: 72,
   victoryPoints: 72,
-  symbol: '†',
+  symbol: '☩',
   description: 'Combines Bishop and Knight movement. Can slide diagonally or leap like a knight.',
   isRoyal: false,
   isMandatory: false,
