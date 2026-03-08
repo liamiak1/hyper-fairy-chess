@@ -3,7 +3,7 @@
  * Handles room creation and joining
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { RoomSettings } from '@hyper-fairy-chess/shared';
 import { getValidSession, clearSession, getSavedPlayerName, savePlayerName } from '../utils/sessionStorage';
 import { useAuth } from '../context/AuthContext';
@@ -49,6 +49,22 @@ export function OnlineLobby({
 
   // Check for valid session on each render
   const validSession = getValidSession();
+
+  // Auto-paste room code from clipboard when entering join mode
+  useEffect(() => {
+    if (mode === 'join' && roomCode === '') {
+      navigator.clipboard.readText()
+        .then((text) => {
+          const cleaned = text.trim().replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+          if (cleaned.length === 6) {
+            setRoomCode(cleaned);
+          }
+        })
+        .catch(() => {
+          // Clipboard access denied or unavailable - silently ignore
+        });
+    }
+  }, [mode]);
 
   const handleCreateRoom = () => {
     if (!playerName.trim()) return;

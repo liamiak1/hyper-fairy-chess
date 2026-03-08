@@ -654,6 +654,21 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
               </button>
             </>
           )}
+          {isGameOver && (
+            <button
+              className={`btn ${state.myRematchProposed ? 'btn-secondary' : 'btn-primary'}`}
+              onClick={actions.proposeRematch}
+              disabled={state.myRematchProposed}
+            >
+              {state.myRematchProposed
+                ? (state.rematchProposedBy && state.rematchProposedBy !== state.playerColor
+                    ? 'Starting Rematch...'
+                    : 'Rematch Proposed')
+                : (state.rematchProposedBy
+                    ? 'Accept Rematch'
+                    : 'Propose Rematch')}
+            </button>
+          )}
           <button className="btn btn-secondary" onClick={actions.leaveRoom}>
             Leave Game
           </button>

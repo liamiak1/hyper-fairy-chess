@@ -151,6 +151,10 @@ function handleMessage(
       handleRespondDraw(socket, msg as RespondDrawMessage, roomManager, state);
       break;
 
+    case 'PROPOSE_REMATCH':
+      handleProposeRematch(socket, roomManager, state);
+      break;
+
     case 'RECONNECT':
       handleReconnect(socket, msg as ReconnectMessage, roomManager, state);
       break;
@@ -489,4 +493,17 @@ function handleRespondDraw(
   if (!room) return;
 
   room.handleRespondDraw(state.playerId, msg.accept);
+}
+
+function handleProposeRematch(
+  _socket: Socket,
+  roomManager: RoomManager,
+  state: SocketState
+): void {
+  if (!state.roomCode || !state.playerId) return;
+
+  const room = roomManager.getRoom(state.roomCode);
+  if (!room) return;
+
+  room.handleProposeRematch(state.playerId);
 }

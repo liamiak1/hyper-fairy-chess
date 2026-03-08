@@ -391,6 +391,28 @@ export interface PongMessage extends ServerMessage {
 }
 
 // =============================================================================
+// Rematch Messages
+// =============================================================================
+
+// Client -> Server
+export interface ProposeRematchMessage extends ClientMessage {
+  type: 'PROPOSE_REMATCH';
+}
+
+// Server -> Client
+export interface RematchProposedMessage extends ServerMessage {
+  type: 'REMATCH_PROPOSED';
+  by: PlayerColor;
+}
+
+// Server -> Client (when both players have proposed/accepted)
+export interface RematchStartMessage extends ServerMessage {
+  type: 'REMATCH_START';
+  placementState: PlacementState;
+  gameState: GameState;
+}
+
+// =============================================================================
 // Union Types for Message Handling
 // =============================================================================
 
@@ -409,7 +431,8 @@ export type ClientToServerMessage =
   | RespondDrawMessage
   | ResignMessage
   | ReconnectMessage
-  | PingMessage;
+  | PingMessage
+  | ProposeRematchMessage;
 
 export type ServerToClientMessage =
   | RoomCreatedMessage
@@ -440,4 +463,6 @@ export type ServerToClientMessage =
   | EloUpdateMessage
   | SyncStateMessage
   | PlayerDisconnectedMessage
-  | PongMessage;
+  | PongMessage
+  | RematchProposedMessage
+  | RematchStartMessage;

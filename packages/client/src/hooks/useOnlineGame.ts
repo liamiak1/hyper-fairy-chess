@@ -92,6 +92,10 @@ export interface OnlineGameState {
     whiteNewElo: number;
     blackNewElo: number;
   } | null;
+
+  // Rematch state
+  rematchProposedBy: PlayerColor | null;
+  myRematchProposed: boolean;
 }
 
 const initialState: OnlineGameState = {
@@ -118,6 +122,8 @@ const initialState: OnlineGameState = {
   error: null,
   opponentStatus: null,
   eloUpdate: null,
+  rematchProposedBy: null,
+  myRematchProposed: false,
 };
 
 export function useOnlineGame() {
@@ -424,9 +430,15 @@ export function useOnlineGame() {
         }));
         break;
 
-      case 'SYNC_STATE':
+      case 'SYNC_STATE': {
+        // Restore roomCode and playerId from localStorage (used by reconnect)
+        const roomCode = localStorage.getItem('hfc_roomCode');
+        const playerId = localStorage.getItem('hfc_playerId');
         setState(prev => ({
           ...prev,
+          roomCode: roomCode || prev.roomCode,
+          playerId: playerId || prev.playerId,
+          playerColor: message.myColor,
           phase: message.phase,
           settings: message.settings,
           players: message.players,
@@ -439,8 +451,10 @@ export function useOnlineGame() {
           myPlacedPieces: message.blindPlacementState?.myPlacedPieces || [],
           myReady: message.blindPlacementState?.myReady || false,
           opponentBlindReady: message.blindPlacementState?.opponentReady || false,
+          error: null, // Clear any previous errors on successful reconnect
         }));
         break;
+      }
 
       case 'DRAW_OFFERED':
         setState(prev => ({
@@ -465,6 +479,35 @@ export function useOnlineGame() {
             whiteNewElo: message.whiteNewElo,
             blackNewElo: message.blackNewElo,
           },
+        }));
+        break;
+
+      case 'REMATCH_PROPOSED':
+        setState(prev => ({
+          ...prev,
+          rematchProposedBy: message.by,
+          myRematchProposed: message.by === prev.playerColor ? true : prev.myRematchProposed,
+        }));
+        break;
+
+      case 'REMATCH_START':
+        // Save session for the rematch
+        if (state.roomCode && state.playerId) {
+          saveSession(state.roomCode, state.playerId);
+        }
+        setState(prev => ({
+          ...prev,
+          phase: 'placement',
+          placementState: message.placementState,
+          gameState: reconstructGameState(message.gameState),
+          blindMode: message.placementState.mode === 'blind',
+          myPlacedPieces: [],
+          myReady: false,
+          opponentBlindReady: false,
+          eloUpdate: null,
+          rematchProposedBy: null,
+          myRematchProposed: false,
+          drawOfferedBy: null,
         }));
         break;
     }
@@ -605,6 +648,14 @@ export function useOnlineGame() {
     }
   }, [sendMessage]);
 
+  const proposeRematch = useCallback(() => {
+    sendMessage({
+      type: 'PROPOSE_REMATCH',
+      timestamp: Date.now(),
+    });
+    setState(prev => ({ ...prev, myRematchProposed: true }));
+  }, [sendMessage]);
+
   const clearError = useCallback(() => {
     setState(prev => ({ ...prev, error: null }));
   }, []);
@@ -626,6 +677,7 @@ export function useOnlineGame() {
       offerDraw,
       respondDraw,
       reconnect,
+      proposeRematch,
       clearError,
     },
   };

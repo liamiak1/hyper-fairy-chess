@@ -91,6 +91,9 @@ export class GameRoom {
   // Draw offer state
   private drawOffer: PlayerColor | null = null;
 
+  // Rematch state - tracks which players want a rematch
+  private rematchProposals: Set<PlayerColor> = new Set();
+
   // Blind placement state - stores placed pieces with their positions
   private blindPlacements: Map<PlayerColor, Map<string, { piece: PieceInstance; position: Position }>> = new Map();
   private blindReady: Map<PlayerColor, boolean> = new Map();
@@ -1131,6 +1134,74 @@ export class GameRoom {
         timestamp: Date.now(),
       });
     }
+  }
+
+  // =========================================================================
+  // Rematch Handling
+  // =========================================================================
+
+  handleProposeRematch(playerId: string): void {
+    const player = this.players.get(playerId);
+    if (!player || !player.color) return;
+
+    // Can only propose rematch when game is ended
+    if (this.phase !== 'ended') return;
+
+    // Already proposed
+    if (this.rematchProposals.has(player.color)) return;
+
+    this.rematchProposals.add(player.color);
+
+    // Notify all players about the proposal
+    this.broadcast({
+      type: 'REMATCH_PROPOSED',
+      timestamp: Date.now(),
+      by: player.color,
+    });
+
+    // Check if both players have proposed
+    if (this.rematchProposals.has('white') && this.rematchProposals.has('black')) {
+      this.startRematch();
+    }
+  }
+
+  private startRematch(): void {
+    // Clear rematch proposals
+    this.rematchProposals.clear();
+
+    // Reset to placement phase with the same drafts
+    this.phase = 'placement';
+
+    const placementMode = this.settings.placementMode || 'alternating';
+
+    this.placementState = createPlacementStateFromDrafts(
+      this.whiteDraft!,
+      this.blackDraft!,
+      placementMode
+    );
+
+    this.gameState = this.createEmptyGameState();
+
+    // Initialize blind placement state if in blind mode
+    if (placementMode === 'blind') {
+      this.blindPlacements.set('white', new Map());
+      this.blindPlacements.set('black', new Map());
+      this.blindReady.set('white', false);
+      this.blindReady.set('black', false);
+    }
+
+    this.lastActivity = Date.now();
+
+    // Clear draw offer state
+    this.drawOffer = null;
+
+    // Broadcast rematch start (same as placement start)
+    this.broadcast({
+      type: 'REMATCH_START',
+      timestamp: Date.now(),
+      placementState: this.placementState,
+      gameState: this.gameState!,
+    });
   }
 
   // =========================================================================
