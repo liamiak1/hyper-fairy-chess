@@ -100,7 +100,7 @@ export function BlindPlacementUI({
         board,
         selectedPiece,
         zones,
-        { ranks: boardConfig.ranks }
+        { ranks: boardConfig.ranks, files: boardConfig.files }
       );
     } catch (err) {
       console.error('Error calculating placement squares:', err);

@@ -99,6 +99,7 @@ export function Board({
         style={{
           gridTemplateColumns: `repeat(${config.files}, 1fr)`,
           gridTemplateRows: `repeat(${config.ranks}, 1fr)`,
+          aspectRatio: `${config.files} / ${config.ranks}`,
         }}
       >
         {ranks.map((rank) =>

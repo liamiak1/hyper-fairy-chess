@@ -40,10 +40,36 @@ export interface PlacementState {
 // Placement Zone Definitions
 // =============================================================================
 
-const FILES_8: File[] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-const PIECE_FILES: File[] = ['a', 'b', 'c', 'f', 'g', 'h']; // Tier 2: edges of back rank
-const ROYALTY_FILES: File[] = ['d', 'e']; // Tier 3: center of back rank
-const HERALD_FILES: File[] = ['a', 'h']; // Herald must be on edge files only
+const ALL_FILES: File[] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'];
+
+/**
+ * Get piece files for a given board width (edge files, excluding center 2 for royalty)
+ * For 8 files: a, b, c, f, g, h (4 pieces per side, 2 center for royalty)
+ * For 10 files: a, b, c, d, g, h, i, j (4 pieces per side, 2 center for royalty)
+ */
+function getPieceFiles(numFiles: number): File[] {
+  const allFiles = ALL_FILES.slice(0, numFiles);
+  const centerIndex = Math.floor(numFiles / 2);
+  // Exclude the center 2 files (royalty positions)
+  return allFiles.filter((_, i) => i < centerIndex - 1 || i > centerIndex);
+}
+
+/**
+ * Get royalty files (center 2 files)
+ * For 8 files: d, e (indices 3, 4)
+ * For 10 files: e, f (indices 4, 5)
+ */
+function getRoyaltyFiles(numFiles: number): File[] {
+  const centerIndex = Math.floor(numFiles / 2);
+  return [ALL_FILES[centerIndex - 1], ALL_FILES[centerIndex]];
+}
+
+/**
+ * Get herald files (first and last file of the board)
+ */
+function getHeraldFiles(numFiles: number): File[] {
+  return [ALL_FILES[0], ALL_FILES[numFiles - 1]];
+}
 
 /**
  * Get placement zones for a player on a given board size
@@ -57,16 +83,18 @@ export function getPlacementZones(boardSize: BoardSize, color: PlayerColor): Pla
   const pawnRank: Rank = color === 'white' ? 2 : ((config.ranks - 1) as Rank);
 
   // Get available files based on board size
-  const allFiles = FILES_8.slice(0, config.files);
+  const allFiles = ALL_FILES.slice(0, config.files);
+  const royaltyFiles = getRoyaltyFiles(config.files);
+  const pieceFiles = getPieceFiles(config.files);
 
   // Back rank - pieces (Tier 2) on edges, royalty (Tier 3) in center
   for (const file of allFiles) {
     const position: Position = { file, rank: backRank };
 
-    if (ROYALTY_FILES.includes(file)) {
+    if (royaltyFiles.includes(file)) {
       // Center squares for royalty
       zones.push({ position, allowedTiers: ['royalty'] });
-    } else if (PIECE_FILES.includes(file)) {
+    } else if (pieceFiles.includes(file)) {
       // Edge squares for pieces
       zones.push({ position, allowedTiers: ['piece'] });
     }
@@ -88,7 +116,7 @@ export function getValidPlacementSquares(
   board: BoardState,
   piece: PieceInstance,
   zones: PlacementZone[],
-  dimensions?: { ranks: number }
+  dimensions?: { ranks: number; files: number }
 ): Position[] {
   const pieceType = PIECE_BY_ID[piece.typeId];
   if (!pieceType) return [];
@@ -96,13 +124,14 @@ export function getValidPlacementSquares(
   const validSquares: Position[] = [];
   const isHeraldPiece = piece.typeId === 'herald';
   const isPawn = pieceType.tier === 'pawn';
+  const heraldFiles = dimensions ? getHeraldFiles(dimensions.files) : getHeraldFiles(8);
 
   for (const zone of zones) {
     // Check if this zone allows this piece's tier
     if (!zone.allowedTiers.includes(pieceType.tier)) continue;
 
-    // Herald can only be placed on edge files (a or h)
-    if (isHeraldPiece && !HERALD_FILES.includes(zone.position.file)) continue;
+    // Herald can only be placed on edge files
+    if (isHeraldPiece && !heraldFiles.includes(zone.position.file)) continue;
 
     // Check if the square is empty
     const posKey = positionToString(zone.position);
@@ -113,7 +142,7 @@ export function getValidPlacementSquares(
 
   // Special handling for pawns: allow back rank positions where Herald is present
   if (isPawn && dimensions) {
-    for (const file of HERALD_FILES) {
+    for (const file of heraldFiles) {
       // Check if there's a Herald on the pawn rank in this file
       const pawnRank: Rank = piece.owner === 'white' ? 2 : ((dimensions.ranks - 1) as Rank);
       const pawnPosKey = positionToString({ file, rank: pawnRank });
@@ -158,8 +187,10 @@ export function isValidPlacement(
   const posKey = positionToString(position);
   if (board.positionMap.has(posKey)) return false;
 
+  const heraldFiles = getHeraldFiles(board.dimensions.files);
+
   // Special case: Pawns can be placed on back rank if Herald is on pawn rank in that file
-  if (pieceType.tier === 'pawn' && HERALD_FILES.includes(position.file)) {
+  if (pieceType.tier === 'pawn' && heraldFiles.includes(position.file)) {
     const backRank: Rank = piece.owner === 'white' ? 1 : (board.dimensions.ranks as Rank);
     if (position.rank === backRank) {
       // Check if there's a Herald on the pawn rank in this file
