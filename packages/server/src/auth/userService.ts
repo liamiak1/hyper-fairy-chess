@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { getPool, isDatabaseAvailable } from '../db/index.js';
 import { hashPassword, verifyPassword } from './password.js';
 import { generateToken } from './jwt.js';
@@ -282,6 +283,81 @@ export async function findUserByUsername(
   } catch (error) {
     console.error('[Auth] Error finding user:', error);
     return null;
+  }
+}
+
+/**
+ * Update a user's password.
+ */
+export async function updateUserPassword(
+  userId: string,
+  newPassword: string
+): Promise<boolean> {
+  if (!isDatabaseAvailable()) return false;
+  const pool = getPool()!;
+  const hash = await hashPassword(newPassword);
+  try {
+    const result = await pool.query(
+      'UPDATE users SET password_hash = $1 WHERE id = $2',
+      [hash, userId]
+    );
+    return result.rowCount !== null && result.rowCount > 0;
+  } catch (err) {
+    console.error('[Auth] Error updating password:', err);
+    return false;
+  }
+}
+
+/**
+ * Create a password reset token (1 hour TTL). Deletes any existing token for the user first.
+ */
+export async function createPasswordResetToken(userId: string): Promise<string | null> {
+  if (!isDatabaseAvailable()) return null;
+  const pool = getPool()!;
+  const token = crypto.randomBytes(32).toString('hex');
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+  try {
+    await pool.query('DELETE FROM password_reset_tokens WHERE user_id = $1', [userId]);
+    await pool.query(
+      'INSERT INTO password_reset_tokens (token, user_id, expires_at) VALUES ($1, $2, $3)',
+      [token, userId, expiresAt]
+    );
+    return token;
+  } catch (err) {
+    console.error('[Auth] Error creating reset token:', err);
+    return null;
+  }
+}
+
+/**
+ * Look up a valid (non-expired) reset token. Returns userId if valid, null otherwise.
+ */
+export async function findPasswordResetToken(token: string): Promise<string | null> {
+  if (!isDatabaseAvailable()) return null;
+  const pool = getPool()!;
+  try {
+    const result = await pool.query(
+      'SELECT user_id FROM password_reset_tokens WHERE token = $1 AND expires_at > NOW()',
+      [token]
+    );
+    if (result.rows.length === 0) return null;
+    return result.rows[0].user_id as string;
+  } catch (err) {
+    console.error('[Auth] Error finding reset token:', err);
+    return null;
+  }
+}
+
+/**
+ * Delete a reset token after use.
+ */
+export async function deletePasswordResetToken(token: string): Promise<void> {
+  if (!isDatabaseAvailable()) return;
+  const pool = getPool()!;
+  try {
+    await pool.query('DELETE FROM password_reset_tokens WHERE token = $1', [token]);
+  } catch (err) {
+    console.error('[Auth] Error deleting reset token:', err);
   }
 }
 

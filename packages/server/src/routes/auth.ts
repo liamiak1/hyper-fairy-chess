@@ -5,7 +5,14 @@ import {
   createUser,
   authenticateUser,
   findUserById,
+  findUserByEmail,
+  createPasswordResetToken,
+  findPasswordResetToken,
+  deletePasswordResetToken,
+  updateUserPassword,
+  validatePassword,
 } from '../auth/userService.js';
+import { isEmailAvailable, sendPasswordResetEmail } from '../auth/email.js';
 
 export const authRouter = Router();
 
@@ -136,11 +143,84 @@ authRouter.get('/profile', async (req: Request, res: Response) => {
 });
 
 /**
+ * POST /auth/forgot-password
+ * Request a password reset email. Always returns 200 to avoid email enumeration.
+ */
+authRouter.post('/forgot-password', async (req: Request, res: Response) => {
+  if (!isDatabaseAvailable()) {
+    res.status(503).json({ error: 'service_unavailable', message: 'Service not available' });
+    return;
+  }
+
+  if (!isEmailAvailable()) {
+    res.status(503).json({ error: 'email_unavailable', message: 'Email service not configured' });
+    return;
+  }
+
+  const { email } = req.body;
+  if (!email || typeof email !== 'string') {
+    res.status(400).json({ error: 'missing_fields', message: 'Email is required' });
+    return;
+  }
+
+  // Always respond 200 — don't reveal whether email exists
+  const user = await findUserByEmail(email.trim());
+  if (user) {
+    const token = await createPasswordResetToken(user.id);
+    if (token) {
+      await sendPasswordResetEmail(user.email, user.username, token);
+    }
+  }
+
+  res.json({ message: 'If that email is registered, a reset link has been sent.' });
+});
+
+/**
+ * POST /auth/reset-password
+ * Set a new password using a reset token.
+ */
+authRouter.post('/reset-password', async (req: Request, res: Response) => {
+  if (!isDatabaseAvailable()) {
+    res.status(503).json({ error: 'service_unavailable', message: 'Service not available' });
+    return;
+  }
+
+  const { token, password } = req.body;
+
+  if (!token || !password) {
+    res.status(400).json({ error: 'missing_fields', message: 'Token and new password are required' });
+    return;
+  }
+
+  const passwordCheck = validatePassword(password);
+  if (!passwordCheck.valid) {
+    res.status(400).json({ error: 'invalid_password', message: passwordCheck.error });
+    return;
+  }
+
+  const userId = await findPasswordResetToken(token);
+  if (!userId) {
+    res.status(400).json({ error: 'invalid_token', message: 'Reset link is invalid or has expired' });
+    return;
+  }
+
+  const updated = await updateUserPassword(userId, password);
+  if (!updated) {
+    res.status(500).json({ error: 'update_failed', message: 'Failed to update password' });
+    return;
+  }
+
+  await deletePasswordResetToken(token);
+  res.json({ message: 'Password updated successfully' });
+});
+
+/**
  * GET /auth/status
  * Check if auth/accounts are available (no auth required).
  */
 authRouter.get('/status', (_req: Request, res: Response) => {
   res.json({
     available: isDatabaseAvailable(),
+    emailAvailable: isEmailAvailable(),
   });
 });

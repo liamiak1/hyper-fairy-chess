@@ -161,3 +161,81 @@
 .auth-switch button:hover {
   color: #8ab4d8;
 }
+
+/* Forgot password label link */
+.auth-field label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.forgot-link {
+  background: none;
+  border: none;
+  color: #6a8caf;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  font-weight: 400;
+}
+
+.forgot-link:hover {
+  color: #8ab4d8;
+}
+
+/* Forgot password view */
+.auth-forgot-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.auth-forgot-header h3 {
+  color: #fff;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.auth-back-btn {
+  background: none;
+  border: none;
+  color: #6a8caf;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.auth-back-btn:hover {
+  color: #8ab4d8;
+}
+
+.forgot-desc {
+  color: #aaa;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* Sent confirmation */
+.forgot-sent {
+  text-align: center;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.forgot-sent-icon {
+  font-size: 2.5rem;
+  margin-bottom: 8px;
+}
+
+.forgot-sent p {
+  color: #ccc;
+  font-size: 14px;
+  margin: 0 0 8px 0;
+}
+
+.forgot-hint {
+  color: #888 !important;
+  font-size: 13px !important;
+}

@@ -31,6 +31,7 @@ interface AuthState {
   token: string | null;
   error: string | null;
   authAvailable: boolean;
+  emailAvailable: boolean;
 }
 
 interface AuthContextValue extends AuthState {
@@ -54,13 +55,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     token: null,
     error: null,
     authAvailable: false,
+    emailAvailable: false,
   });
 
   // Check for existing token and auth availability on mount
   useEffect(() => {
     async function initAuth() {
       // Check if auth is available on server
-      const available = await checkAuthStatus();
+      const { available, emailAvailable } = await checkAuthStatus();
 
       const storedToken = getAuthToken();
 
@@ -69,6 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           ...prev,
           isLoading: false,
           authAvailable: available,
+          emailAvailable,
         }));
         return;
       }
@@ -84,6 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           token: storedToken,
           error: null,
           authAvailable: available,
+          emailAvailable,
         });
         saveStoredUser(result.user);
       } else {
@@ -96,6 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           token: null,
           error: null,
           authAvailable: available,
+          emailAvailable,
         });
       }
     }

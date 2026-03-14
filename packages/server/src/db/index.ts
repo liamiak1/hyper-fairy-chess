@@ -83,6 +83,17 @@ export async function initDatabase(): Promise<pg.Pool | null> {
       CREATE INDEX IF NOT EXISTS idx_saved_armies_user ON saved_armies(user_id);
     `);
 
+    // Create password reset tokens table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS password_reset_tokens (
+        token VARCHAR(128) PRIMARY KEY,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_prt_user ON password_reset_tokens(user_id);
+    `);
+
     console.log('[DB] Migrations complete');
 
     return pool;

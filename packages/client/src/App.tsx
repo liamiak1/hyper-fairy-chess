@@ -3,14 +3,41 @@ import { Game } from './components/Game';
 import { MainMenu } from './components/MainMenu';
 import { OnlineGame } from './components/OnlineGame';
 import { ProfilePage } from './components/ProfilePage';
+import { ResetPasswordForm } from './components/ResetPasswordForm';
 import { SocketProvider } from './context/SocketContext';
 import { AuthProvider } from './context/AuthContext';
 import './App.css';
 
 type GameMode = 'menu' | 'local' | 'online' | 'profile';
 
+function getResetToken(): string | null {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('reset_token');
+}
+
+function clearResetToken() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete('reset_token');
+  window.history.replaceState({}, '', url.toString());
+}
+
 function AppContent() {
   const [mode, setMode] = useState<GameMode>('menu');
+  const [resetToken, setResetToken] = useState<string | null>(() => getResetToken());
+
+  if (resetToken) {
+    return (
+      <div className="app">
+        <ResetPasswordForm
+          token={resetToken}
+          onDone={() => {
+            clearResetToken();
+            setResetToken(null);
+          }}
+        />
+      </div>
+    );
+  }
 
   if (mode === 'menu') {
     return (

@@ -39,19 +39,65 @@ export interface AuthError {
 
 export interface AuthStatusResponse {
   available: boolean;
+  emailAvailable?: boolean;
 }
 
 /**
  * Check if auth/accounts are available on the server.
  */
-export async function checkAuthStatus(): Promise<boolean> {
+export async function checkAuthStatus(): Promise<{ available: boolean; emailAvailable: boolean }> {
   try {
     const response = await fetch(`${getApiBase()}/auth/status`);
-    if (!response.ok) return false;
+    if (!response.ok) return { available: false, emailAvailable: false };
     const data: AuthStatusResponse = await response.json();
-    return data.available;
+    return { available: data.available, emailAvailable: data.emailAvailable ?? false };
   } catch {
-    return false;
+    return { available: false, emailAvailable: false };
+  }
+}
+
+/**
+ * Request a password reset email.
+ */
+export async function requestPasswordReset(
+  email: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const response = await fetch(`${getApiBase()}/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (!response.ok) {
+      const data = await response.json();
+      return { success: false, error: data.message || 'Failed to send reset email' };
+    }
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Failed to connect to server' };
+  }
+}
+
+/**
+ * Reset password using a token from the reset email.
+ */
+export async function resetPassword(
+  token: string,
+  password: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const response = await fetch(`${getApiBase()}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, password }),
+    });
+    if (!response.ok) {
+      const data = await response.json();
+      return { success: false, error: data.message || 'Failed to reset password' };
+    }
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Failed to connect to server' };
   }
 }
 
