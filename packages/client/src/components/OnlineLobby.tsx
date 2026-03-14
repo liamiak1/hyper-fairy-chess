@@ -4,9 +4,10 @@
  */
 
 import { useState, useEffect } from 'react';
-import type { RoomSettings } from '@hyper-fairy-chess/shared';
+import type { RoomSettings, LobbyRoom } from '@hyper-fairy-chess/shared';
 import { getValidSession, clearSession, getSavedPlayerName, savePlayerName } from '../utils/sessionStorage';
 import { useAuth } from '../context/AuthContext';
+import { useSocketContext } from '../context/SocketContext';
 import { AuthModal } from './AuthModal';
 import './OnlineLobby.css';
 
@@ -31,7 +32,9 @@ export function OnlineLobby({
 }: OnlineLobbyProps) {
   const { isAuthenticated, user, logout, authAvailable } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [mode, setMode] = useState<'menu' | 'create' | 'join'>('menu');
+  const { sendMessage, addMessageListener } = useSocketContext();
+  const [mode, setMode] = useState<'menu' | 'create' | 'join' | 'browse'>('menu');
+  const [lobbyRooms, setLobbyRooms] = useState<LobbyRoom[]>([]);
   // Use account username as default name if logged in
   const [playerName, setPlayerName] = useState(() => {
     if (user?.username) return user.username;
@@ -49,6 +52,21 @@ export function OnlineLobby({
 
   // Check for valid session on each render
   const validSession = getValidSession();
+
+  // Fetch and listen for lobby updates when in browse mode
+  useEffect(() => {
+    if (mode !== 'browse') return;
+
+    sendMessage({ type: 'GET_LOBBY', timestamp: Date.now() });
+
+    const unsubscribe = addMessageListener((msg) => {
+      if (msg.type === 'LOBBY_LIST' || msg.type === 'LOBBY_UPDATED') {
+        setLobbyRooms(msg.rooms);
+      }
+    });
+
+    return unsubscribe;
+  }, [mode, sendMessage, addMessageListener]);
 
   // Auto-paste room code from clipboard when entering join mode
   useEffect(() => {
@@ -164,8 +182,11 @@ export function OnlineLobby({
             <button className="btn-primary large" onClick={() => setMode('create')}>
               Create Game
             </button>
-            <button className="btn-primary large" onClick={() => setMode('join')}>
-              Join Game
+            <button className="btn-primary large" onClick={() => setMode('browse')}>
+              Browse Open Games
+            </button>
+            <button className="btn-secondary large" onClick={() => setMode('join')}>
+              Join by Code
             </button>
             <button
               className={`btn-rejoin large ${validSession ? '' : 'disabled'}`}
@@ -287,6 +308,57 @@ export function OnlineLobby({
               Back
             </button>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (mode === 'browse') {
+    const formatBudget = (b: number) => b;
+    const formatBoardSize = (s: string) => s;
+    const formatPlacement = (p: string) => p === 'blind' ? 'Blind' : 'Alternating';
+    const formatTime = (t: number | null) => t ? `${t / 60}m` : '∞';
+
+    return (
+      <div className="online-lobby">
+        <div className="lobby-card lobby-card-wide">
+          <h2>Open Games</h2>
+
+          {lobbyRooms.length === 0 ? (
+            <div className="lobby-empty">
+              <p>No open games right now.</p>
+              <p className="lobby-empty-hint">Create a game and wait for an opponent, or join by code.</p>
+            </div>
+          ) : (
+            <div className="lobby-room-list">
+              {lobbyRooms.map((room) => (
+                <div key={room.code} className="lobby-room-row">
+                  <div className="lobby-room-info">
+                    <span className="lobby-room-host">{room.hostName}</span>
+                    <span className="lobby-room-tags">
+                      <span className="lobby-tag">{formatBudget(room.budget)} pts</span>
+                      <span className="lobby-tag">{formatBoardSize(room.boardSize)}</span>
+                      <span className="lobby-tag">{formatPlacement(room.placementMode)}</span>
+                      <span className="lobby-tag">{formatTime(room.draftTimeLimit)} draft</span>
+                    </span>
+                  </div>
+                  <button
+                    className="btn-join-room"
+                    onClick={() => {
+                      setRoomCode(room.code);
+                      setMode('join');
+                    }}
+                  >
+                    Join
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button className="btn-secondary" onClick={() => setMode('menu')}>
+            Back
+          </button>
         </div>
       </div>
     );

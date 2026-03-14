@@ -43,6 +43,15 @@ function validateSessionToken(
 }
 
 export function setupSocketHandlers(io: Server, roomManager: RoomManager): void {
+  // Broadcast lobby updates to all connected clients whenever rooms change
+  roomManager.setLobbyChangeCallback(() => {
+    io.emit('message', {
+      type: 'LOBBY_UPDATED',
+      rooms: roomManager.getWaitingRooms(),
+      timestamp: Date.now(),
+    });
+  });
+
   io.on('connection', (socket: Socket) => {
     console.log(`Client connected: ${socket.id}`);
 
@@ -159,6 +168,14 @@ function handleMessage(
       handleReconnect(socket, msg as ReconnectMessage, roomManager, state);
       break;
 
+    case 'GET_LOBBY':
+      socket.emit('message', {
+        type: 'LOBBY_LIST',
+        rooms: roomManager.getWaitingRooms(),
+        timestamp: Date.now(),
+      });
+      break;
+
     case 'PING':
       socket.emit('message', {
         type: 'PONG',
@@ -248,6 +265,9 @@ function handleJoinRoom(
 
   state.roomCode = room.code;
   state.playerId = result.playerId!;
+
+  // Room is no longer waiting - update lobby for other clients
+  roomManager.notifyLobbyChange();
 
   // Notify the joining player
   socket.emit('message', {

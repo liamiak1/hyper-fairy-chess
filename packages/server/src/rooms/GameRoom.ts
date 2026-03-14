@@ -1350,6 +1350,19 @@ export class GameRoom {
     return this.settings;
   }
 
+  getLobbyInfo() {
+    const players = Array.from(this.players.values());
+    const host = players[0];
+    return {
+      code: this.code,
+      hostName: host?.name ?? '?',
+      budget: this.settings.budget,
+      boardSize: this.settings.boardSize,
+      placementMode: this.settings.placementMode,
+      draftTimeLimit: this.settings.draftTimeLimit,
+    };
+  }
+
   getPlayers(): PlayerInfo[] {
     return Array.from(this.players.values()).map(p => ({
       id: p.id,

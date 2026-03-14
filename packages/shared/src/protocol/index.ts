@@ -334,6 +334,35 @@ export interface EloUpdateMessage extends ServerMessage {
 }
 
 // =============================================================================
+// Lobby Messages
+// =============================================================================
+
+export interface LobbyRoom {
+  code: string;
+  hostName: string;
+  budget: number;
+  boardSize: BoardSize;
+  placementMode: 'alternating' | 'blind';
+  draftTimeLimit: number | null;
+}
+
+// Client -> Server
+export interface GetLobbyMessage extends ClientMessage {
+  type: 'GET_LOBBY';
+}
+
+// Server -> Client
+export interface LobbyListMessage extends ServerMessage {
+  type: 'LOBBY_LIST';
+  rooms: LobbyRoom[];
+}
+
+export interface LobbyUpdatedMessage extends ServerMessage {
+  type: 'LOBBY_UPDATED';
+  rooms: LobbyRoom[];
+}
+
+// =============================================================================
 // Connection & Sync Messages
 // =============================================================================
 
@@ -420,6 +449,7 @@ export type ClientToServerMessage =
   | CreateRoomMessage
   | JoinRoomMessage
   | LeaveRoomMessage
+  | GetLobbyMessage
   | DraftSubmitMessage
   | PlacePieceMessage
   | BlindPlacePieceMessage
@@ -465,4 +495,6 @@ export type ServerToClientMessage =
   | PlayerDisconnectedMessage
   | PongMessage
   | RematchProposedMessage
-  | RematchStartMessage;
+  | RematchStartMessage
+  | LobbyListMessage
+  | LobbyUpdatedMessage;

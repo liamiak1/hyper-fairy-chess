@@ -3,13 +3,22 @@
  */
 
 import { GameRoom } from './GameRoom';
-import type { RoomSettings } from '@hyper-fairy-chess/shared';
+import type { RoomSettings, LobbyRoom } from '@hyper-fairy-chess/shared';
 
 // Characters that are easy to distinguish (no 0/O, 1/I/l)
 const ROOM_CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
 export class RoomManager {
   private rooms: Map<string, GameRoom> = new Map();
+  private onLobbyChange?: () => void;
+
+  setLobbyChangeCallback(cb: () => void) {
+    this.onLobbyChange = cb;
+  }
+
+  notifyLobbyChange() {
+    this.onLobbyChange?.();
+  }
 
   /**
    * Generate a unique 6-character room code
@@ -43,6 +52,7 @@ export class RoomManager {
     this.rooms.set(code, room);
 
     console.log(`Room created: ${code} (budget: ${settings.budget}, board: ${settings.boardSize}, draftTime: ${settings.draftTimeLimit})`);
+    this.notifyLobbyChange();
 
     return room;
   }
@@ -63,7 +73,21 @@ export class RoomManager {
       room.cleanup();
       this.rooms.delete(code);
       console.log(`Room removed: ${code}`);
+      this.notifyLobbyChange();
     }
+  }
+
+  /**
+   * Get all waiting rooms (1 player, not yet started)
+   */
+  getWaitingRooms(): LobbyRoom[] {
+    const result: LobbyRoom[] = [];
+    for (const room of this.rooms.values()) {
+      if (room.isWaiting() && room.getPlayerCount() === 1) {
+        result.push(room.getLobbyInfo());
+      }
+    }
+    return result;
   }
 
   /**
