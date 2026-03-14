@@ -179,6 +179,7 @@ export function DraftUI({
         <SavedArmyMenu
           budget={budget}
           boardSize={boardSize}
+          currentDraft={currentDraft}
           onLoad={onLoadArmy}
         />
         <button

@@ -41,6 +41,66 @@
   overflow: hidden;
 }
 
+/* Save section */
+.sam-save-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 12px;
+  background: rgba(108, 92, 231, 0.08);
+  border-bottom: 1px solid #2a2a4a;
+}
+
+.sam-save-input {
+  flex: 1;
+  min-width: 120px;
+  padding: 6px 10px;
+  border: 1px solid #3a3a5c;
+  border-radius: 6px;
+  background: #12122a;
+  color: #fff;
+  font-size: 0.85rem;
+}
+
+.sam-save-input:focus {
+  outline: none;
+  border-color: #6c5ce7;
+}
+
+.sam-save-input::placeholder {
+  color: #555;
+}
+
+.sam-save-btn {
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #6c5ce7 0%, #a855f7 100%);
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sam-save-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.sam-save-msg {
+  width: 100%;
+  font-size: 0.8rem;
+  color: #81c784;
+  text-align: center;
+}
+
+.sam-divider {
+  height: 1px;
+  background: #2a2a4a;
+}
+
+/* Status / empty */
 .sam-status {
   color: #888;
   font-size: 0.85rem;
@@ -48,6 +108,7 @@
   text-align: center;
 }
 
+/* Army items */
 .sam-item {
   display: flex;
   flex-direction: column;
@@ -68,6 +129,47 @@
 
 .sam-item:hover {
   background: rgba(108, 92, 231, 0.15);
+}
+
+/* Guest preset items (row layout with delete button) */
+.sam-item-guest {
+  flex-direction: row;
+  align-items: center;
+  padding: 0;
+}
+
+.sam-item-load {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sam-item-guest:hover {
+  background: rgba(108, 92, 231, 0.15);
+}
+
+.sam-delete-btn {
+  flex-shrink: 0;
+  padding: 0 14px;
+  background: transparent;
+  border: none;
+  color: #666;
+  font-size: 1.1rem;
+  cursor: pointer;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+}
+
+.sam-delete-btn:hover {
+  color: #e74c3c;
 }
 
 .sam-name {
