@@ -314,6 +314,75 @@ export const LANCER: PieceType = {
   captureType: 'standard',
 };
 
+export const ZEBRA: PieceType = {
+  id: 'zebra',
+  name: 'Zebra',
+  tier: 'piece',
+  cost: 12,
+  victoryPoints: 12,
+  symbol: '⋄',
+  description: 'Leaps in a (3,2) pattern — like a knight but stretched. Always lands on a different color square.',
+  isRoyal: false,
+  isMandatory: false,
+  canCastle: false,
+  canBeCaptured: true,
+  canFreeze: false,
+  canBeJumpedOver: true,
+  movement: {
+    slides: [],
+    leaps: [{ dx: 3, dy: 2, symmetric: true }],
+    special: [],
+  },
+  captureType: 'standard',
+};
+
+export const WIZARD: PieceType = {
+  id: 'wizard',
+  name: 'Wizard',
+  tier: 'piece',
+  cost: 40,
+  victoryPoints: 40,
+  symbol: '✴',
+  description: 'Bishop + Camel combined. Slides diagonally any number of squares, or leaps in a (3,1) pattern.',
+  isRoyal: false,
+  isMandatory: false,
+  canCastle: false,
+  canBeCaptured: true,
+  canFreeze: false,
+  canBeJumpedOver: true,
+  movement: {
+    slides: ['diagonal'],  // bishop slides
+    leaps: [{ dx: 3, dy: 1, symmetric: true }],  // camel leap
+    special: [],
+  },
+  captureType: 'standard',
+};
+
+export const BISON: PieceType = {
+  id: 'bison',
+  name: 'Bison',
+  tier: 'piece',
+  cost: 130,
+  victoryPoints: 130,
+  symbol: '⬟',
+  description: 'Camel + Zebra combined. Leaps in either a (3,1) or (3,2) pattern.',
+  isRoyal: false,
+  isMandatory: false,
+  canCastle: false,
+  canBeCaptured: true,
+  canFreeze: false,
+  canBeJumpedOver: true,
+  movement: {
+    slides: [],
+    leaps: [
+      { dx: 3, dy: 1, symmetric: true },  // camel leap
+      { dx: 3, dy: 2, symmetric: true },  // zebra leap
+    ],
+    special: [],
+  },
+  captureType: 'standard',
+};
+
 export const CHAMBERLAIN: PieceType = {
   id: 'chamberlain',
   name: 'Chamberlain',
@@ -939,6 +1008,9 @@ export const ALL_PIECES: PieceType[] = [
   // Tier 2: Pieces
   CATAPULT,
   LANCER,
+  ZEBRA,
+  WIZARD,
+  BISON,
   CHAMBERLAIN,
   COURTESAN,
   THIEF,
