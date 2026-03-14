@@ -92,17 +92,12 @@ export async function testSmtpConnection(): Promise<{ ok: boolean; error?: strin
     return { ok: false, error: 'RESEND_API_KEY env var not set', config };
   }
 
-  // Resend has no "verify" method — do a lightweight API call to check the key
-  const { data, error } = await resend.domains.list();
-  if (error) {
-    return { ok: false, error: error.message, config };
+  // Send-only keys can't call domains.list() — that's fine, sending is all we need.
+  // Just confirm the key is present and well-formed (starts with "re_").
+  const apiKey = process.env.RESEND_API_KEY!;
+  if (!apiKey.startsWith('re_')) {
+    return { ok: false, error: 'RESEND_API_KEY does not look like a valid Resend key (should start with re_)', config };
   }
 
-  return {
-    ok: true,
-    config: {
-      ...config,
-      verifiedDomains: data?.data?.map((d: { name: string; status: string }) => `${d.name} (${d.status})`),
-    },
-  };
+  return { ok: true, config };
 }
