@@ -261,6 +261,14 @@ export function generateSpecialMoves(
       case 'checkers-king':
         moves.push(...generateCheckersKingMoves(board, piece));
         break;
+
+      case 'gold-general':
+        moves.push(...generateGoldGeneralMoves(board, piece));
+        break;
+
+      case 'silver-general':
+        moves.push(...generateSilverGeneralMoves(board, piece));
+        break;
     }
   }
 
@@ -1952,6 +1960,73 @@ function generateKingMoves(board: BoardState, piece: PieceInstance): Position[] 
 }
 
 // =============================================================================
+// Shogi Generals
+// =============================================================================
+
+/**
+ * Gold General: moves 1 square orthogonally or diagonally forward.
+ * Forward diagonals are relative to the piece's owner color.
+ */
+function generateGoldGeneralMoves(board: BoardState, piece: PieceInstance): Position[] {
+  if (!piece.position) return [];
+
+  const dir = getPawnDirection(piece.owner); // +1 for white, -1 for black
+  const moves: Position[] = [];
+
+  // Orthogonals (N/S/E/W) + forward diagonals only
+  const offsets = [
+    { dx: 0, dy: dir },   // forward
+    { dx: 0, dy: -dir },  // backward
+    { dx: -1, dy: 0 },    // left
+    { dx: 1, dy: 0 },     // right
+    { dx: -1, dy: dir },  // forward-left diagonal
+    { dx: 1, dy: dir },   // forward-right diagonal
+  ];
+
+  for (const offset of offsets) {
+    const targetPos = offsetPosition(piece.position, offset.dx, offset.dy, board.dimensions);
+    if (!targetPos) continue;
+    if (hasFriendlyPiece(board, targetPos, piece.owner)) continue;
+    if (hasEnemyPiece(board, targetPos, piece.owner) &&
+        !hasCapturableEnemyPiece(board, targetPos, piece.owner)) continue;
+    moves.push(targetPos);
+  }
+
+  return moves;
+}
+
+/**
+ * Silver General: moves 1 square diagonally (any direction) or straight forward.
+ * Forward is relative to the piece's owner color.
+ */
+function generateSilverGeneralMoves(board: BoardState, piece: PieceInstance): Position[] {
+  if (!piece.position) return [];
+
+  const dir = getPawnDirection(piece.owner); // +1 for white, -1 for black
+  const moves: Position[] = [];
+
+  // All 4 diagonals + forward only
+  const offsets = [
+    { dx: 0, dy: dir },   // forward
+    { dx: -1, dy: dir },  // forward-left diagonal
+    { dx: 1, dy: dir },   // forward-right diagonal
+    { dx: -1, dy: -dir }, // backward-left diagonal
+    { dx: 1, dy: -dir },  // backward-right diagonal
+  ];
+
+  for (const offset of offsets) {
+    const targetPos = offsetPosition(piece.position, offset.dx, offset.dy, board.dimensions);
+    if (!targetPos) continue;
+    if (hasFriendlyPiece(board, targetPos, piece.owner)) continue;
+    if (hasEnemyPiece(board, targetPos, piece.owner) &&
+        !hasCapturableEnemyPiece(board, targetPos, piece.owner)) continue;
+    moves.push(targetPos);
+  }
+
+  return moves;
+}
+
+// =============================================================================
 // Attack Generation (for check detection)
 // =============================================================================
 
@@ -2032,6 +2107,14 @@ export function getAttackedSquares(
       case 'checkers-king':
         // Checkers King attacks by jumping diagonally in any direction
         attacked.push(...getCheckersAttackSquares(board, piece, false));
+        break;
+
+      case 'gold-general':
+        attacked.push(...generateGoldGeneralMoves(board, piece));
+        break;
+
+      case 'silver-general':
+        attacked.push(...generateSilverGeneralMoves(board, piece));
         break;
     }
   }

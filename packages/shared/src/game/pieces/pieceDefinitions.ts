@@ -133,11 +133,11 @@ export const BOXER: PieceType = {
 
 export const SOLDIER: PieceType = {
   id: 'soldier',
-  name: 'Soldier',
+  name: 'Commoner',
   tier: 'pawn',
   cost: 36,
   victoryPoints: 36,
-  symbol: '⚔',
+  symbol: '◎',
   description: 'Moves one square in any direction, like a King but without royal status.',
   isRoyal: false,
   isMandatory: false,
@@ -149,6 +149,50 @@ export const SOLDIER: PieceType = {
     slides: [],
     leaps: [],
     special: ['king-one-square'], // Moves 1 square in any direction
+  },
+  captureType: 'standard',
+};
+
+export const GOLD_GENERAL: PieceType = {
+  id: 'gold-general',
+  name: 'Gold General',
+  tier: 'pawn',
+  cost: 29,
+  victoryPoints: 29,
+  symbol: '⬡',
+  description: 'Moves one square orthogonally or diagonally forward. Cannot move diagonally backward.',
+  isRoyal: false,
+  isMandatory: false,
+  canCastle: false,
+  canBeCaptured: true,
+  canFreeze: false,
+  canBeJumpedOver: true,
+  movement: {
+    slides: [],
+    leaps: [],
+    special: ['gold-general'],
+  },
+  captureType: 'standard',
+};
+
+export const SILVER_GENERAL: PieceType = {
+  id: 'silver-general',
+  name: 'Silver General',
+  tier: 'pawn',
+  cost: 18,
+  victoryPoints: 18,
+  symbol: '⬢',
+  description: 'Moves one square diagonally (any direction) or straight forward. Cannot move orthogonally backward or sideways.',
+  isRoyal: false,
+  isMandatory: false,
+  canCastle: false,
+  canBeCaptured: true,
+  canFreeze: false,
+  canBeJumpedOver: true,
+  movement: {
+    slides: [],
+    leaps: [],
+    special: ['silver-general'],
   },
   captureType: 'standard',
 };
@@ -250,7 +294,7 @@ export const CATAPULT: PieceType = {
 
 export const LANCER: PieceType = {
   id: 'lancer',
-  name: 'Lancer',
+  name: 'Camel',
   tier: 'piece',
   cost: 8,
   victoryPoints: 8,
@@ -807,7 +851,7 @@ export const QUEEN: PieceType = {
 
 export const FAIRY_QUEEN: PieceType = {
   id: 'fairy-queen',
-  name: 'Fairy Queen',
+  name: 'Amazon',
   tier: 'royalty',
   cost: 130,
   victoryPoints: 130,
@@ -887,6 +931,8 @@ export const ALL_PIECES: PieceType[] = [
   PEASANT,
   BOXER,
   SOLDIER,
+  GOLD_GENERAL,
+  SILVER_GENERAL,
   FOOL,
   CHECKER,
 

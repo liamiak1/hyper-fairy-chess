@@ -130,7 +130,9 @@ export type SpecialMovement =
   | 'long-leap'            // Long Leaper: jump over enemies to capture (multiple in one line)
   | 'chameleon'            // Chameleon: moves/captures like whatever it's capturing
   | 'checkers-forward'     // Checkers: move diagonally forward 1, jump capture diagonally forward
-  | 'checkers-king';       // Checkers King: diagonal jumps in any direction
+  | 'checkers-king'        // Checkers King: diagonal jumps in any direction
+  | 'gold-general'         // Shogi Gold General: orthogonals + forward diagonals
+  | 'silver-general';      // Shogi Silver General: all diagonals + forward
 
 // =============================================================================
 // Game Piece Instance (on the board)
