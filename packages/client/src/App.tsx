@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { Game } from './components/Game';
 import { MainMenu } from './components/MainMenu';
 import { OnlineGame } from './components/OnlineGame';
+import { ProfilePage } from './components/ProfilePage';
 import { SocketProvider } from './context/SocketContext';
 import { AuthProvider } from './context/AuthContext';
 import './App.css';
 
-type GameMode = 'menu' | 'local' | 'online';
+type GameMode = 'menu' | 'local' | 'online' | 'profile';
 
 function AppContent() {
   const [mode, setMode] = useState<GameMode>('menu');
@@ -17,6 +18,7 @@ function AppContent() {
         <MainMenu
           onLocalPlay={() => setMode('local')}
           onOnlinePlay={() => setMode('online')}
+          onProfile={() => setMode('profile')}
         />
       </div>
     );
@@ -26,6 +28,14 @@ function AppContent() {
     return (
       <div className="app">
         <Game />
+      </div>
+    );
+  }
+
+  if (mode === 'profile') {
+    return (
+      <div className="app">
+        <ProfilePage onBack={() => setMode('menu')} />
       </div>
     );
   }

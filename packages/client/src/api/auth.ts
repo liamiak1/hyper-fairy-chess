@@ -19,6 +19,11 @@ export interface User {
   username: string;
   email: string;
   createdAt?: string;
+  eloRating?: number;
+  gamesPlayed?: number;
+  wins?: number;
+  losses?: number;
+  draws?: number;
 }
 
 export interface AuthResponse {

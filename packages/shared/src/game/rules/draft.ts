@@ -406,3 +406,73 @@ export function getPieceCountInDraft(draft: PlayerDraft, pieceTypeId: string): n
   const selection = draft.selections.find((s) => s.pieceTypeId === pieceTypeId);
   return selection?.count ?? 0;
 }
+
+// =============================================================================
+// Army Validation for Saved Armies
+// =============================================================================
+
+/**
+ * Check if a saved army is valid for a specific game configuration
+ * Used to filter out incompatible armies when loading during draft
+ */
+export function isArmyValidForGame(
+  pieces: DraftSelection[],
+  armyBudget: number,
+  gameBudget: number,
+  boardSize: BoardSize
+): { valid: boolean; reason?: string } {
+  // Check budget
+  if (armyBudget > gameBudget) {
+    return { valid: false, reason: `Army budget (${armyBudget}) exceeds game budget (${gameBudget})` };
+  }
+
+  // Get slot limits for board size
+  const limits = getSlotLimits(boardSize);
+
+  // Count pieces by tier
+  let pawnCount = 0;
+  let pieceCount = 0;
+  let royaltyCount = 0;
+
+  for (const selection of pieces) {
+    const pieceType = PIECE_BY_ID[selection.pieceTypeId];
+    if (!pieceType) continue;
+
+    switch (pieceType.tier) {
+      case 'pawn':
+        pawnCount += selection.count;
+        break;
+      case 'piece':
+        pieceCount += selection.count;
+        break;
+      case 'royalty':
+        // King-replacing pieces don't use an extra royalty slot
+        if (!pieceType.replacesKing) {
+          royaltyCount += selection.count;
+        }
+        break;
+    }
+  }
+
+  // Add 1 for mandatory King (always present unless replaced)
+  const hasReplacer = pieces.some((s) => {
+    const pt = PIECE_BY_ID[s.pieceTypeId];
+    return pt?.replacesKing;
+  });
+  if (!hasReplacer) {
+    royaltyCount += 1;
+  }
+
+  // Check slot limits
+  if (pawnCount > limits.pawn) {
+    return { valid: false, reason: `Too many pawns (${pawnCount}/${limits.pawn})` };
+  }
+  if (pieceCount > limits.piece) {
+    return { valid: false, reason: `Too many pieces (${pieceCount}/${limits.piece})` };
+  }
+  if (royaltyCount > limits.royalty) {
+    return { valid: false, reason: `Too many royalty (${royaltyCount}/${limits.royalty})` };
+  }
+
+  return { valid: true };
+}

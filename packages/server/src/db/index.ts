@@ -69,6 +69,20 @@ export async function initDatabase(): Promise<pg.Pool | null> {
       );
     `);
 
+    // Create saved armies table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS saved_armies (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        name VARCHAR(50) NOT NULL,
+        pieces JSONB NOT NULL,
+        budget INT NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_saved_armies_user ON saved_armies(user_id);
+    `);
+
     console.log('[DB] Migrations complete');
 
     return pool;

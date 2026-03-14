@@ -13,7 +13,9 @@
     "build:client": "pnpm --filter client build",
     "build:server": "pnpm --filter server build",
     "lint": "pnpm -r run lint",
-    "typecheck": "pnpm -r run typecheck"
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm --filter shared test",
+    "test:watch": "pnpm --filter shared test:watch"
   },
   "devDependencies": {
     "typescript": "~5.9.3"

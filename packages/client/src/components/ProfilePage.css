@@ -1,0 +1,243 @@
+/* Profile Page Styles */
+
+.profile-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  padding: 20px;
+}
+
+.profile-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Header */
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #333;
+}
+
+.header-left .back-btn {
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 8px 0;
+}
+
+.header-left .back-btn:hover {
+  color: #fff;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.username {
+  color: #fff;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.logout-btn {
+  background: rgba(231, 76, 60, 0.2);
+  border: 1px solid #e74c3c;
+  color: #e74c3c;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.logout-btn:hover {
+  background: rgba(231, 76, 60, 0.3);
+}
+
+/* Stats Section */
+.stats-section {
+  margin-bottom: 40px;
+}
+
+.stats-section h2 {
+  color: #fff;
+  font-size: 1.5rem;
+  margin: 0 0 20px 0;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 16px;
+}
+
+.stat-card {
+  background: #242442;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  border: 1px solid #333;
+}
+
+.stat-value {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.85rem;
+  color: #888;
+}
+
+/* Armies Section */
+.armies-section {
+  margin-bottom: 40px;
+}
+
+.armies-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.armies-header h2 {
+  color: #fff;
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.create-btn {
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.3) 0%, rgba(108, 92, 231, 0.1) 100%);
+  border: 1px solid #6c5ce7;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.create-btn:hover {
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.4) 0%, rgba(108, 92, 231, 0.2) 100%);
+}
+
+.loading,
+.error,
+.no-armies {
+  color: #888;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.error {
+  color: #e74c3c;
+}
+
+/* Army Cards */
+.armies-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.army-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: #242442;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+
+.army-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.army-name {
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.army-budget {
+  color: #fdcb6e;
+  font-size: 0.9rem;
+}
+
+.army-pieces {
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.army-icons {
+  font-size: 1.5rem;
+  color: #fff;
+  min-width: 180px;
+  text-align: center;
+}
+
+.army-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.edit-btn,
+.delete-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  border: 1px solid;
+}
+
+.edit-btn {
+  background: rgba(52, 152, 219, 0.2);
+  border-color: #3498db;
+  color: #3498db;
+}
+
+.edit-btn:hover {
+  background: rgba(52, 152, 219, 0.3);
+}
+
+.delete-btn {
+  background: rgba(231, 76, 60, 0.2);
+  border-color: #e74c3c;
+  color: #e74c3c;
+}
+
+.delete-btn:hover {
+  background: rgba(231, 76, 60, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .army-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .army-icons {
+    min-width: auto;
+    text-align: left;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

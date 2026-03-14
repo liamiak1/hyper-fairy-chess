@@ -76,6 +76,16 @@
   background: linear-gradient(135deg, rgba(0, 184, 148, 0.25) 0%, rgba(0, 184, 148, 0.1) 100%);
 }
 
+.menu-btn.profile {
+  border-color: #fdcb6e;
+  background: linear-gradient(135deg, rgba(253, 203, 110, 0.15) 0%, rgba(253, 203, 110, 0.05) 100%);
+}
+
+.menu-btn.profile:hover {
+  border-color: #ffeaa7;
+  background: linear-gradient(135deg, rgba(253, 203, 110, 0.25) 0%, rgba(253, 203, 110, 0.1) 100%);
+}
+
 .btn-icon {
   font-size: 2rem;
   width: 48px;

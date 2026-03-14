@@ -1,10 +1,17 @@
--When placing in a multiplayer game, the pieces disappear off the available pieces screen, but do not show up on the board - also, all the possible options (for all piece types) are shown as options. However, something is happening, as attempting to place a piece where one already has results in it not being placed (though one can place a piece in the wrong square type)
--Separately, it would be good to allow both sides to see the unplaces pieces of both sides during placement
--Idea for later - room option to set up armies before providing information (no neither side sees how the other is set until both are locked in, in which case they could do so independently)
--Both sides should have their pieces at the bottom of the board when not hot seating
--Idea for later - folks with accounts should be able to save armies (i.e. piece configurations) and select them on the select pieces screen (then allowing modifications as usual)
--nightriders do not trigger check
--Fools should be able to take
--Chameleons can't bounce-take pontiffs
--If one drafts a regent first, one cannot get any other royals
--In the join game screen, the name and room code fields are overrunning the right side of the frame. 
+Other new features
+Saved games between people
+Game replay
+piece elo/point value tracking (only in ranked games)
+3+ players at once (would also need new board(s)
+AI player
+Other board sizes
+
+-New pieces
+ -others from other chess variants
+
+
+-Add note on join room that it will try to paste (to explain the "requesting access to clipboard" popup)
+-Add lobby
+
+Working
+save/load armies (i.e. select a bunch of pieces at one)
