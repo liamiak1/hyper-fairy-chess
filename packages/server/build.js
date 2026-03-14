@@ -20,6 +20,7 @@ await esbuild.build({
     'bcrypt',
     'pg',
     'jsonwebtoken',
+    'nodemailer',
   ],
 });
 
