@@ -59,14 +59,39 @@ export async function initDatabase(): Promise<pg.Pool | null> {
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         white_user_id UUID REFERENCES users(id),
         black_user_id UUID REFERENCES users(id),
+        white_player_name VARCHAR(30) NOT NULL DEFAULT '',
+        black_player_name VARCHAR(30) NOT NULL DEFAULT '',
         result_type VARCHAR(30) NOT NULL,
         winner_color VARCHAR(5),
         white_elo_before INT,
         black_elo_before INT,
         white_elo_change INT,
         black_elo_change INT,
+        settings JSONB,
+        white_draft JSONB,
+        black_draft JSONB,
+        initial_board_state JSONB,
+        moves JSONB,
+        move_count INT DEFAULT 0,
         played_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+    `);
+
+    // Add game history columns to existing games table (idempotent)
+    await pool.query(`
+      ALTER TABLE games ADD COLUMN IF NOT EXISTS white_player_name VARCHAR(30) NOT NULL DEFAULT '';
+      ALTER TABLE games ADD COLUMN IF NOT EXISTS black_player_name VARCHAR(30) NOT NULL DEFAULT '';
+      ALTER TABLE games ADD COLUMN IF NOT EXISTS settings JSONB;
+      ALTER TABLE games ADD COLUMN IF NOT EXISTS white_draft JSONB;
+      ALTER TABLE games ADD COLUMN IF NOT EXISTS black_draft JSONB;
+      ALTER TABLE games ADD COLUMN IF NOT EXISTS initial_board_state JSONB;
+      ALTER TABLE games ADD COLUMN IF NOT EXISTS moves JSONB;
+      ALTER TABLE games ADD COLUMN IF NOT EXISTS move_count INT DEFAULT 0;
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_games_white_user ON games(white_user_id, played_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_games_black_user ON games(black_user_id, played_at DESC);
     `);
 
     // Create saved armies table

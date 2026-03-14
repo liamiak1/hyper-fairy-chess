@@ -225,6 +225,92 @@
   background: rgba(231, 76, 60, 0.3);
 }
 
+/* Game History */
+.history-section {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 32px;
+}
+
+.history-section h2 {
+  margin: 0 0 20px;
+  color: #fff;
+  font-size: 1.2rem;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.history-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border-left: 4px solid transparent;
+}
+
+.history-row.result-win { border-left-color: #4caf50; }
+.history-row.result-loss { border-left-color: #e74c3c; }
+.history-row.result-draw { border-left-color: #888; }
+
+.history-result-badge {
+  font-weight: 700;
+  font-size: 0.8rem;
+  width: 38px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.result-win .history-result-badge { color: #4caf50; }
+.result-loss .history-result-badge { color: #e74c3c; }
+.result-draw .history-result-badge { color: #aaa; }
+
+.history-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.history-opponent {
+  color: #fff;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.history-meta {
+  color: #888;
+  font-size: 0.78rem;
+}
+
+.history-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.history-elo {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.history-elo.elo-pos { color: #4caf50; }
+.history-elo.elo-neg { color: #e74c3c; }
+
+.history-date {
+  color: #666;
+  font-size: 0.75rem;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   .army-card {

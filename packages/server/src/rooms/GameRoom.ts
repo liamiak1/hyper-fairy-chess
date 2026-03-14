@@ -55,7 +55,8 @@ import {
   getGameResult,
   createDrawAgreementResult,
 } from '@hyper-fairy-chess/shared';
-import { recordGameResult, type EloUpdateResult } from '../services/eloService.js';
+import { recordGameResult, getUserElo, type EloUpdateResult } from '../services/eloService.js';
+import { saveGame } from '../services/gameService.js';
 
 interface RoomPlayer extends PlayerInfo {
   socketId: string;
@@ -81,6 +82,7 @@ export class GameRoom {
   // Game state
   private placementState: PlacementState | null = null;
   private gameState: GameState | null = null;
+  private initialGameState: GameState | null = null; // Snapshot at game start (for replay)
 
   // Timers
   private countdownTimer: ReturnType<typeof setInterval> | null = null;
@@ -930,6 +932,9 @@ export class GameRoom {
         this.gameState.enPassantTarget
       );
       this.gameState.positionHistory = [initialHash];
+
+      // Snapshot initial state for replay (deep copy - no moves yet)
+      this.initialGameState = JSON.parse(JSON.stringify(this.gameState));
     }
 
     this.broadcast({
@@ -1219,33 +1224,75 @@ export class GameRoom {
     const whitePlayer = whitePlayers[0];
     const blackPlayer = blackPlayers[0];
 
+    // Build draft picks for saving
+    const whiteDraftPicks = this.whiteDraft?.selections ?? null;
+    const blackDraftPicks = this.blackDraft?.selections ?? null;
+
+    const moves = this.gameState?.moveHistory ?? [];
+
+    // Get ELO before update (for record)
+    let whiteEloBefore: number | null = null;
+    let blackEloBefore: number | null = null;
+    let whiteEloChange: number | null = null;
+    let blackEloChange: number | null = null;
+
     // Only update ELO if both players are authenticated account users
-    if (!whitePlayer?.userId || !blackPlayer?.userId) {
+    if (whitePlayer?.userId && blackPlayer?.userId) {
+      try {
+        [whiteEloBefore, blackEloBefore] = await Promise.all([
+          getUserElo(whitePlayer.userId),
+          getUserElo(blackPlayer.userId),
+        ]);
+
+        const eloResult = await recordGameResult(
+          whitePlayer.userId,
+          blackPlayer.userId,
+          resultType,
+          winnerColor
+        );
+
+        if (eloResult) {
+          whiteEloChange = eloResult.whiteEloChange;
+          blackEloChange = eloResult.blackEloChange;
+
+          // Broadcast ELO update to both players
+          this.broadcast({
+            type: 'ELO_UPDATE',
+            timestamp: Date.now(),
+            whiteEloChange: eloResult.whiteEloChange,
+            blackEloChange: eloResult.blackEloChange,
+            whiteNewElo: eloResult.whiteNewElo,
+            blackNewElo: eloResult.blackNewElo,
+          });
+        }
+      } catch (error) {
+        console.error('[ELO] Error updating ELO ratings:', error);
+      }
+    } else {
       console.log('[ELO] Skipping ELO update - not both players are authenticated');
-      return;
     }
 
+    // Save game record regardless of ELO eligibility
     try {
-      const eloResult = await recordGameResult(
-        whitePlayer.userId,
-        blackPlayer.userId,
+      await saveGame({
+        whiteUserId: whitePlayer?.userId ?? null,
+        blackUserId: blackPlayer?.userId ?? null,
+        whitePlayerName: whitePlayer?.name ?? '?',
+        blackPlayerName: blackPlayer?.name ?? '?',
         resultType,
-        winnerColor
-      );
-
-      if (eloResult) {
-        // Broadcast ELO update to both players
-        this.broadcast({
-          type: 'ELO_UPDATE',
-          timestamp: Date.now(),
-          whiteEloChange: eloResult.whiteEloChange,
-          blackEloChange: eloResult.blackEloChange,
-          whiteNewElo: eloResult.whiteNewElo,
-          blackNewElo: eloResult.blackNewElo,
-        });
-      }
+        winnerColor,
+        whiteEloBefore,
+        blackEloBefore,
+        whiteEloChange,
+        blackEloChange,
+        settings: this.settings,
+        whiteDraft: whiteDraftPicks,
+        blackDraft: blackDraftPicks,
+        initialBoardState: this.initialGameState,
+        moves,
+      });
     } catch (error) {
-      console.error('[ELO] Error updating ELO ratings:', error);
+      console.error('[GameService] Error saving game record:', error);
     }
   }
 

@@ -12,6 +12,7 @@ import { initDatabase, isDatabaseAvailable } from './db/index.js';
 import { authRouter } from './routes/auth.js';
 import { statsRouter } from './routes/stats.js';
 import { armiesRouter } from './routes/armies.js';
+import { gamesRouter } from './routes/games.js';
 
 const PORT = process.env.PORT || 3001;
 // Allow all origins in development for LAN play
@@ -30,6 +31,9 @@ app.use('/stats/player', statsRouter);
 
 // Saved armies routes
 app.use('/armies', armiesRouter);
+
+// Game history routes
+app.use('/games', gamesRouter);
 
 // Health check endpoint
 app.get('/health', (_req, res) => {
