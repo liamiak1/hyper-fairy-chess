@@ -90,6 +90,7 @@ export function Game({ mode = 'draft' }: GameProps) {
     startDraft,
     addToDraft,
     removeFromDraft,
+    loadDraft,
     confirmDraft,
     acknowledgeHandoff,
 
@@ -129,6 +130,7 @@ export function Game({ mode = 'draft' }: GameProps) {
         playerColor={currentDrafter}
         onAddPiece={addToDraft}
         onRemovePiece={removeFromDraft}
+        onLoadArmy={loadDraft}
         onConfirmDraft={confirmDraft}
       />
     );

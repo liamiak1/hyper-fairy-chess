@@ -13,6 +13,8 @@ import {
   PIECE_BY_ID,
 } from '@hyper-fairy-chess/shared';
 import { PieceInfoPopup } from './PieceInfoPopup';
+import { SavedArmyMenu } from './SavedArmyMenu';
+import type { PlayerDraft as PlayerDraftType } from '@hyper-fairy-chess/shared';
 import './DraftUI.css';
 
 interface PieceInfoState {
@@ -29,6 +31,7 @@ interface DraftUIProps {
   playerColor: PlayerColor;
   onAddPiece: (pieceType: PieceType) => void;
   onRemovePiece: (pieceTypeId: string) => void;
+  onLoadArmy: (draft: PlayerDraftType) => void;
   onConfirmDraft: () => void;
 }
 
@@ -40,6 +43,7 @@ export function DraftUI({
   playerColor,
   onAddPiece,
   onRemovePiece,
+  onLoadArmy,
   onConfirmDraft,
 }: DraftUIProps) {
   const [pieceInfo, setPieceInfo] = useState<PieceInfoState | null>(null);
@@ -172,6 +176,11 @@ export function DraftUI({
       </div>
 
       <div className="draft-footer">
+        <SavedArmyMenu
+          budget={budget}
+          boardSize={boardSize}
+          onLoad={onLoadArmy}
+        />
         <button
           className="confirm-btn"
           onClick={onConfirmDraft}

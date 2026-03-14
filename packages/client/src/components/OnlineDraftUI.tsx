@@ -24,6 +24,7 @@ import {
   PIECE_BY_ID,
 } from '@hyper-fairy-chess/shared';
 import { PieceInfoPopup } from './PieceInfoPopup';
+import { SavedArmyMenu } from './SavedArmyMenu';
 import { useArmyPresets } from '../hooks/useArmyPresets';
 import type { ArmyPreset } from '../hooks/useArmyPresets';
 import './OnlineDraftUI.css';
@@ -228,9 +229,15 @@ export function OnlineDraftUI({
         </div>
       </div>
 
-      {/* Preset controls */}
+      {/* Saved armies + preset controls */}
       {!isLocked && (
         <div className="preset-controls">
+          <SavedArmyMenu
+            budget={budget}
+            boardSize={boardSize}
+            disabled={isLocked}
+            onLoad={(newDraft) => setDraft(newDraft)}
+          />
           <button
             className="preset-btn"
             onClick={() => setShowPresetMenu(!showPresetMenu)}

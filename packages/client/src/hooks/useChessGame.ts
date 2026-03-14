@@ -113,6 +113,7 @@ export interface UseChessGameReturn {
   startDraft: (budget: number) => void;
   addToDraft: (pieceType: PieceType) => void;
   removeFromDraft: (pieceTypeId: string) => void;
+  loadDraft: (draft: PlayerDraft) => void;
   confirmDraft: () => void;
   acknowledgeHandoff: () => void;
 
@@ -723,6 +724,20 @@ export function useChessGame(
   );
 
   /**
+   * Replace the current player's draft wholesale (used when loading a saved army)
+   */
+  const loadDraft = useCallback(
+    (newDraft: PlayerDraft) => {
+      if (currentDrafter === 'white') {
+        setWhiteDraft(newDraft);
+      } else {
+        setBlackDraft(newDraft);
+      }
+    },
+    [currentDrafter]
+  );
+
+  /**
    * Confirm the current player's draft
    */
   const confirmDraft = useCallback(() => {
@@ -801,6 +816,7 @@ export function useChessGame(
     startDraft,
     addToDraft,
     removeFromDraft,
+    loadDraft,
     confirmDraft,
     acknowledgeHandoff,
 
