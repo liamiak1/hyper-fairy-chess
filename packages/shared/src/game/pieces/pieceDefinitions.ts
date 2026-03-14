@@ -116,7 +116,7 @@ export const BOXER: PieceType = {
   cost: 23,
   victoryPoints: 23,
   symbol: '⛨',
-  description: 'Slides orthogonally. Captures enemies that are "boxed in" (blocked on 3+ sides) after moving.',
+  description: 'Slides orthogonally. After moving, captures any orthogonally adjacent enemy that has a friendly piece directly on the opposite side.',
   isRoyal: false,
   isMandatory: false,
   canCastle: false,

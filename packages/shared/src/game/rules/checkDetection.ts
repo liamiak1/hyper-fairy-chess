@@ -242,8 +242,8 @@ function canLongLeaperThreaten(
     return false;
   }
 
-  // Must have at least 1 square distance (can't jump adjacent)
-  if (Math.abs(dx) <= 1 && Math.abs(dy) <= 1) {
+  // Must not be the same square
+  if (dx === 0 && dy === 0) {
     return false;
   }
 
