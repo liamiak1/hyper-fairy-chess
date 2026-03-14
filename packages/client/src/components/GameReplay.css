@@ -1,0 +1,221 @@
+/* Game Replay Viewer */
+
+.replay-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.replay-container {
+  background: #1a1a2e;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 900px;
+  max-height: 95vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+}
+
+/* Header */
+.replay-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.replay-title {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.replay-players {
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.replay-result {
+  color: #a0a0c0;
+  font-size: 0.82rem;
+}
+
+.replay-close {
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: color 0.2s;
+}
+
+.replay-close:hover {
+  color: #fff;
+}
+
+/* Loading / error */
+.replay-loading,
+.replay-error {
+  padding: 40px;
+  text-align: center;
+  color: #888;
+}
+
+.replay-error {
+  color: #ef5350;
+}
+
+/* Body */
+.replay-body {
+  display: flex;
+  gap: 0;
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Board area */
+.replay-board-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 20px;
+  gap: 16px;
+  min-width: 0;
+}
+
+.replay-board-area .board-container {
+  width: 100%;
+  max-width: 520px;
+}
+
+/* Controls */
+.replay-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.replay-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.replay-btn:hover:not(:disabled) {
+  background: rgba(108, 92, 231, 0.3);
+  border-color: #6c5ce7;
+}
+
+.replay-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.replay-step {
+  color: #a0a0c0;
+  font-size: 0.85rem;
+  min-width: 110px;
+  text-align: center;
+}
+
+/* Move list */
+.replay-moves {
+  width: 200px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.replay-moves-header {
+  padding: 12px 16px;
+  color: #888;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.replay-moves-list {
+  overflow-y: auto;
+  flex: 1;
+  padding: 4px 0;
+}
+
+.replay-move-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 16px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #a0a0c0;
+  border-radius: 4px;
+  transition: background 0.1s;
+}
+
+.replay-move-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.replay-move-row.active {
+  background: rgba(108, 92, 231, 0.25);
+  color: #fff;
+}
+
+.start-row {
+  color: #666;
+  font-style: italic;
+}
+
+.move-number {
+  color: #666;
+  font-size: 0.78rem;
+  min-width: 24px;
+}
+
+.white-move {
+  color: #ddd;
+}
+
+.black-move {
+  color: #aaa;
+}
+
+.replay-move-row.active .white-move,
+.replay-move-row.active .black-move {
+  color: #fff;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .replay-moves {
+    display: none;
+  }
+
+  .replay-board-area {
+    padding: 12px;
+  }
+}

@@ -9,6 +9,7 @@ import { getArmies, deleteArmy, type SavedArmy } from '../api/armies';
 import { getGames, type GameSummary } from '../api/games';
 import { PIECE_BY_ID } from '@hyper-fairy-chess/shared';
 import { ArmyBuilder } from './ArmyBuilder';
+import { GameReplay } from './GameReplay';
 import './ProfilePage.css';
 
 interface ProfilePageProps {
@@ -24,6 +25,7 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
   const [editingArmy, setEditingArmy] = useState<SavedArmy | null>(null);
   const [games, setGames] = useState<GameSummary[]>([]);
   const [gamesLoading, setGamesLoading] = useState(true);
+  const [replayGame, setReplayGame] = useState<GameSummary | null>(null);
 
   // Fetch armies and game history on mount
   useEffect(() => {
@@ -147,6 +149,9 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
 
   return (
     <div className="profile-page">
+      {replayGame && (
+        <GameReplay gameSummary={replayGame} onClose={() => setReplayGame(null)} />
+      )}
       <div className="profile-container">
         <header className="profile-header">
           <div className="header-left">
@@ -230,6 +235,13 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
                         </span>
                       )}
                       <span className="history-date">{formatDate(game.playedAt)}</span>
+                      <button
+                        className="watch-btn"
+                        onClick={() => setReplayGame(game)}
+                        title="Watch replay"
+                      >
+                        ▶ Replay
+                      </button>
                     </div>
                   </div>
                 );
