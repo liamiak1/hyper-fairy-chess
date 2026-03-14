@@ -278,3 +278,10 @@
   border-color: #dc3545;
   color: #dc3545;
 }
+
+.field-hint {
+  margin: 6px 0 0 0;
+  font-size: 0.78rem;
+  color: #666;
+  line-height: 1.4;
+}

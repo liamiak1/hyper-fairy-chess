@@ -323,6 +323,7 @@ export function OnlineLobby({
             className="room-code-input"
             maxLength={6}
           />
+          <p className="field-hint">The code will be pasted automatically if it's in your clipboard — that's why your browser may ask for permission.</p>
         </div>
 
         <div className="button-group">
