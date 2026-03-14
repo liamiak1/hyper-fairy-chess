@@ -326,8 +326,6 @@
   flex-direction: column;
   gap: 6px;
   flex: 1;
-  overflow-y: auto;
-  max-height: 400px;
 }
 
 .army-piece {
@@ -452,7 +450,4 @@
     grid-template-columns: 1fr;
   }
 
-  .army-list {
-    max-height: 250px;
-  }
 }
