@@ -102,6 +102,11 @@ cd packages/client && npx vitest run
 ## GitHub
 - Repo: https://github.com/liamiak1/hyper-fairy-chess
 
+## IMPORTANT: Commit & Push Policy
+After completing any feature or fix, always commit and push to GitHub automatically — no need to ask the user first. Exclude:
+- `.claude/settings.local.json` (local only)
+- `nul` or other OS artifacts
+
 ## IMPORTANT: Deployment Workflow
 Railway deploys from GitHub, NOT from local files. Before deploying or when the user mentions deploying:
 
