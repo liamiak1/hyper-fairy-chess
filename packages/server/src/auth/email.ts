@@ -19,7 +19,40 @@ function createTransporter() {
     port,
     secure: port === 465,
     auth: { user, pass },
+    tls: { rejectUnauthorized: false },
   });
+}
+
+/**
+ * Test the SMTP connection and return a diagnostic result.
+ */
+export async function testSmtpConnection(): Promise<{ ok: boolean; error?: string; config: object }> {
+  const host = process.env.SMTP_HOST;
+  const port = process.env.SMTP_PORT;
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+
+  const config = {
+    host: host || '(not set)',
+    port: port || '(not set)',
+    user: user || '(not set)',
+    passLength: pass ? pass.length : 0,
+    from: FROM,
+    clientUrl: CLIENT_URL,
+  };
+
+  const transporter = createTransporter();
+  if (!transporter) {
+    return { ok: false, error: 'Missing SMTP_HOST, SMTP_USER, or SMTP_PASS env vars', config };
+  }
+
+  try {
+    await transporter.verify();
+    return { ok: true, config };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { ok: false, error: message, config };
+  }
 }
 
 export function isEmailAvailable(): boolean {

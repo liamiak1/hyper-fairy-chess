@@ -12,7 +12,7 @@ import {
   updateUserPassword,
   validatePassword,
 } from '../auth/userService.js';
-import { isEmailAvailable, sendPasswordResetEmail } from '../auth/email.js';
+import { isEmailAvailable, sendPasswordResetEmail, testSmtpConnection } from '../auth/email.js';
 
 export const authRouter = Router();
 
@@ -212,6 +212,15 @@ authRouter.post('/reset-password', async (req: Request, res: Response) => {
 
   await deletePasswordResetToken(token);
   res.json({ message: 'Password updated successfully' });
+});
+
+/**
+ * GET /auth/test-smtp
+ * Diagnostic endpoint - tests SMTP connection and returns result.
+ */
+authRouter.get('/test-smtp', async (_req: Request, res: Response) => {
+  const result = await testSmtpConnection();
+  res.status(result.ok ? 200 : 500).json(result);
 });
 
 /**
