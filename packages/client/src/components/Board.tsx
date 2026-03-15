@@ -3,7 +3,7 @@
  */
 
 import type { BoardSize, Position, PieceInstance, Move, PlayerColor } from '@hyper-fairy-chess/shared';
-import { BOARD_CONFIGS, positionToString, PIECE_BY_ID } from '@hyper-fairy-chess/shared';
+import { BOARD_CONFIGS, positionToString, PIECE_BY_ID, isVoidSquare } from '@hyper-fairy-chess/shared';
 import './Board.css';
 
 interface SpecialCaptureTarget {
@@ -29,7 +29,7 @@ interface BoardProps {
   isViewingEnemy?: boolean; // True when viewing enemy piece moves (not executable)
 }
 
-const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'] as const;
+const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'] as const;
 
 export function Board({
   size,
@@ -104,10 +104,15 @@ export function Board({
       >
         {ranks.map((rank) =>
           files.map((file, fileIndex) => {
-            const position: Position = { file, rank: rank as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 };
+            const position: Position = { file, rank: rank as Position['rank'] };
             const posKey = positionToString(position);
+            const isVoid = isVoidSquare(position, size);
             const piece = pieceMap.get(posKey);
             const pieceType = piece ? PIECE_BY_ID[piece.typeId] : null;
+
+            if (isVoid) {
+              return <div key={posKey} className="square void" />;
+            }
 
             const isSelected =
               selectedSquare &&

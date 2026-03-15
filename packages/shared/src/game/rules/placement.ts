@@ -29,6 +29,8 @@ export interface PlacementZone {
 export interface PlacementState {
   whitePiecesToPlace: PieceInstance[];
   blackPiecesToPlace: PieceInstance[];
+  redPiecesToPlace?: PieceInstance[];
+  bluePiecesToPlace?: PieceInstance[];
   currentPlacer: PlayerColor;
   selectedPieceId: string | null;
   mode: 'alternating' | 'blind';
@@ -71,6 +73,13 @@ function getHeraldFiles(numFiles: number): File[] {
   return [ALL_FILES[0], ALL_FILES[numFiles - 1]];
 }
 
+// Files c–j (indices 2-9) for 4-player pawn rows
+const FOUR_PLAYER_INNER_FILES: File[] = ['c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'];
+// Royalty files for 4-player inner area: e, f (center 2 of 8)
+const FOUR_PLAYER_ROYALTY_FILES: File[] = ['e', 'f'];
+// Piece files for 4-player: c, d, g, h, i, j (excluding royalty center)
+const FOUR_PLAYER_PIECE_FILES: File[] = ['c', 'd', 'g', 'h', 'i', 'j'];
+
 /**
  * Get placement zones for a player on a given board size
  */
@@ -78,7 +87,11 @@ export function getPlacementZones(boardSize: BoardSize, color: PlayerColor): Pla
   const config = BOARD_CONFIGS[boardSize];
   const zones: PlacementZone[] = [];
 
-  // Determine ranks based on color
+  if (boardSize === '4player') {
+    return getFourPlayerPlacementZones(color);
+  }
+
+  // Determine ranks based on color (white/black)
   const backRank: Rank = color === 'white' ? 1 : (config.ranks as Rank);
   const pawnRank: Rank = color === 'white' ? 2 : ((config.ranks - 1) as Rank);
 
@@ -104,6 +117,54 @@ export function getPlacementZones(boardSize: BoardSize, color: PlayerColor): Pla
   for (const file of allFiles) {
     const position: Position = { file, rank: pawnRank };
     zones.push({ position, allowedTiers: ['pawn'] });
+  }
+
+  return zones;
+}
+
+/**
+ * Get placement zones for a player in 4-player mode.
+ * White: backRank=1, pawnRank=2, files c–j
+ * Black: backRank=12, pawnRank=11, files c–j
+ * Red: backFile='a', pawnFile='b', ranks 3–10
+ * Blue: backFile='l', pawnFile='k', ranks 3–10
+ */
+function getFourPlayerPlacementZones(color: PlayerColor): PlacementZone[] {
+  const zones: PlacementZone[] = [];
+
+  if (color === 'white' || color === 'black') {
+    const backRank: Rank = color === 'white' ? 1 : 12;
+    const pawnRank: Rank = color === 'white' ? 2 : 11;
+
+    for (const file of FOUR_PLAYER_INNER_FILES) {
+      if (FOUR_PLAYER_ROYALTY_FILES.includes(file)) {
+        zones.push({ position: { file, rank: backRank }, allowedTiers: ['royalty'] });
+      } else if (FOUR_PLAYER_PIECE_FILES.includes(file)) {
+        zones.push({ position: { file, rank: backRank }, allowedTiers: ['piece'] });
+      }
+    }
+    for (const file of FOUR_PLAYER_INNER_FILES) {
+      zones.push({ position: { file, rank: pawnRank }, allowedTiers: ['pawn'] });
+    }
+  } else {
+    // Red: left side (files a=back, b=pawn); Blue: right side (files l=back, k=pawn)
+    const backFile: File = color === 'red' ? 'a' : 'l';
+    const pawnFile: File = color === 'red' ? 'b' : 'k';
+    const innerRanks: Rank[] = [3, 4, 5, 6, 7, 8, 9, 10];
+    // Royalty ranks: 5, 6 (center 2 of 8)
+    const royaltyRanks: Rank[] = [5, 6];
+    const pieceRanks: Rank[] = [3, 4, 7, 8, 9, 10];
+
+    for (const rank of innerRanks) {
+      if (royaltyRanks.includes(rank)) {
+        zones.push({ position: { file: backFile, rank }, allowedTiers: ['royalty'] });
+      } else if (pieceRanks.includes(rank)) {
+        zones.push({ position: { file: backFile, rank }, allowedTiers: ['piece'] });
+      }
+    }
+    for (const rank of innerRanks) {
+      zones.push({ position: { file: pawnFile, rank }, allowedTiers: ['pawn'] });
+    }
   }
 
   return zones;
@@ -321,29 +382,53 @@ export function createInitialPlacementState(): PlacementState {
  * Get pieces remaining to be placed for a player
  */
 export function getPiecesToPlace(state: PlacementState, color: PlayerColor): PieceInstance[] {
-  return color === 'white' ? state.whitePiecesToPlace : state.blackPiecesToPlace;
+  switch (color) {
+    case 'white': return state.whitePiecesToPlace;
+    case 'black': return state.blackPiecesToPlace;
+    case 'red':   return state.redPiecesToPlace ?? [];
+    case 'blue':  return state.bluePiecesToPlace ?? [];
+  }
 }
 
 /**
  * Check if all pieces have been placed
  */
 export function isPlacementComplete(state: PlacementState): boolean {
-  return state.whitePiecesToPlace.length === 0 && state.blackPiecesToPlace.length === 0;
+  if (state.whitePiecesToPlace.length > 0) return false;
+  if (state.blackPiecesToPlace.length > 0) return false;
+  if (state.redPiecesToPlace && state.redPiecesToPlace.length > 0) return false;
+  if (state.bluePiecesToPlace && state.bluePiecesToPlace.length > 0) return false;
+  return true;
+}
+
+/** Get all colors participating in placement */
+function getPlacementColors(state: PlacementState): PlayerColor[] {
+  const colors: PlayerColor[] = ['white', 'black'];
+  if (state.redPiecesToPlace !== undefined) colors.push('red');
+  if (state.bluePiecesToPlace !== undefined) colors.push('blue');
+  return colors;
 }
 
 /**
  * Get the next placer after a piece is placed
+ * For 4-player, cycles white → blue → black → red → ... (TURN_ORDER) skipping done players.
  */
 export function getNextPlacer(state: PlacementState, currentPlacer: PlayerColor): PlayerColor {
-  const otherColor = currentPlacer === 'white' ? 'black' : 'white';
-  const otherPieces = getPiecesToPlace(state, otherColor);
+  const colors = getPlacementColors(state);
 
-  // If other player still has pieces, they go next
-  if (otherPieces.length > 0) {
-    return otherColor;
+  // For 4-player, use TURN_ORDER within the participating colors
+  const import_TURN_ORDER: PlayerColor[] = ['white', 'blue', 'black', 'red'];
+  const ordered = import_TURN_ORDER.filter(c => colors.includes(c));
+
+  // Find next in order who still has pieces
+  const currentIdx = ordered.indexOf(currentPlacer);
+  for (let i = 1; i <= ordered.length; i++) {
+    const nextColor = ordered[(currentIdx + i) % ordered.length];
+    if (getPiecesToPlace(state, nextColor).length > 0) {
+      return nextColor;
+    }
   }
 
-  // Otherwise current player continues (if they have pieces left)
   return currentPlacer;
 }
 
@@ -366,6 +451,28 @@ export function createPlacementStateFromDrafts(
   };
 }
 
+/**
+ * Create placement state from 4-player completed drafts
+ */
+export function createFourPlayerPlacementState(
+  whiteDraft: PlayerDraft,
+  blueDraft: PlayerDraft,
+  blackDraft: PlayerDraft,
+  redDraft: PlayerDraft,
+): PlacementState {
+  return {
+    whitePiecesToPlace: createPiecesFromDraft(whiteDraft, 'white'),
+    blackPiecesToPlace: createPiecesFromDraft(blackDraft, 'black'),
+    redPiecesToPlace: createPiecesFromDraft(redDraft, 'red'),
+    bluePiecesToPlace: createPiecesFromDraft(blueDraft, 'blue'),
+    currentPlacer: 'white',
+    selectedPieceId: null,
+    mode: 'alternating',
+    whiteReady: false,
+    blackReady: false,
+  };
+}
+
 // =============================================================================
 // Herald Placement Special Rules
 // =============================================================================
@@ -379,13 +486,20 @@ export function isHerald(piece: PieceInstance): boolean {
 
 /**
  * Get the actual position where a Herald should be placed.
- * Heralds go on the pawn rank, not the back rank.
+ * Heralds go on the pawn rank/file, not the back rank/file.
  */
 export function getHeraldActualPosition(
   clickedPosition: Position,
   color: PlayerColor,
-  dimensions: { ranks: number }
+  dimensions: { ranks: number; files?: number }
 ): Position {
+  if (color === 'red') {
+    return { file: 'b', rank: clickedPosition.rank };
+  }
+  if (color === 'blue') {
+    const bl = String.fromCharCode(97 + (dimensions.files ?? 12) - 2) as File;
+    return { file: bl, rank: clickedPosition.rank };
+  }
   const pawnRank: Rank = color === 'white' ? 2 : ((dimensions.ranks - 1) as Rank);
   return {
     file: clickedPosition.file,
@@ -394,13 +508,20 @@ export function getHeraldActualPosition(
 }
 
 /**
- * Get the back rank position for a pawn that swaps with a Herald.
+ * Get the back rank/file position for a pawn that swaps with a Herald.
  */
 export function getPawnSwapPosition(
   file: File,
   color: PlayerColor,
-  dimensions: { ranks: number }
+  dimensions: { ranks: number; files?: number }
 ): Position {
+  if (color === 'red') {
+    return { file: 'a', rank: file.charCodeAt(0) as unknown as Rank }; // use rank as surrogate - not applicable for 4-player side
+  }
+  if (color === 'blue') {
+    const bl = String.fromCharCode(97 + (dimensions.files ?? 12) - 1) as File;
+    return { file: bl, rank: file.charCodeAt(0) as unknown as Rank };
+  }
   const backRank: Rank = color === 'white' ? 1 : (dimensions.ranks as Rank);
   return {
     file,

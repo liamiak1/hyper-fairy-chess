@@ -50,6 +50,14 @@
   color: #333;
 }
 
+.red-remaining {
+  color: #e74c3c;
+}
+
+.blue-remaining {
+  color: #3498db;
+}
+
 .placement-instructions {
   font-size: 0.85em;
   color: #666;

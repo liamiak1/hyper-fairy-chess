@@ -12,6 +12,7 @@ import type {
   File,
   Rank,
 } from '../types';
+import { TURN_ORDER } from '../types';
 import { PIECE_BY_ID } from '../pieces/pieceDefinitions';
 import {
   cloneBoardState,
@@ -837,10 +838,22 @@ export function executeMove(gameState: GameState, move: Move): GameState {
     }
   }
 
-  // Switch turn
-  const nextTurn = getOpponentColor(gameState.currentTurn);
+  // Switch turn — supports both 2-player and 4-player
+  let nextTurn: PlayerColor;
+  const activePlayers = boardWithFrozen.activePlayers;
+  if (activePlayers && activePlayers.length > 2) {
+    // 4-player: cycle through TURN_ORDER skipping eliminated players
+    const currentIdx = TURN_ORDER.indexOf(gameState.currentTurn);
+    let nextIdx = (currentIdx + 1) % TURN_ORDER.length;
+    while (!activePlayers.includes(TURN_ORDER[nextIdx])) {
+      nextIdx = (nextIdx + 1) % TURN_ORDER.length;
+    }
+    nextTurn = TURN_ORDER[nextIdx];
+  } else {
+    nextTurn = getOpponentColor(gameState.currentTurn);
+  }
 
-  // Increment turn number (after black moves)
+  // Increment turn number (after last player in order moves)
   const newTurnNumber = nextTurn === 'white' ? gameState.turnNumber + 1 : gameState.turnNumber;
 
   // Check if opponent is now in check
@@ -1040,14 +1053,16 @@ export function createInitialGameState(
  * Create empty game state for placement phase
  */
 export function createEmptyGameState(
-  boardSize: '8x8' | '10x8' | '10x10' = '8x8',
+  boardSize: import('../types').BoardSize = '8x8',
   pointBudget: number = 0
 ): GameState {
-  const dimensions = {
+  const dimensionMap: Record<string, { files: number; ranks: number }> = {
     '8x8': { files: 8, ranks: 8 },
     '10x8': { files: 10, ranks: 8 },
     '10x10': { files: 10, ranks: 10 },
-  }[boardSize];
+    '4player': { files: 12, ranks: 12 },
+  };
+  const dimensions = dimensionMap[boardSize] ?? { files: 8, ranks: 8 };
 
   return {
     phase: 'placement',
@@ -1056,6 +1071,7 @@ export function createEmptyGameState(
       dimensions,
       pieces: [],
       positionMap: new Map(),
+      boardSize,
     },
     players: {
       white: { color: 'white', budget: pointBudget, remainingBudget: 0, victoryPoints: 0 },
@@ -1072,6 +1088,27 @@ export function createEmptyGameState(
     halfmoveClock: 0,
     positionHistory: [],
     result: null,
+  };
+}
+
+/**
+ * Create empty game state for 4-player placement phase
+ */
+export function createFourPlayerGameState(pointBudget: number = 0): GameState {
+  const state = createEmptyGameState('4player', pointBudget);
+  return {
+    ...state,
+    board: {
+      ...state.board,
+      activePlayers: ['white', 'blue', 'black', 'red'],
+      boardSize: '4player',
+    },
+    players: {
+      white: { color: 'white', budget: pointBudget, remainingBudget: 0, victoryPoints: 0 },
+      black: { color: 'black', budget: pointBudget, remainingBudget: 0, victoryPoints: 0 },
+      red: { color: 'red', budget: pointBudget, remainingBudget: 0, victoryPoints: 0 },
+      blue: { color: 'blue', budget: pointBudget, remainingBudget: 0, victoryPoints: 0 },
+    },
   };
 }
 

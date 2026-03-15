@@ -9,7 +9,7 @@ import { SocketProvider } from './context/SocketContext';
 import { AuthProvider } from './context/AuthContext';
 import './App.css';
 
-type GameMode = 'menu' | 'local' | 'ai' | 'online' | 'profile';
+type GameMode = 'menu' | 'local' | 'ai' | 'online' | 'profile' | '4player';
 
 function getResetToken(): string | null {
   const params = new URLSearchParams(window.location.search);
@@ -32,6 +32,10 @@ function AppContent() {
     setMode('ai');
   }, []);
 
+  const handle4PlayerPlay = useCallback(() => {
+    setMode('4player');
+  }, []);
+
   if (resetToken) {
     return (
       <div className="app">
@@ -52,6 +56,7 @@ function AppContent() {
         <MainMenu
           onLocalPlay={() => setMode('local')}
           onAIPlay={handleAIPlay}
+          on4PlayerPlay={handle4PlayerPlay}
           onOnlinePlay={() => setMode('online')}
           onProfile={() => setMode('profile')}
         />
@@ -63,6 +68,14 @@ function AppContent() {
     return (
       <div className="app">
         <Game />
+      </div>
+    );
+  }
+
+  if (mode === '4player') {
+    return (
+      <div className="app">
+        <Game playerColors={['white', 'blue', 'black', 'red']} />
       </div>
     );
   }

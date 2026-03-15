@@ -14,6 +14,8 @@ interface PlacementUIProps {
   playerColor?: PlayerColor;
   whitePiecesRemaining: number;
   blackPiecesRemaining: number;
+  redPiecesRemaining?: number;
+  bluePiecesRemaining?: number;
 }
 
 export function PlacementUI({
@@ -24,6 +26,8 @@ export function PlacementUI({
   playerColor,
   whitePiecesRemaining,
   blackPiecesRemaining,
+  redPiecesRemaining,
+  bluePiecesRemaining,
 }: PlacementUIProps) {
   // Group pieces by tier
   const piecesByTier = groupPiecesByTier(piecesToPlace);
@@ -35,13 +39,15 @@ export function PlacementUI({
         <div className={`placer-indicator ${currentPlacer}`}>
           {playerColor
             ? (currentPlacer === playerColor ? 'Your' : "Opponent's")
-            : (currentPlacer === 'white' ? "White's" : "Black's")} turn to place
+            : `${currentPlacer.charAt(0).toUpperCase() + currentPlacer.slice(1)}'s`} turn to place
         </div>
       </div>
 
       <div className="pieces-remaining">
         <span className="white-remaining">White: {whitePiecesRemaining}</span>
         <span className="black-remaining">Black: {blackPiecesRemaining}</span>
+        {redPiecesRemaining !== undefined && <span className="red-remaining">Red: {redPiecesRemaining}</span>}
+        {bluePiecesRemaining !== undefined && <span className="blue-remaining">Blue: {bluePiecesRemaining}</span>}
       </div>
 
       <div className="placement-instructions">

@@ -23,6 +23,16 @@
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.3), inset 0 0 30px rgba(0, 0, 0, 0.1);
 }
 
+.board-container.red-turn {
+  background: linear-gradient(135deg, rgba(231, 76, 60, 0.15) 0%, rgba(231, 76, 60, 0.05) 50%, transparent 100%);
+  box-shadow: 0 0 20px rgba(231, 76, 60, 0.2), inset 0 0 30px rgba(231, 76, 60, 0.07);
+}
+
+.board-container.blue-turn {
+  background: linear-gradient(135deg, rgba(52, 152, 219, 0.15) 0%, rgba(52, 152, 219, 0.05) 50%, transparent 100%);
+  box-shadow: 0 0 20px rgba(52, 152, 219, 0.2), inset 0 0 30px rgba(52, 152, 219, 0.07);
+}
+
 /* Main board grid */
 .board {
   display: grid;
@@ -90,6 +100,23 @@
 .piece.black {
   color: #333;
   -webkit-text-stroke: 1px #000;
+}
+
+.piece.red {
+  color: #e74c3c;
+  -webkit-text-stroke: 1px #922b21;
+}
+
+.piece.blue {
+  color: #3498db;
+  -webkit-text-stroke: 1px #1a5276;
+}
+
+/* Void square (4-player board corners) */
+.square.void {
+  background: #1a1a1a;
+  cursor: default;
+  pointer-events: none;
 }
 
 .piece.frozen {

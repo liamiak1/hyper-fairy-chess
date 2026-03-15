@@ -22,7 +22,9 @@ import {
   getDirectionVectors,
   expandLeapOffset,
   getPawnDirection,
+  getForwardVector,
   canPawnDoubleMove,
+  getOpponentColors,
   ALL_DIRECTIONS,
   getAllPieces,
   canCaptureByDisplacement,
@@ -298,16 +300,16 @@ function generatePawnForwardMoves(board: BoardState, piece: PieceInstance): Posi
   if (!piece.position) return [];
 
   const moves: Position[] = [];
-  const direction = getPawnDirection(piece.owner);
+  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner);
 
   // Single step forward
-  const oneStep = offsetPosition(piece.position, 0, direction, board.dimensions);
+  const oneStep = offsetPosition(piece.position, fdx, fdy, board.dimensions);
   if (oneStep && isSquareEmpty(board, oneStep)) {
     moves.push(oneStep);
 
     // Double step from starting position
-    if (canPawnDoubleMove(piece, piece.owner)) {
-      const twoStep = offsetPosition(piece.position, 0, direction * 2, board.dimensions);
+    if (canPawnDoubleMove(piece, piece.owner, board.dimensions)) {
+      const twoStep = offsetPosition(piece.position, fdx * 2, fdy * 2, board.dimensions);
       if (twoStep && isSquareEmpty(board, twoStep)) {
         moves.push(twoStep);
       }
@@ -328,11 +330,15 @@ function generatePawnCaptureMoves(
   if (!piece.position) return [];
 
   const moves: Position[] = [];
-  const direction = getPawnDirection(piece.owner);
+  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner);
 
-  // Diagonal captures
-  for (const dx of [-1, 1]) {
-    const capturePos = offsetPosition(piece.position, dx, direction, board.dimensions);
+  // Perpendicular directions (the "sideways" component of diagonal captures)
+  const perps = fdy !== 0
+    ? [{ dx: -1, dy: 0 }, { dx: 1, dy: 0 }]
+    : [{ dx: 0, dy: -1 }, { dx: 0, dy: 1 }];
+
+  for (const p of perps) {
+    const capturePos = offsetPosition(piece.position, fdx + p.dx, fdy + p.dy, board.dimensions);
     if (!capturePos) continue;
 
     // Regular capture - only if enemy piece is capturable
@@ -340,8 +346,8 @@ function generatePawnCaptureMoves(
       moves.push(capturePos);
     }
 
-    // En passant (the captured pawn is always capturable)
-    if (enPassantTarget && capturePos.file === enPassantTarget.file && capturePos.rank === enPassantTarget.rank) {
+    // En passant - only for vertical pawns (white/black)
+    if (fdy !== 0 && enPassantTarget && capturePos.file === enPassantTarget.file && capturePos.rank === enPassantTarget.rank) {
       moves.push(capturePos);
     }
   }
@@ -356,11 +362,11 @@ function generateShogiPawnMoves(board: BoardState, piece: PieceInstance): Positi
   if (!piece.position) return [];
 
   const moves: Position[] = [];
-  const direction = getPawnDirection(piece.owner);
+  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner);
   const canDisplacementCapture = canCaptureByDisplacement(piece);
 
   // Single step forward (move or capture)
-  const oneStep = offsetPosition(piece.position, 0, direction, board.dimensions);
+  const oneStep = offsetPosition(piece.position, fdx, fdy, board.dimensions);
   if (oneStep) {
     // Can move if empty
     if (isSquareEmpty(board, oneStep)) {
@@ -622,17 +628,22 @@ function generatePeasantDiagonalMoves(board: BoardState, piece: PieceInstance): 
   if (!piece.position) return [];
 
   const moves: Position[] = [];
-  const direction = getPawnDirection(piece.owner);
+  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner);
+  const perps = fdy !== 0
+    ? [{ dx: -1, dy: 0 }, { dx: 1, dy: 0 }]
+    : [{ dx: 0, dy: -1 }, { dx: 0, dy: 1 }];
 
-  // Diagonal moves (forward-left and forward-right)
-  for (const dx of [-1, 1]) {
-    const oneStep = offsetPosition(piece.position, dx, direction, board.dimensions);
+  // Diagonal moves (forward-left and forward-right relative to piece's forward)
+  for (const p of perps) {
+    const ddx = fdx + p.dx;
+    const ddy = fdy + p.dy;
+    const oneStep = offsetPosition(piece.position, ddx, ddy, board.dimensions);
     if (oneStep && isSquareEmpty(board, oneStep)) {
       moves.push(oneStep);
 
       // Double diagonal on first move (same diagonal direction)
       if (!piece.hasMoved) {
-        const twoStep = offsetPosition(piece.position, dx * 2, direction * 2, board.dimensions);
+        const twoStep = offsetPosition(piece.position, ddx * 2, ddy * 2, board.dimensions);
         if (twoStep && isSquareEmpty(board, twoStep)) {
           moves.push(twoStep);
         }
@@ -651,10 +662,10 @@ function generatePeasantCaptureMoves(board: BoardState, piece: PieceInstance): P
   if (!piece.position) return [];
 
   const moves: Position[] = [];
-  const direction = getPawnDirection(piece.owner);
+  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner);
 
   // Capture forward only
-  const capturePos = offsetPosition(piece.position, 0, direction, board.dimensions);
+  const capturePos = offsetPosition(piece.position, fdx, fdy, board.dimensions);
   if (capturePos && hasCapturableEnemyPiece(board, capturePos, piece.owner)) {
     moves.push(capturePos);
   }
@@ -868,7 +879,8 @@ function generateChameleonMoves(board: BoardState, piece: PieceInstance): Positi
   }
 
   // 3. Other capturing moves: capture like the target piece
-  const enemyPieces = getAllPieces(board, piece.owner === 'white' ? 'black' : 'white');
+  const opponents = getOpponentColors(board, piece.owner);
+  const enemyPieces = opponents.flatMap(opp => getAllPieces(board, opp));
 
   for (const enemy of enemyPieces) {
     if (!enemy.position) continue;
@@ -1844,13 +1856,13 @@ function generateCheckersForwardMoves(board: BoardState, piece: PieceInstance): 
 
   const moves: Position[] = [];
   const visited = new Set<string>();
-  const direction = getPawnDirection(piece.owner); // +1 for white, -1 for black
+  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner);
+  const perps = fdy !== 0
+    ? [{ dx: -1, dy: 0 }, { dx: 1, dy: 0 }]
+    : [{ dx: 0, dy: -1 }, { dx: 0, dy: 1 }];
 
   // Forward diagonal directions only
-  const forwardDiagonals = [
-    { dx: -1, dy: direction },
-    { dx: 1, dy: direction },
-  ];
+  const forwardDiagonals = perps.map(p => ({ dx: fdx + p.dx, dy: fdy + p.dy }));
 
   // 1. Non-capturing moves: 1 square diagonally forward
   for (const dir of forwardDiagonals) {
@@ -1982,17 +1994,20 @@ function generateKingMoves(board: BoardState, piece: PieceInstance): Position[] 
 function generateGoldGeneralMoves(board: BoardState, piece: PieceInstance): Position[] {
   if (!piece.position) return [];
 
-  const dir = getPawnDirection(piece.owner); // +1 for white, -1 for black
+  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner);
+  const perps = fdy !== 0
+    ? [{ dx: -1, dy: 0 }, { dx: 1, dy: 0 }]
+    : [{ dx: 0, dy: -1 }, { dx: 0, dy: 1 }];
   const moves: Position[] = [];
 
-  // Orthogonals (N/S/E/W) + forward diagonals only
+  // Orthogonals (forward, backward, sides) + forward diagonals only
   const offsets = [
-    { dx: 0, dy: dir },   // forward
-    { dx: 0, dy: -dir },  // backward
-    { dx: -1, dy: 0 },    // left
-    { dx: 1, dy: 0 },     // right
-    { dx: -1, dy: dir },  // forward-left diagonal
-    { dx: 1, dy: dir },   // forward-right diagonal
+    { dx: fdx, dy: fdy },                              // forward
+    { dx: -fdx, dy: -fdy },                            // backward
+    perps[0],                                          // left/right
+    perps[1],                                          // left/right
+    { dx: fdx + perps[0].dx, dy: fdy + perps[0].dy }, // forward-left diagonal
+    { dx: fdx + perps[1].dx, dy: fdy + perps[1].dy }, // forward-right diagonal
   ];
 
   for (const offset of offsets) {
@@ -2014,16 +2029,19 @@ function generateGoldGeneralMoves(board: BoardState, piece: PieceInstance): Posi
 function generateSilverGeneralMoves(board: BoardState, piece: PieceInstance): Position[] {
   if (!piece.position) return [];
 
-  const dir = getPawnDirection(piece.owner); // +1 for white, -1 for black
+  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner);
+  const perps = fdy !== 0
+    ? [{ dx: -1, dy: 0 }, { dx: 1, dy: 0 }]
+    : [{ dx: 0, dy: -1 }, { dx: 0, dy: 1 }];
   const moves: Position[] = [];
 
   // All 4 diagonals + forward only
   const offsets = [
-    { dx: 0, dy: dir },   // forward
-    { dx: -1, dy: dir },  // forward-left diagonal
-    { dx: 1, dy: dir },   // forward-right diagonal
-    { dx: -1, dy: -dir }, // backward-left diagonal
-    { dx: 1, dy: -dir },  // backward-right diagonal
+    { dx: fdx, dy: fdy },                               // forward
+    { dx: fdx + perps[0].dx, dy: fdy + perps[0].dy },  // forward-left diagonal
+    { dx: fdx + perps[1].dx, dy: fdy + perps[1].dy },  // forward-right diagonal
+    { dx: -fdx + perps[0].dx, dy: -fdy + perps[0].dy }, // backward-left diagonal
+    { dx: -fdx + perps[1].dx, dy: -fdy + perps[1].dy }, // backward-right diagonal
   ];
 
   for (const offset of offsets) {
@@ -2086,12 +2104,12 @@ function generateMaoMoves(board: BoardState, piece: PieceInstance): Position[] {
 function generateLanceMoves(board: BoardState, piece: PieceInstance): Position[] {
   if (!piece.position) return [];
 
-  const dir = getPawnDirection(piece.owner);
+  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner);
   const moves: Position[] = [];
   let currentPos = piece.position;
 
   while (true) {
-    const nextPos = offsetPosition(currentPos, 0, dir, board.dimensions);
+    const nextPos = offsetPosition(currentPos, fdx, fdy, board.dimensions);
     if (!nextPos) break;
 
     if (isSquareEmpty(board, nextPos)) {

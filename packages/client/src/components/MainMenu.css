@@ -86,6 +86,16 @@
   background: linear-gradient(135deg, rgba(0, 184, 148, 0.25) 0%, rgba(0, 184, 148, 0.1) 100%);
 }
 
+.menu-btn.fourplayer {
+  border-color: #a29bfe;
+  background: linear-gradient(135deg, rgba(162, 155, 254, 0.15) 0%, rgba(162, 155, 254, 0.05) 100%);
+}
+
+.menu-btn.fourplayer:hover {
+  border-color: #6c5ce7;
+  background: linear-gradient(135deg, rgba(162, 155, 254, 0.25) 0%, rgba(162, 155, 254, 0.1) 100%);
+}
+
 .menu-btn.profile {
   border-color: #fdcb6e;
   background: linear-gradient(135deg, rgba(253, 203, 110, 0.15) 0%, rgba(253, 203, 110, 0.05) 100%);

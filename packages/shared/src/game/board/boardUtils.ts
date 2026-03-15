@@ -8,6 +8,7 @@ import type {
   Position,
   BoardDimensions,
   BoardState,
+  BoardSize,
   PieceInstance,
   PlayerColor,
 } from '../types';
@@ -18,7 +19,7 @@ import { PIECE_BY_ID } from '../pieces/pieceDefinitions';
 // File/Rank Conversion
 // =============================================================================
 
-const FILES: File[] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'];
+const FILES: File[] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'];
 
 export function fileToIndex(file: File): number {
   return FILES.indexOf(file);
@@ -35,13 +36,13 @@ export function indexToFile(index: number): File | null {
 
 /**
  * Offset a position by dx (files) and dy (ranks)
- * Returns null if the resulting position would be off the board
+ * Returns null if the resulting position would be off the board or in a void square
  */
 export function offsetPosition(
   pos: Position,
   dx: number,
   dy: number,
-  dimensions: BoardDimensions
+  dimensions: BoardDimensions & { boardSize?: BoardSize }
 ): Position | null {
   const newFileIndex = fileToIndex(pos.file) + dx;
   const newRank = pos.rank + dy;
@@ -52,7 +53,14 @@ export function offsetPosition(
   const newFile = indexToFile(newFileIndex);
   if (!newFile) return null;
 
-  return { file: newFile, rank: newRank as Rank };
+  const newPos: Position = { file: newFile, rank: newRank as Rank };
+
+  // Reject void corner squares on 4-player board
+  if ((dimensions as { boardSize?: BoardSize }).boardSize === '4player') {
+    if (isVoidSquare(newPos, '4player')) return null;
+  }
+
+  return newPos;
 }
 
 /**
@@ -218,6 +226,8 @@ export function cloneBoardState(board: BoardState): BoardState {
     hadMultipleRoyals: board.hadMultipleRoyals
       ? { ...board.hadMultipleRoyals }
       : undefined,
+    activePlayers: board.activePlayers ? [...board.activePlayers] : undefined,
+    boardSize: board.boardSize,
   };
 }
 
@@ -258,15 +268,15 @@ export function countRoyaltyTierPieces(pieces: PieceInstance[], color: PlayerCol
  * Tracks royalty-tier pieces (not just isRoyal) for Regent logic
  */
 export function initializeRoyalTracking(board: BoardState): BoardState {
-  const whiteRoyalty = countRoyaltyTierPieces(board.pieces, 'white');
-  const blackRoyalty = countRoyaltyTierPieces(board.pieces, 'black');
+  const players = board.activePlayers ?? ['white', 'black'];
+  const hadMultipleRoyals: Partial<Record<import('../types').PlayerColor, boolean>> = {};
+  for (const color of players) {
+    hadMultipleRoyals[color] = countRoyaltyTierPieces(board.pieces, color) > 1;
+  }
 
   return {
     ...board,
-    hadMultipleRoyals: {
-      white: whiteRoyalty > 1,
-      black: blackRoyalty > 1,
-    },
+    hadMultipleRoyals,
   };
 }
 
@@ -385,10 +395,36 @@ export function expandLeapOffset(leap: { dx: number; dy: number; symmetric: bool
 // =============================================================================
 
 /**
- * Get the forward direction for a player color
+ * Get the forward direction vector for a player color.
+ * White/Black move vertically; Red/Blue move horizontally.
+ */
+export function getForwardVector(color: PlayerColor): { dx: number; dy: number } {
+  switch (color) {
+    case 'white': return { dx: 0, dy: 1 };
+    case 'black': return { dx: 0, dy: -1 };
+    case 'red':   return { dx: 1, dy: 0 };
+    case 'blue':  return { dx: -1, dy: 0 };
+  }
+}
+
+/**
+ * Get the forward direction for a player color (2-player helper, kept for backward compat)
+ * Returns ±1 (dy) for white/black, and ±1 (dx) for red/blue mapped to dy
  */
 export function getPawnDirection(color: PlayerColor): number {
-  return color === 'white' ? 1 : -1;
+  const { dx, dy } = getForwardVector(color);
+  return dy !== 0 ? dy : dx;
+}
+
+/**
+ * Check if a position is a void (corner) square on the 4-player board.
+ * The 4-player board is a 12×12 cross with 2×2 corners cut out.
+ */
+export function isVoidSquare(pos: Position, boardSize: BoardSize): boolean {
+  if (boardSize !== '4player') return false;
+  const fi = fileToIndex(pos.file) + 1; // 1-indexed
+  const r = pos.rank;
+  return (fi <= 2 || fi >= 11) && (r <= 2 || r >= 11);
 }
 
 /**
@@ -399,7 +435,7 @@ export function getPawnStartRank(color: PlayerColor): Rank {
 }
 
 /**
- * Get the promotion rank for a given color
+ * Get the promotion rank for a given color (white/black only; use isOnPromotionLine for 4-player)
  */
 export function getPromotionRank(color: PlayerColor, dimensions: BoardDimensions): Rank {
   return color === 'white' ? (dimensions.ranks as Rank) : 1;
@@ -407,13 +443,19 @@ export function getPromotionRank(color: PlayerColor, dimensions: BoardDimensions
 
 /**
  * Check if a pawn can double-move from its current position
+ * For white/black: checks rank-based start zone.
+ * For red/blue: checks file-based start zone.
  */
-export function canPawnDoubleMove(piece: PieceInstance, color: PlayerColor): boolean {
+export function canPawnDoubleMove(piece: PieceInstance, color: PlayerColor, dimensions?: BoardDimensions): boolean {
   if (!piece.position) return false;
   if (piece.hasMoved) return false;
 
-  // Can double move from rank 1 or 2 (for white) or rank 7 or 8 (for black)
-  // Based on PLANNING.md rules
+  if (color === 'red' || color === 'blue') {
+    if (!dimensions) return false;
+    return isInPawnStartZone(piece, color, dimensions);
+  }
+
+  // White/Black (vertical pawns) - classic rank check
   if (color === 'white') {
     return piece.position.rank <= 2;
   } else {
@@ -433,10 +475,55 @@ export function getHomeRank(color: PlayerColor): Rank {
 }
 
 /**
- * Get the opponent's color
+ * Get the opponent's color (2-player)
  */
 export function getOpponentColor(color: PlayerColor): PlayerColor {
   return color === 'white' ? 'black' : 'white';
+}
+
+/**
+ * Get all opponent colors for a player (supports 4-player via activePlayers on board)
+ */
+export function getOpponentColors(board: BoardState, color: PlayerColor): PlayerColor[] {
+  const players = board.activePlayers ?? ['white', 'black'];
+  return players.filter(p => p !== color);
+}
+
+/**
+ * Check if a pawn-type piece is in its starting zone (for double-move eligibility).
+ * Supports all 4 player colors.
+ */
+export function isInPawnStartZone(
+  piece: PieceInstance,
+  color: PlayerColor,
+  dimensions: BoardDimensions
+): boolean {
+  if (!piece.position || piece.hasMoved) return false;
+  const fi = fileToIndex(piece.position.file) + 1; // 1-indexed
+  switch (color) {
+    case 'white': return piece.position.rank <= 2;
+    case 'black': return piece.position.rank >= dimensions.ranks - 1;
+    case 'red':   return fi <= 2;
+    case 'blue':  return fi >= dimensions.files - 1;
+  }
+}
+
+/**
+ * Check if a position is on the promotion line for a given color.
+ * Supports all 4 player colors.
+ */
+export function isOnPromotionLine(
+  pos: Position,
+  color: PlayerColor,
+  dimensions: BoardDimensions
+): boolean {
+  const fi = fileToIndex(pos.file) + 1; // 1-indexed
+  switch (color) {
+    case 'white': return pos.rank === dimensions.ranks;
+    case 'black': return pos.rank === 1;
+    case 'red':   return fi === dimensions.files;
+    case 'blue':  return fi === 1;
+  }
 }
 
 // =============================================================================

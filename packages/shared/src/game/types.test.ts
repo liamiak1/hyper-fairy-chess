@@ -40,12 +40,12 @@ describe('Type Utilities', () => {
     it('returns null for invalid string', () => {
       expect(stringToPosition('invalid')).toBeNull();
       expect(stringToPosition('')).toBeNull();
-      expect(stringToPosition('k1')).toBeNull(); // invalid file
+      expect(stringToPosition('m1')).toBeNull(); // invalid file (beyond 'l')
     });
 
     it('returns null for out-of-range rank', () => {
       expect(stringToPosition('a0')).toBeNull();
-      expect(stringToPosition('a11')).toBeNull();
+      expect(stringToPosition('a13')).toBeNull(); // beyond max rank 12
     });
   });
 

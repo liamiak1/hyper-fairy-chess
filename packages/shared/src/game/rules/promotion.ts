@@ -10,7 +10,7 @@ import type {
   GameState,
 } from '../types';
 import { PIECE_BY_ID, ALL_PIECES } from '../pieces/pieceDefinitions';
-import { getPromotionRank } from '../board/boardUtils';
+import { getPromotionRank, isOnPromotionLine } from '../board/boardUtils';
 
 // =============================================================================
 // Promotion Detection
@@ -28,7 +28,12 @@ export function isPromotionMove(
   // Only pawn-type pieces can promote
   if (!isPawnType(pieceType)) return false;
 
-  // Check if reaching promotion rank
+  // For red/blue horizontal players, use isOnPromotionLine
+  if (piece.owner === 'red' || piece.owner === 'blue') {
+    return isOnPromotionLine(to, piece.owner, dimensions);
+  }
+
+  // White/Black: check promotion rank
   const promotionRank = getPromotionRank(piece.owner, dimensions);
   return to.rank === promotionRank;
 }

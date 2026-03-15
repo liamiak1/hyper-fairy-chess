@@ -20,6 +20,7 @@ import './Game.css';
 interface GameProps {
   mode?: GameMode;
   aiColor?: PlayerColor;
+  playerColors?: PlayerColor[];
 }
 
 interface PieceInfoState {
@@ -29,7 +30,7 @@ interface PieceInfoState {
   y: number;
 }
 
-export function Game({ mode = 'draft', aiColor }: GameProps) {
+export function Game({ mode = 'draft', aiColor, playerColors }: GameProps) {
   const [hoveredMove, setHoveredMove] = useState<Position | null>(null);
   const [pieceInfo, setPieceInfo] = useState<PieceInfoState | null>(null);
 
@@ -71,6 +72,7 @@ export function Game({ mode = 'draft', aiColor }: GameProps) {
     isDraftPhase,
     showHandoff,
     currentDrafter,
+    nextDrafter,
     currentDraft,
     availablePieces,
     budget,
@@ -100,7 +102,7 @@ export function Game({ mode = 'draft', aiColor }: GameProps) {
     resultDescription,
     currentTurn,
     isAIThinking,
-  } = useChessGame(mode, aiColor);
+  } = useChessGame(mode, aiColor, playerColors);
 
   // Handle board click - different behavior for placement vs play
   const handleSquareClick = (position: { file: string; rank: number }) => {
@@ -118,7 +120,7 @@ export function Game({ mode = 'draft', aiColor }: GameProps) {
 
   // Draft phase - show handoff screen between players (skip for AI)
   if (showHandoff && aiColor !== 'black') {
-    return <HandoffScreen nextPlayer="black" onReady={acknowledgeHandoff} />;
+    return <HandoffScreen nextPlayer={nextDrafter} onReady={acknowledgeHandoff} />;
   }
 
   // Draft phase - piece selection (skip DraftUI when it's the AI's turn)
@@ -193,6 +195,8 @@ export function Game({ mode = 'draft', aiColor }: GameProps) {
             currentPlacer={placementState.currentPlacer}
             whitePiecesRemaining={placementState.whitePiecesToPlace.length}
             blackPiecesRemaining={placementState.blackPiecesToPlace.length}
+            redPiecesRemaining={placementState.redPiecesToPlace?.length}
+            bluePiecesRemaining={placementState.bluePiecesToPlace?.length}
           />
         )}
       </div>

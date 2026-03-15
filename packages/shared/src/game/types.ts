@@ -6,8 +6,8 @@
 // Board & Position Types
 // =============================================================================
 
-export type File = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j';
-export type Rank = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+export type File = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j' | 'k' | 'l';
+export type Rank = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
 export interface Position {
   file: File;
@@ -19,19 +19,23 @@ export interface BoardDimensions {
   ranks: number; // 8, 10, etc.
 }
 
-export type BoardSize = '8x8' | '10x8' | '10x10';
+export type BoardSize = '8x8' | '10x8' | '10x10' | '4player';
 
 export const BOARD_CONFIGS: Record<BoardSize, BoardDimensions & { pawnSlots: number; pieceSlots: number; royaltySlots: number }> = {
   '8x8': { files: 8, ranks: 8, pawnSlots: 8, pieceSlots: 6, royaltySlots: 2 },
   '10x8': { files: 10, ranks: 8, pawnSlots: 10, pieceSlots: 8, royaltySlots: 2 },
   '10x10': { files: 10, ranks: 10, pawnSlots: 10, pieceSlots: 8, royaltySlots: 2 },
+  '4player': { files: 12, ranks: 12, pawnSlots: 8, pieceSlots: 6, royaltySlots: 2 },
 };
 
 // =============================================================================
 // Player & Color Types
 // =============================================================================
 
-export type PlayerColor = 'white' | 'black';
+export type PlayerColor = 'white' | 'black' | 'red' | 'blue';
+
+/** Clockwise turn order for 4-player mode */
+export const TURN_ORDER: PlayerColor[] = ['white', 'blue', 'black', 'red'];
 
 export interface Player {
   color: PlayerColor;
@@ -163,7 +167,13 @@ export interface BoardState {
 
   // Tracks if player started with multiple royal pieces (for Regent logic)
   // Set at end of placement phase, used to determine if Regent gets queen powers
-  hadMultipleRoyals?: { white: boolean; black: boolean };
+  hadMultipleRoyals?: Partial<Record<PlayerColor, boolean>>;
+
+  // Active (non-eliminated) players; undefined = 2-player ['white','black']
+  activePlayers?: PlayerColor[];
+
+  // Board size reference for void-square detection
+  boardSize?: BoardSize;
 }
 
 // =============================================================================
@@ -196,6 +206,8 @@ export interface GameState {
   players: {
     white: Player;
     black: Player;
+    red?: Player;
+    blue?: Player;
   };
 
   // Turn tracking
@@ -292,13 +304,13 @@ export function positionToString(pos: Position): string {
 }
 
 export function stringToPosition(str: string): Position | null {
-  const match = str.match(/^([a-j])(\d+)$/);
+  const match = str.match(/^([a-l])(\d+)$/);
   if (!match) return null;
 
   const file = match[1] as File;
   const rank = parseInt(match[2], 10) as Rank;
 
-  if (rank < 1 || rank > 10) return null;
+  if (rank < 1 || rank > 12) return null;
 
   return { file, rank };
 }

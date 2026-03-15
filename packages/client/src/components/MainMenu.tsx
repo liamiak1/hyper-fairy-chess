@@ -12,11 +12,12 @@ import './MainMenu.css';
 interface MainMenuProps {
   onLocalPlay: () => void;
   onAIPlay: () => void;
+  on4PlayerPlay: () => void;
   onOnlinePlay: () => void;
   onProfile: () => void;
 }
 
-export function MainMenu({ onLocalPlay, onAIPlay, onOnlinePlay, onProfile }: MainMenuProps) {
+export function MainMenu({ onLocalPlay, onAIPlay, on4PlayerPlay, onOnlinePlay, onProfile }: MainMenuProps) {
   const { isAuthenticated, user, authAvailable } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showPieceStats, setShowPieceStats] = useState(false);
@@ -49,6 +50,14 @@ export function MainMenu({ onLocalPlay, onAIPlay, onOnlinePlay, onProfile }: Mai
             <span className="btn-text">
               <span className="btn-title">vs AI</span>
               <span className="btn-desc">Play against the computer</span>
+            </span>
+          </button>
+
+          <button className="menu-btn fourplayer" onClick={on4PlayerPlay}>
+            <span className="btn-icon">♜</span>
+            <span className="btn-text">
+              <span className="btn-title">4-Player (Local)</span>
+              <span className="btn-desc">White, Blue, Black & Red</span>
             </span>
           </button>
 

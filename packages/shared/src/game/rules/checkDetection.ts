@@ -10,7 +10,7 @@ import {
   getAllPieces,
   cloneBoardState,
   createPositionMap,
-  getOpponentColor,
+  getOpponentColors,
   getPieceAt,
   areAdjacent,
   fileToIndex,
@@ -66,7 +66,7 @@ function canBoxerThreaten(
 ): boolean {
   if (!boxer.position || boxer.isFrozen) return false;
 
-  const files: File[] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'];
+  const files: File[] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'];
   const moves = generatePseudoLegalMoves(board, boxer, null);
 
   for (const boxerNewPos of moves) {
@@ -545,12 +545,14 @@ export function isSquareAttacked(
 
 /**
  * Check if the king of the given color is in check
+ * Supports both 2-player and 4-player (via board.activePlayers)
  */
 export function isInCheck(board: BoardState, color: PlayerColor): boolean {
   const king = getKing(board, color);
   if (!king || !king.position) return false;
 
-  return isSquareAttacked(board, king.position, getOpponentColor(color));
+  const opponents = getOpponentColors(board, color);
+  return opponents.some(opp => isSquareAttacked(board, king.position!, opp));
 }
 
 /**
@@ -696,7 +698,7 @@ export function filterLegalMoves(
       const direction = piece.owner === 'white' ? 1 : -1;
       capturePosition = {
         file: enPassantTarget.file,
-        rank: (enPassantTarget.rank - direction) as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10,
+        rank: (enPassantTarget.rank - direction) as import('../types').Rank,
       };
     }
 

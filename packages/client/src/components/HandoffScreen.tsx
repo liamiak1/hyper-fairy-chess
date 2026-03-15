@@ -11,7 +11,7 @@ interface HandoffScreenProps {
 }
 
 export function HandoffScreen({ nextPlayer, onReady }: HandoffScreenProps) {
-  const playerName = nextPlayer === 'white' ? 'White' : 'Black';
+  const playerName = { white: 'White', black: 'Black', red: 'Red', blue: 'Blue' }[nextPlayer] ?? nextPlayer;
 
   return (
     <div className="handoff-screen">

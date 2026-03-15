@@ -39,7 +39,7 @@ describe('Board Utilities', () => {
 
     it('returns null for invalid index', () => {
       expect(indexToFile(-1)).toBeNull();
-      expect(indexToFile(10)).toBeNull();
+      expect(indexToFile(12)).toBeNull(); // beyond 'l' (index 11)
     });
   });
 

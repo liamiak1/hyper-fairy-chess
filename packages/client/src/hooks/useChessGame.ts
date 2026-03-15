@@ -55,6 +55,9 @@ import {
   addPieceToDraft,
   removePieceFromDraft,
   resetDraftPieceIdCounter,
+  TURN_ORDER,
+  createFourPlayerGameState,
+  createFourPlayerPlacementState,
 } from '@hyper-fairy-chess/shared';
 
 // =============================================================================
@@ -98,6 +101,7 @@ export interface UseChessGameReturn {
   isDraftPhase: boolean;
   showHandoff: boolean;
   currentDrafter: PlayerColor;
+  nextDrafter: PlayerColor;
   currentDraft: PlayerDraft | null;
   availablePieces: PieceType[];
   budget: number;
@@ -141,11 +145,17 @@ export interface UseChessGameReturn {
 
 export function useChessGame(
   mode: GameMode = 'standard',
-  aiColor?: PlayerColor
+  aiColor?: PlayerColor,
+  playerColors?: PlayerColor[]
 ): UseChessGameReturn {
+  const is4Player = playerColors !== undefined && playerColors.length === 4;
+
   // Initialize game state
   const [gameState, setGameState] = useState<GameState>(() => {
     if (mode === 'draft') {
+      if (playerColors && playerColors.length === 4) {
+        return { ...createFourPlayerGameState(0), phase: 'setup' as const };
+      }
       return { ...createEmptyGameState('8x8'), phase: 'setup' as const };
     }
     if (mode === 'placement') {
@@ -175,6 +185,8 @@ export function useChessGame(
   const [budget, setBudget] = useState<number>(400);
   const [whiteDraft, setWhiteDraft] = useState<PlayerDraft | null>(null);
   const [blackDraft, setBlackDraft] = useState<PlayerDraft | null>(null);
+  const [redDraft, setRedDraft] = useState<PlayerDraft | null>(null);
+  const [blueDraft, setBlueDraft] = useState<PlayerDraft | null>(null);
   const [currentDrafter, setCurrentDrafter] = useState<PlayerColor>('white');
   const [showHandoff, setShowHandoff] = useState(false);
 
@@ -293,8 +305,23 @@ export function useChessGame(
   // Computed: current draft (for current drafter)
   const currentDraft = useMemo(() => {
     if (!isDraftPhase) return null;
-    return currentDrafter === 'white' ? whiteDraft : blackDraft;
-  }, [isDraftPhase, currentDrafter, whiteDraft, blackDraft]);
+    switch (currentDrafter) {
+      case 'white': return whiteDraft;
+      case 'black': return blackDraft;
+      case 'red': return redDraft;
+      case 'blue': return blueDraft;
+      default: return null;
+    }
+  }, [isDraftPhase, currentDrafter, whiteDraft, blackDraft, redDraft, blueDraft]);
+
+  // Computed: next drafter (player who drafts after current one)
+  const nextDrafter = useMemo((): PlayerColor => {
+    if (is4Player) {
+      const idx = TURN_ORDER.indexOf(currentDrafter);
+      return TURN_ORDER[(idx + 1) % TURN_ORDER.length];
+    }
+    return currentDrafter === 'white' ? 'black' : 'white';
+  }, [is4Player, currentDrafter]);
 
   // Computed: available pieces for draft
   const availablePieces = useMemo(() => {
@@ -310,7 +337,12 @@ export function useChessGame(
   // Computed: selected piece to place
   const selectedPieceToPlace = useMemo(() => {
     if (!placementState || !placementState.selectedPieceId) return null;
-    const allPieces = [...placementState.whitePiecesToPlace, ...placementState.blackPiecesToPlace];
+    const allPieces = [
+      ...placementState.whitePiecesToPlace,
+      ...placementState.blackPiecesToPlace,
+      ...(placementState.redPiecesToPlace ?? []),
+      ...(placementState.bluePiecesToPlace ?? []),
+    ];
     return allPieces.find((p) => p.id === placementState.selectedPieceId) ?? null;
   }, [placementState]);
 
@@ -460,7 +492,13 @@ export function useChessGame(
    */
   const resetGame = useCallback(() => {
     if (mode === 'draft') {
-      setGameState({ ...createEmptyGameState('8x8'), phase: 'setup' as const });
+      if (is4Player) {
+        setGameState({ ...createFourPlayerGameState(0), phase: 'setup' as const });
+        setRedDraft(null);
+        setBlueDraft(null);
+      } else {
+        setGameState({ ...createEmptyGameState('8x8'), phase: 'setup' as const });
+      }
       setPlacementState(null);
       setWhiteDraft(null);
       setBlackDraft(null);
@@ -477,7 +515,7 @@ export function useChessGame(
     setSelectedPieceId(null);
     setPromotionPending(null);
     setStateHistory([]); // Clear undo history
-  }, [mode]);
+  }, [mode, is4Player]);
 
   /**
    * Undo the last move
@@ -566,6 +604,8 @@ export function useChessGame(
           gameState.board.dimensions
         );
 
+        // Pawn swap only applies to white/black (rank-based placement)
+        if (currentPlacer !== 'red' && currentPlacer !== 'blue') {
         // Check if there's already a pawn on the pawn rank in this file
         const pawnRank = currentPlacer === 'white' ? 2 : (gameState.board.dimensions.ranks - 1);
         const pawnRankPosKey = `${actualPosition.file}${pawnRank}`;
@@ -586,11 +626,12 @@ export function useChessGame(
             }
           }
         }
-      }
+        } // end if (currentPlacer !== 'red' && currentPlacer !== 'blue')
+      } // end if (isHerald)
 
       // Pawn special placement: if Herald is already on pawn rank in this file, go to back rank
       const pieceType = PIECE_BY_ID[selectedPieceToPlace.typeId];
-      if (pieceType && pieceType.tier === 'pawn') {
+      if (pieceType && pieceType.tier === 'pawn' && currentPlacer !== 'red' && currentPlacer !== 'blue') {
         if (shouldPawnSwapToBackRank(
           gameState.board,
           position.file,
@@ -635,13 +676,23 @@ export function useChessGame(
         currentPlacer === 'black'
           ? placementState.blackPiecesToPlace.filter((p) => p.id !== selectedPieceToPlace.id)
           : placementState.blackPiecesToPlace;
+      const newRedPieces =
+        currentPlacer === 'red'
+          ? (placementState.redPiecesToPlace ?? []).filter((p) => p.id !== selectedPieceToPlace.id)
+          : placementState.redPiecesToPlace;
+      const newBluePieces =
+        currentPlacer === 'blue'
+          ? (placementState.bluePiecesToPlace ?? []).filter((p) => p.id !== selectedPieceToPlace.id)
+          : placementState.bluePiecesToPlace;
 
       // Create updated placement state to check completion
       const updatedPlacementState: PlacementState = {
         whitePiecesToPlace: newWhitePieces,
         blackPiecesToPlace: newBlackPieces,
+        redPiecesToPlace: newRedPieces,
+        bluePiecesToPlace: newBluePieces,
         currentPlacer: getNextPlacer(
-          { ...placementState, whitePiecesToPlace: newWhitePieces, blackPiecesToPlace: newBlackPieces },
+          { ...placementState, whitePiecesToPlace: newWhitePieces, blackPiecesToPlace: newBlackPieces, redPiecesToPlace: newRedPieces, bluePiecesToPlace: newBluePieces },
           currentPlacer
         ),
         selectedPieceId: null,
@@ -705,18 +756,22 @@ export function useChessGame(
    */
   const addToDraft = useCallback(
     (pieceType: PieceType) => {
-      const draft = currentDrafter === 'white' ? whiteDraft : blackDraft;
+      const draft = currentDrafter === 'white' ? whiteDraft
+        : currentDrafter === 'black' ? blackDraft
+        : currentDrafter === 'red' ? redDraft
+        : blueDraft;
       if (!draft) return;
       if (!canAddPiece(draft, pieceType, budget, gameState.boardSize)) return;
 
       const newDraft = addPieceToDraft(draft, pieceType);
-      if (currentDrafter === 'white') {
-        setWhiteDraft(newDraft);
-      } else {
-        setBlackDraft(newDraft);
+      switch (currentDrafter) {
+        case 'white': setWhiteDraft(newDraft); break;
+        case 'black': setBlackDraft(newDraft); break;
+        case 'red': setRedDraft(newDraft); break;
+        case 'blue': setBlueDraft(newDraft); break;
       }
     },
-    [currentDrafter, whiteDraft, blackDraft, budget, gameState.boardSize]
+    [currentDrafter, whiteDraft, blackDraft, redDraft, blueDraft, budget, gameState.boardSize]
   );
 
   /**
@@ -724,17 +779,21 @@ export function useChessGame(
    */
   const removeFromDraft = useCallback(
     (pieceTypeId: string) => {
-      const draft = currentDrafter === 'white' ? whiteDraft : blackDraft;
+      const draft = currentDrafter === 'white' ? whiteDraft
+        : currentDrafter === 'black' ? blackDraft
+        : currentDrafter === 'red' ? redDraft
+        : blueDraft;
       if (!draft) return;
 
       const newDraft = removePieceFromDraft(draft, pieceTypeId);
-      if (currentDrafter === 'white') {
-        setWhiteDraft(newDraft);
-      } else {
-        setBlackDraft(newDraft);
+      switch (currentDrafter) {
+        case 'white': setWhiteDraft(newDraft); break;
+        case 'black': setBlackDraft(newDraft); break;
+        case 'red': setRedDraft(newDraft); break;
+        case 'blue': setBlueDraft(newDraft); break;
       }
     },
-    [currentDrafter, whiteDraft, blackDraft]
+    [currentDrafter, whiteDraft, blackDraft, redDraft, blueDraft]
   );
 
   /**
@@ -742,10 +801,11 @@ export function useChessGame(
    */
   const loadDraft = useCallback(
     (newDraft: PlayerDraft) => {
-      if (currentDrafter === 'white') {
-        setWhiteDraft(newDraft);
-      } else {
-        setBlackDraft(newDraft);
+      switch (currentDrafter) {
+        case 'white': setWhiteDraft(newDraft); break;
+        case 'black': setBlackDraft(newDraft); break;
+        case 'red': setRedDraft(newDraft); break;
+        case 'blue': setBlueDraft(newDraft); break;
       }
     },
     [currentDrafter]
@@ -755,11 +815,34 @@ export function useChessGame(
    * Confirm the current player's draft
    */
   const confirmDraft = useCallback(() => {
+    if (is4Player) {
+      const draftOrder = TURN_ORDER; // white → blue → black → red
+      const idx = draftOrder.indexOf(currentDrafter);
+      if (idx < draftOrder.length - 1) {
+        setShowHandoff(true);
+      } else {
+        // All 4 drafted → move to placement
+        if (whiteDraft && blueDraft && blackDraft && redDraft) {
+          resetDraftPieceIdCounter();
+          const newPlacementState = createFourPlayerPlacementState(whiteDraft, blueDraft, blackDraft, redDraft);
+          setPlacementState(newPlacementState);
+          setGameState((prev) => ({
+            ...prev,
+            phase: 'placement',
+            currentTurn: 'white',
+          }));
+          setWhiteDraft(null);
+          setBlackDraft(null);
+          setRedDraft(null);
+          setBlueDraft(null);
+        }
+      }
+      return;
+    }
+    // 2-player
     if (currentDrafter === 'white') {
-      // White confirmed, show handoff for black
       setShowHandoff(true);
     } else {
-      // Black confirmed, move to placement
       if (whiteDraft && blackDraft) {
         resetDraftPieceIdCounter();
         const newPlacementState = createPlacementStateFromDrafts(whiteDraft, blackDraft);
@@ -773,16 +856,31 @@ export function useChessGame(
         setBlackDraft(null);
       }
     }
-  }, [currentDrafter, whiteDraft, blackDraft]);
+  }, [is4Player, currentDrafter, whiteDraft, blueDraft, blackDraft, redDraft]);
 
   /**
    * Acknowledge handoff and start next player's draft
    */
   const acknowledgeHandoff = useCallback(() => {
     setShowHandoff(false);
+    if (is4Player) {
+      const draftOrder = TURN_ORDER;
+      const idx = draftOrder.indexOf(currentDrafter);
+      const next = draftOrder[idx + 1];
+      if (next) {
+        setCurrentDrafter(next);
+        const emptyDraft = createEmptyDraft();
+        switch (next) {
+          case 'blue': setBlueDraft(emptyDraft); break;
+          case 'black': setBlackDraft(emptyDraft); break;
+          case 'red': setRedDraft(emptyDraft); break;
+        }
+      }
+      return;
+    }
     setCurrentDrafter('black');
     setBlackDraft(createEmptyDraft());
-  }, []);
+  }, [is4Player, currentDrafter]);
 
   // ==========================================================================
   // AI Effects
@@ -1027,6 +1125,7 @@ export function useChessGame(
     isDraftPhase,
     showHandoff,
     currentDrafter,
+    nextDrafter,
     currentDraft,
     availablePieces,
     budget,
