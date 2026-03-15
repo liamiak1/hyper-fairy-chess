@@ -155,11 +155,29 @@ export class GameRoom {
     console.log(`[GameRoom] Player ${playerId} (${color}) joined room ${this.code}, socket ${socket.id}`);
 
     if (this.players.size === 2) {
+      // Randomly assign which player is white/black
+      if (Math.random() < 0.5) {
+        for (const [, p] of this.players) {
+          p.color = p.color === 'white' ? 'black' : 'white';
+        }
+        console.log(`[GameRoom] Colors swapped — ${playerId} is now ${player.color}`);
+      }
+
+      // Notify the first player of their final color (second player gets theirs below)
+      const firstPlayer = [...this.players.values()].find((p) => p.id !== playerId);
+      if (firstPlayer) {
+        this.sendToPlayer(firstPlayer.id, {
+          type: 'COLORS_ASSIGNED',
+          timestamp: Date.now(),
+          yourColor: firstPlayer.color!,
+        });
+      }
+
       console.log(`[GameRoom] Room ${this.code} now has 2 players, starting draft countdown`);
       this.startDraftCountdown();
     }
 
-    return { success: true, playerId, color };
+    return { success: true, playerId, color: player.color! };
   }
 
   removePlayer(playerId: string): void {

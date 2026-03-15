@@ -209,6 +209,10 @@ export function useOnlineGame() {
         }));
         break;
 
+      case 'COLORS_ASSIGNED':
+        setState(prev => ({ ...prev, playerColor: message.yourColor }));
+        break;
+
       case 'DRAFT_START':
         console.log('[useOnlineGame] DRAFT_START - budget from msg:', message.budget, 'boardSize:', message.boardSize);
         setState(prev => {

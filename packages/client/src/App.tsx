@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import type { PlayerColor } from '@hyper-fairy-chess/shared';
 import { Game } from './components/Game';
 import { MainMenu } from './components/MainMenu';
 import { OnlineGame } from './components/OnlineGame';
@@ -23,7 +24,13 @@ function clearResetToken() {
 
 function AppContent() {
   const [mode, setMode] = useState<GameMode>('menu');
+  const [aiColor, setAiColor] = useState<PlayerColor>('black');
   const [resetToken, setResetToken] = useState<string | null>(() => getResetToken());
+
+  const handleAIPlay = useCallback(() => {
+    setAiColor(Math.random() < 0.5 ? 'black' : 'white');
+    setMode('ai');
+  }, []);
 
   if (resetToken) {
     return (
@@ -44,7 +51,7 @@ function AppContent() {
       <div className="app">
         <MainMenu
           onLocalPlay={() => setMode('local')}
-          onAIPlay={() => setMode('ai')}
+          onAIPlay={handleAIPlay}
           onOnlinePlay={() => setMode('online')}
           onProfile={() => setMode('profile')}
         />
@@ -63,7 +70,7 @@ function AppContent() {
   if (mode === 'ai') {
     return (
       <div className="app">
-        <Game aiColor="black" />
+        <Game aiColor={aiColor} />
       </div>
     );
   }

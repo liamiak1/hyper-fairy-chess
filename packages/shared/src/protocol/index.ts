@@ -84,6 +84,11 @@ export interface LeaveRoomMessage extends ClientMessage {
 }
 
 // Server -> Client
+export interface ColorsAssignedMessage extends ServerMessage {
+  type: 'COLORS_ASSIGNED';
+  yourColor: PlayerColor;
+}
+
 export interface RoomCreatedMessage extends ServerMessage {
   type: 'ROOM_CREATED';
   roomCode: string;
@@ -479,6 +484,7 @@ export type ClientToServerMessage =
   | ProposeRematchMessage;
 
 export type ServerToClientMessage =
+  | ColorsAssignedMessage
   | RoomCreatedMessage
   | RoomJoinedMessage
   | PlayerJoinedMessage
