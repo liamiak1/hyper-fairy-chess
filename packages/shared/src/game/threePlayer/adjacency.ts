@@ -40,11 +40,11 @@ function prevSection(s: Section): Section {
 }
 
 function mirrorFile(f: SFile): SFile {
-  return (5 - f) as SFile;
+  return (9 - f) as SFile;
 }
 
 export function isSeamSquare(pos: ThreePos): boolean {
-  return pos.srank === 8;
+  return pos.srank === 4;
 }
 
 /**
@@ -57,7 +57,7 @@ export function seamNeighbor(pos: ThreePos): ThreePos | null {
   return {
     section: nextSection(pos.section),
     sfile: mirrorFile(pos.sfile),
-    srank: 8,
+    srank: 4,
   };
 }
 
@@ -70,7 +70,7 @@ export function secondarySeamNeighbor(pos: ThreePos): ThreePos | null {
   return {
     section: prevSection(pos.section),
     sfile: mirrorFile(pos.sfile),
-    srank: 8,
+    srank: 4,
   };
 }
 
@@ -102,7 +102,7 @@ export function stepInDirection(
   const newSfile = pos.sfile + dsfile;
 
   // Normal step within the section
-  if (newSrank >= 1 && newSrank <= 8 && newSfile >= 1 && newSfile <= 4) {
+  if (newSrank >= 1 && newSrank <= 4 && newSfile >= 1 && newSfile <= 8) {
     return {
       pos: { section: pos.section, sfile: newSfile as SFile, srank: newSrank as ThreePos['srank'] },
       newDsrank: dsrank,
@@ -110,19 +110,19 @@ export function stepInDirection(
     };
   }
 
-  // Seam crossing: stepping forward (dsrank > 0) from srank=8
-  if (dsrank > 0 && pos.srank === 8) {
+  // Seam crossing: stepping forward (dsrank > 0) from srank=4
+  if (dsrank > 0 && pos.srank === 4) {
     const neighbor: ThreePos = {
       section: nextSection(pos.section),
       sfile: mirrorFile(pos.sfile),
-      srank: 8,
+      srank: 4,
     };
     // Direction negates in the new section (avoid -0)
     const nd = dsrank === 0 ? 0 : -dsrank;
     const nf = dsfile === 0 ? 0 : -dsfile;
     const continuedSrank = neighbor.srank + nd;
     const continuedSfile = neighbor.sfile + nf;
-    if (continuedSrank >= 1 && continuedSrank <= 8 && continuedSfile >= 1 && continuedSfile <= 4) {
+    if (continuedSrank >= 1 && continuedSrank <= 4 && continuedSfile >= 1 && continuedSfile <= 8) {
       return {
         pos: {
           section: neighbor.section,

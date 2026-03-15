@@ -3,8 +3,8 @@
  */
 
 export type Section = 'white' | 'red' | 'black';
-export type SFile = 1 | 2 | 3 | 4;
-export type SRank = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+export type SFile = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+export type SRank = 1 | 2 | 3 | 4;
 
 export interface ThreePos {
   section: Section;

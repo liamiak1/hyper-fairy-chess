@@ -108,7 +108,7 @@ function addSlide(
 
   while (true) {
     // If we're at a seam square and this is a diagonal, try branching to the other adjacent section
-    if (isDiagonal && pos.srank === 8) {
+    if (isDiagonal && pos.srank === 4) {
       // We're continuing a diagonal slide from the seam. The normal stepInDirection
       // will handle the primary path. We also need to try the alternative seam cross.
       addDiagonalSeamBranch(state, piece, pos, cdr, cdf, moves);

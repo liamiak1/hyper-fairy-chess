@@ -1,10 +1,10 @@
 /**
  * SVG board for 3-player GreenChess.
  *
- * Three 4×8 sections arranged around a triangular center.
+ * Three 8×4 sections arranged around a triangular center.
  * White = bottom (rank 1 at bottom), Red = upper-left, Black = upper-right.
  *
- * Each square is SQUARE_SIZE px. Sections are oriented so rank-8 faces center.
+ * Each square is SQUARE_SIZE px. Sections are oriented so rank-4 faces center.
  */
 
 import type {
@@ -17,8 +17,8 @@ import { threeposKey, threeposEqual, PIECE_BY_ID } from '@hyper-fairy-chess/shar
 import './BoardThreePlayer.css';
 
 const SQUARE_SIZE = 52;
-const SECTION_W = 4 * SQUARE_SIZE; // 208
-const SECTION_H = 8 * SQUARE_SIZE; // 416
+const SECTION_W = 8 * SQUARE_SIZE; // 416
+const SECTION_H = 4 * SQUARE_SIZE; // 208
 
 interface BoardThreePlayerProps {
   state: ThreeGameState;
@@ -53,8 +53,8 @@ function getPieceStroke(owner: Section): string {
 }
 
 /**
- * Renders a single 4×8 section as an SVG <g>.
- * The section is always rendered with sfile 1..4 left→right and srank 1..8 bottom→top.
+ * Renders a single 8×4 section as an SVG <g>.
+ * The section is always rendered with sfile 1..8 left→right and srank 1..4 bottom→top.
  * The <g> transform applied by the parent will rotate/translate into position.
  */
 interface SectionGridProps {
@@ -78,14 +78,14 @@ function SectionGrid({
 }: SectionGridProps) {
   const squares: React.ReactElement[] = [];
 
-  for (let srank = 1; srank <= 8; srank++) {
-    for (let sfile = 1; sfile <= 4; sfile++) {
+  for (let srank = 1; srank <= 4; srank++) {
+    for (let sfile = 1; sfile <= 8; sfile++) {
       const pos: ThreePos = { section, sfile: sfile as ThreePos['sfile'], srank: srank as ThreePos['srank'] };
       const key = threeposKey(pos);
 
-      // x = (sfile-1)*SQUARE_SIZE, y = (8-srank)*SQUARE_SIZE (rank 1 at bottom)
+      // x = (sfile-1)*SQUARE_SIZE, y = (4-srank)*SQUARE_SIZE (rank 1 at bottom)
       const x = (sfile - 1) * SQUARE_SIZE;
-      const y = (8 - srank) * SQUARE_SIZE;
+      const y = (4 - srank) * SQUARE_SIZE;
 
       // Checkerboard: light when (sfile + srank) % 2 === 0
       const isLight = (sfile + srank) % 2 === 0;
