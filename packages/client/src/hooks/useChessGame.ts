@@ -350,7 +350,7 @@ export function useChessGame(
   const validPlacementSquares = useMemo(() => {
     if (!placementState || !selectedPieceToPlace) return [];
     const zones = getPlacementZones(gameState.boardSize, placementState.currentPlacer);
-    return getValidPlacementSquares(gameState.board, selectedPieceToPlace, zones, gameState.board.dimensions);
+    return getValidPlacementSquares(gameState.board, selectedPieceToPlace, zones, gameState.board.dimensions, gameState.boardSize);
   }, [placementState, selectedPieceToPlace, gameState.board, gameState.boardSize]);
 
   // ==========================================================================
@@ -587,7 +587,7 @@ export function useChessGame(
       if (!placementState || !selectedPieceToPlace) return;
 
       const zones = getPlacementZones(gameState.boardSize, placementState.currentPlacer);
-      if (!isValidPlacement(gameState.board, selectedPieceToPlace, position, zones)) return;
+      if (!isValidPlacement(gameState.board, selectedPieceToPlace, position, zones, gameState.boardSize)) return;
 
       const currentPlacer = placementState.currentPlacer;
       let actualPosition = position;
@@ -946,7 +946,8 @@ export function useChessGame(
       gameState.board,
       piece,
       zones,
-      gameState.board.dimensions
+      gameState.board.dimensions,
+      gameState.boardSize
     );
     if (validSquares.length === 0) return;
 
