@@ -113,6 +113,79 @@ export async function getUserGames(userId: string, limit = 20): Promise<GameSumm
   }
 }
 
+export interface PieceStat {
+  pieceId: string;
+  appearances: number;   // armies that included this piece
+  totalCopies: number;   // total copies drafted (sum of counts)
+  wins: number;
+  draws: number;
+  losses: number;
+  totalGames: number;    // total non-playtest games analysed
+}
+
+export async function getPieceStats(): Promise<PieceStat[]> {
+  if (!isDatabaseAvailable()) return [];
+
+  const pool = getPool()!;
+  try {
+    const result = await pool.query(`
+      WITH non_playtest AS (
+        SELECT id, winner_color, result_type, white_draft, black_draft
+        FROM games
+        WHERE white_draft IS NOT NULL
+          AND COALESCE(settings->>'isPlaytest', 'false') != 'true'
+      ),
+      total_games AS (
+        SELECT COUNT(*) AS total FROM non_playtest
+      ),
+      exploded AS (
+        SELECT
+          pick->>'pieceTypeId' AS piece_id,
+          COALESCE((pick->>'count')::int, 1) AS draft_count,
+          CASE WHEN g.winner_color = 'white' THEN 'win'
+               WHEN g.result_type = 'draw'   THEN 'draw'
+               ELSE 'loss' END AS outcome
+        FROM non_playtest g, jsonb_array_elements(g.white_draft) AS pick
+
+        UNION ALL
+
+        SELECT
+          pick->>'pieceTypeId' AS piece_id,
+          COALESCE((pick->>'count')::int, 1) AS draft_count,
+          CASE WHEN g.winner_color = 'black' THEN 'win'
+               WHEN g.result_type = 'draw'   THEN 'draw'
+               ELSE 'loss' END AS outcome
+        FROM non_playtest g, jsonb_array_elements(g.black_draft) AS pick
+        WHERE g.black_draft IS NOT NULL
+      )
+      SELECT
+        e.piece_id,
+        COUNT(*)::int                                                       AS appearances,
+        SUM(e.draft_count)::int                                            AS total_copies,
+        SUM(CASE WHEN e.outcome = 'win'  THEN 1 ELSE 0 END)::int          AS wins,
+        SUM(CASE WHEN e.outcome = 'draw' THEN 1 ELSE 0 END)::int          AS draws,
+        SUM(CASE WHEN e.outcome = 'loss' THEN 1 ELSE 0 END)::int          AS losses,
+        t.total::int                                                        AS total_games
+      FROM exploded e, total_games t
+      GROUP BY e.piece_id, t.total
+      ORDER BY appearances DESC
+    `);
+
+    return result.rows.map(row => ({
+      pieceId: row.piece_id,
+      appearances: row.appearances,
+      totalCopies: row.total_copies,
+      wins: row.wins,
+      draws: row.draws,
+      losses: row.losses,
+      totalGames: row.total_games,
+    }));
+  } catch (error) {
+    console.error('[GameService] Error fetching piece stats:', error);
+    return [];
+  }
+}
+
 export async function getGame(gameId: string): Promise<GameRecord | null> {
   if (!isDatabaseAvailable()) return null;
 

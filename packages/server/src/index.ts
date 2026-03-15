@@ -26,8 +26,8 @@ app.use(express.json());
 // Auth routes
 app.use('/auth', authRouter);
 
-// Player stats routes
-app.use('/stats/player', statsRouter);
+// Stats routes (player + piece analytics)
+app.use('/stats', statsRouter);
 
 // Saved armies routes
 app.use('/armies', armiesRouter);

@@ -113,6 +113,23 @@
   font-size: 0.85rem;
 }
 
+.stats-link {
+  background: none;
+  border: none;
+  color: #6c5ce7;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin-top: 4px;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color 0.15s;
+}
+
+.stats-link:hover {
+  text-decoration-color: #6c5ce7;
+}
+
 /* Subtle animated background effect */
 .main-menu::before {
   content: '';

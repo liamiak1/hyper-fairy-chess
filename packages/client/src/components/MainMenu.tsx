@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { AuthModal } from './AuthModal';
+import { PieceStats } from './PieceStats';
 import './MainMenu.css';
 
 interface MainMenuProps {
@@ -17,6 +18,7 @@ interface MainMenuProps {
 export function MainMenu({ onLocalPlay, onOnlinePlay, onProfile }: MainMenuProps) {
   const { isAuthenticated, user, authAvailable } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showPieceStats, setShowPieceStats] = useState(false);
 
   const handleProfileClick = () => {
     if (isAuthenticated) {
@@ -66,10 +68,14 @@ export function MainMenu({ onLocalPlay, onOnlinePlay, onProfile }: MainMenuProps
 
         <div className="menu-footer">
           <p>Right-click any piece to see its moves</p>
+          <button className="stats-link" onClick={() => setShowPieceStats(true)}>
+            Piece Statistics
+          </button>
         </div>
       </div>
 
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+      {showPieceStats && <PieceStats onClose={() => setShowPieceStats(false)} />}
     </div>
   );
 }
