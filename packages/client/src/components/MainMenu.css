@@ -76,6 +76,16 @@
   background: linear-gradient(135deg, rgba(116, 185, 255, 0.25) 0%, rgba(116, 185, 255, 0.1) 100%);
 }
 
+.menu-btn.threeplayer {
+  border-color: #00cec9;
+  background: linear-gradient(135deg, rgba(0, 206, 201, 0.15) 0%, rgba(0, 206, 201, 0.05) 100%);
+}
+
+.menu-btn.threeplayer:hover {
+  border-color: #81ecec;
+  background: linear-gradient(135deg, rgba(0, 206, 201, 0.25) 0%, rgba(0, 206, 201, 0.1) 100%);
+}
+
 .menu-btn.online {
   border-color: #00b894;
   background: linear-gradient(135deg, rgba(0, 184, 148, 0.15) 0%, rgba(0, 184, 148, 0.05) 100%);

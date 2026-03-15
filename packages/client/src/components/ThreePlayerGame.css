@@ -1,0 +1,82 @@
+.three-player-game {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  padding: 16px;
+  color: #fff;
+}
+
+.three-player-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  max-width: 1100px;
+}
+
+.three-board-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.three-turn-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.turn-indicator {
+  padding: 6px 16px;
+  border-radius: 8px;
+  border: 2px solid currentColor;
+}
+.turn-indicator.white { color: #f0f0f0; border-color: #f0f0f0; }
+.turn-indicator.red   { color: #e74c3c; border-color: #e74c3c; }
+.turn-indicator.black { color: #74b9ff; border-color: #74b9ff; }
+
+.check-indicator {
+  color: #e74c3c;
+  font-weight: 700;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.game-result-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 48px;
+  text-align: center;
+}
+
+.game-result-screen h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.back-btn {
+  background: #242442;
+  color: #fff;
+  border: 2px solid #6c5ce7;
+  border-radius: 12px;
+  padding: 12px 32px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.back-btn:hover {
+  background: rgba(108, 92, 231, 0.2);
+}

@@ -12,5 +12,8 @@ export * from './game/rules/castling';
 export * from './game/rules/promotion';
 export * from './game/rules/freeze';
 
+// 3-player GreenChess mode
+export * from './game/threePlayer';
+
 // Re-export protocol types
 export * from './protocol';

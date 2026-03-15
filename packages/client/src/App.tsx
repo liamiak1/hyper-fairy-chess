@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import type { PlayerColor } from '@hyper-fairy-chess/shared';
 import { Game } from './components/Game';
 import { MainMenu } from './components/MainMenu';
+import { ThreePlayerGame } from './components/ThreePlayerGame';
 import { OnlineGame } from './components/OnlineGame';
 import { ProfilePage } from './components/ProfilePage';
 import { ResetPasswordForm } from './components/ResetPasswordForm';
@@ -9,7 +10,7 @@ import { SocketProvider } from './context/SocketContext';
 import { AuthProvider } from './context/AuthContext';
 import './App.css';
 
-type GameMode = 'menu' | 'local' | 'ai' | 'online' | 'profile' | '4player';
+type GameMode = 'menu' | 'local' | 'ai' | 'online' | 'profile' | '4player' | '3player';
 
 function getResetToken(): string | null {
   const params = new URLSearchParams(window.location.search);
@@ -36,6 +37,10 @@ function AppContent() {
     setMode('4player');
   }, []);
 
+  const handle3PlayerPlay = useCallback(() => {
+    setMode('3player');
+  }, []);
+
   if (resetToken) {
     return (
       <div className="app">
@@ -57,6 +62,7 @@ function AppContent() {
           onLocalPlay={() => setMode('local')}
           onAIPlay={handleAIPlay}
           on4PlayerPlay={handle4PlayerPlay}
+          on3PlayerPlay={handle3PlayerPlay}
           onOnlinePlay={() => setMode('online')}
           onProfile={() => setMode('profile')}
         />
@@ -76,6 +82,14 @@ function AppContent() {
     return (
       <div className="app">
         <Game playerColors={['white', 'blue', 'black', 'red']} />
+      </div>
+    );
+  }
+
+  if (mode === '3player') {
+    return (
+      <div className="app">
+        <ThreePlayerGame onBack={() => setMode('menu')} />
       </div>
     );
   }
