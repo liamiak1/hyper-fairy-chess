@@ -376,6 +376,75 @@ export const CHECKER_KING: PieceType = {
   captureType: 'checkers', // Diagonal jump capture only
 };
 
+export const TOKIN: PieceType = {
+  id: 'tokin',
+  name: 'Tokin',
+  tier: 'pawn',
+  cost: 29,
+  victoryPoints: 29,
+  symbol: 'と',
+  description: 'Promoted Shogi Pawn. Moves like a Gold General: orthogonally or diagonally forward.',
+  isRoyal: false,
+  isMandatory: false,
+  promotionOnly: true,
+  canCastle: false,
+  canBeCaptured: true,
+  canFreeze: false,
+  canBeJumpedOver: true,
+  movement: {
+    slides: [],
+    leaps: [],
+    special: ['gold-general'],
+  },
+  captureType: 'standard',
+};
+
+export const PROMOTED_SILVER: PieceType = {
+  id: 'promoted-silver',
+  name: 'Promoted Silver',
+  tier: 'pawn',
+  cost: 29,
+  victoryPoints: 29,
+  symbol: '全',
+  description: 'Promoted Silver General. Moves like a Gold General: orthogonally or diagonally forward.',
+  isRoyal: false,
+  isMandatory: false,
+  promotionOnly: true,
+  canCastle: false,
+  canBeCaptured: true,
+  canFreeze: false,
+  canBeJumpedOver: true,
+  movement: {
+    slides: [],
+    leaps: [],
+    special: ['gold-general'],
+  },
+  captureType: 'standard',
+};
+
+export const PROMOTED_LANCE: PieceType = {
+  id: 'promoted-lance',
+  name: 'Promoted Lance',
+  tier: 'pawn',
+  cost: 29,
+  victoryPoints: 29,
+  symbol: '杏',
+  description: 'Promoted Lance. Moves like a Gold General: orthogonally or diagonally forward.',
+  isRoyal: false,
+  isMandatory: false,
+  promotionOnly: true,
+  canCastle: false,
+  canBeCaptured: true,
+  canFreeze: false,
+  canBeJumpedOver: true,
+  movement: {
+    slides: [],
+    leaps: [],
+    special: ['gold-general'],
+  },
+  captureType: 'standard',
+};
+
 // =============================================================================
 // Tier 2: Pieces
 // =============================================================================
@@ -1294,6 +1363,9 @@ export const ALL_PIECES: PieceType[] = [
   NIGHTRIDER,
   CANNON,
   CHECKER_KING,
+  TOKIN,
+  PROMOTED_SILVER,
+  PROMOTED_LANCE,
 
   // Tier 3: Royalty
   KING,

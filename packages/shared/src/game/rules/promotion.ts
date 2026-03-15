@@ -43,7 +43,9 @@ export function isPawnType(pieceType: PieceType): boolean {
     pieceType.movement.special.includes('shogi-pawn') ||
     pieceType.movement.special.includes('berolina') ||
     pieceType.movement.special.includes('peasant-diagonal') ||
-    pieceType.movement.special.includes('checkers-forward')
+    pieceType.movement.special.includes('checkers-forward') ||
+    pieceType.movement.special.includes('lance') ||
+    pieceType.movement.special.includes('silver-general')
   );
 }
 
@@ -116,6 +118,24 @@ export function getPromotionOptionsForPiece(
   if (pieceType.id === 'checker') {
     const checkerKing = PIECE_BY_ID['checker-king'];
     return checkerKing ? [checkerKing] : [];
+  }
+
+  // Shogi Pawn promotes to Tokin
+  if (pieceType.id === 'shogi-pawn') {
+    const tokin = PIECE_BY_ID['tokin'];
+    return tokin ? [tokin] : [];
+  }
+
+  // Silver General promotes to Promoted Silver
+  if (pieceType.id === 'silver-general') {
+    const promotedSilver = PIECE_BY_ID['promoted-silver'];
+    return promotedSilver ? [promotedSilver] : [];
+  }
+
+  // Lance promotes to Promoted Lance
+  if (pieceType.id === 'lance') {
+    const promotedLance = PIECE_BY_ID['promoted-lance'];
+    return promotedLance ? [promotedLance] : [];
   }
 
   // Use game-aware promotion options (fairy pieces in current game)
