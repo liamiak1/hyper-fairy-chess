@@ -132,7 +132,10 @@ export type SpecialMovement =
   | 'checkers-forward'     // Checkers: move diagonally forward 1, jump capture diagonally forward
   | 'checkers-king'        // Checkers King: diagonal jumps in any direction
   | 'gold-general'         // Shogi Gold General: orthogonals + forward diagonals
-  | 'silver-general';      // Shogi Silver General: all diagonals + forward
+  | 'silver-general'       // Shogi Silver General: all diagonals + forward
+  | 'mao'                  // Chinese chess horse: blockable knight (orthogonal step must be empty)
+  | 'lance'                // Shogi Lance: slides forward only (any number of squares)
+  | 'vao';                 // Diagonal cannon: slides diagonally, captures by hopping diagonally
 
 // =============================================================================
 // Game Piece Instance (on the board)

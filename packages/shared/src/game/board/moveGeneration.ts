@@ -269,6 +269,18 @@ export function generateSpecialMoves(
       case 'silver-general':
         moves.push(...generateSilverGeneralMoves(board, piece));
         break;
+
+      case 'mao':
+        moves.push(...generateMaoMoves(board, piece));
+        break;
+
+      case 'lance':
+        moves.push(...generateLanceMoves(board, piece));
+        break;
+
+      case 'vao':
+        moves.push(...generateVaoMoves(board, piece));
+        break;
     }
   }
 
@@ -2027,6 +2039,118 @@ function generateSilverGeneralMoves(board: BoardState, piece: PieceInstance): Po
 }
 
 // =============================================================================
+// Mao, Lance, Vao
+// =============================================================================
+
+/**
+ * Mao (Chinese chess horse): moves like a knight but the orthogonal step must be unoccupied.
+ * Each of the 8 knight destinations has one intermediate square that must be empty.
+ */
+function generateMaoMoves(board: BoardState, piece: PieceInstance): Position[] {
+  if (!piece.position) return [];
+
+  const moves: Position[] = [];
+
+  // Each entry: the orthogonal step that must be empty, and the final landing offset
+  const maoOffsets = [
+    { step: { dx: 0, dy: 1 },  land: { dx:  1, dy: 2 } },
+    { step: { dx: 0, dy: 1 },  land: { dx: -1, dy: 2 } },
+    { step: { dx: 0, dy: -1 }, land: { dx:  1, dy: -2 } },
+    { step: { dx: 0, dy: -1 }, land: { dx: -1, dy: -2 } },
+    { step: { dx: 1, dy: 0 },  land: { dx: 2, dy:  1 } },
+    { step: { dx: 1, dy: 0 },  land: { dx: 2, dy: -1 } },
+    { step: { dx: -1, dy: 0 }, land: { dx: -2, dy:  1 } },
+    { step: { dx: -1, dy: 0 }, land: { dx: -2, dy: -1 } },
+  ];
+
+  for (const { step, land } of maoOffsets) {
+    const stepPos = offsetPosition(piece.position, step.dx, step.dy, board.dimensions);
+    if (!stepPos || !isSquareEmpty(board, stepPos)) continue;
+
+    const landPos = offsetPosition(piece.position, land.dx, land.dy, board.dimensions);
+    if (!landPos) continue;
+    if (hasFriendlyPiece(board, landPos, piece.owner)) continue;
+    if (hasEnemyPiece(board, landPos, piece.owner) &&
+        !hasCapturableEnemyPiece(board, landPos, piece.owner)) continue;
+
+    moves.push(landPos);
+  }
+
+  return moves;
+}
+
+/**
+ * Lance: slides any number of squares forward only (no backward or sideways movement).
+ * Forward is relative to the piece's owner color.
+ */
+function generateLanceMoves(board: BoardState, piece: PieceInstance): Position[] {
+  if (!piece.position) return [];
+
+  const dir = getPawnDirection(piece.owner);
+  const moves: Position[] = [];
+  let currentPos = piece.position;
+
+  while (true) {
+    const nextPos = offsetPosition(currentPos, 0, dir, board.dimensions);
+    if (!nextPos) break;
+
+    if (isSquareEmpty(board, nextPos)) {
+      moves.push(nextPos);
+      currentPos = nextPos;
+    } else if (hasCapturableEnemyPiece(board, nextPos, piece.owner)) {
+      moves.push(nextPos);
+      break;
+    } else {
+      break;
+    }
+  }
+
+  return moves;
+}
+
+/**
+ * Vao: diagonal cannon. Slides diagonally freely (no capture), captures by hopping
+ * over exactly one piece diagonally to land on an enemy beyond it.
+ */
+function generateVaoMoves(board: BoardState, piece: PieceInstance): Position[] {
+  if (!piece.position) return [];
+
+  const moves: Position[] = [];
+  const diagonalDirs = getDirectionVectors('diagonal');
+
+  for (const dir of diagonalDirs) {
+    let currentPos = piece.position;
+    let foundScreen = false;
+
+    while (true) {
+      const nextPos = offsetPosition(currentPos, dir.dx, dir.dy, board.dimensions);
+      if (!nextPos) break;
+
+      if (!foundScreen) {
+        if (isSquareEmpty(board, nextPos)) {
+          moves.push(nextPos);
+          currentPos = nextPos;
+        } else {
+          foundScreen = true;
+          currentPos = nextPos;
+        }
+      } else {
+        if (isSquareEmpty(board, nextPos)) {
+          currentPos = nextPos;
+        } else if (hasCapturableEnemyPiece(board, nextPos, piece.owner)) {
+          moves.push(nextPos);
+          break;
+        } else {
+          break;
+        }
+      }
+    }
+  }
+
+  return moves;
+}
+
+// =============================================================================
 // Attack Generation (for check detection)
 // =============================================================================
 
@@ -2115,6 +2239,18 @@ export function getAttackedSquares(
 
       case 'silver-general':
         attacked.push(...generateSilverGeneralMoves(board, piece));
+        break;
+
+      case 'mao':
+        attacked.push(...generateMaoMoves(board, piece));
+        break;
+
+      case 'lance':
+        attacked.push(...generateLanceMoves(board, piece));
+        break;
+
+      case 'vao':
+        attacked.push(...generateVaoMoves(board, piece));
         break;
     }
   }

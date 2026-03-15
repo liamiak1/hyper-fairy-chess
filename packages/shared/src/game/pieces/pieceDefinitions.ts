@@ -197,6 +197,116 @@ export const SILVER_GENERAL: PieceType = {
   captureType: 'standard',
 };
 
+export const DABBABA: PieceType = {
+  id: 'dabbaba',
+  name: 'Dabbaba',
+  tier: 'pawn',
+  cost: 4,
+  victoryPoints: 4,
+  symbol: '⊡',
+  description: 'Leaps exactly 2 squares orthogonally. Severely color-restricted: can only reach 1/4 of all squares.',
+  isRoyal: false,
+  isMandatory: false,
+  canCastle: false,
+  canBeCaptured: true,
+  canFreeze: false,
+  canBeJumpedOver: true,
+  movement: {
+    slides: [],
+    leaps: [{ dx: 2, dy: 0, symmetric: true }],
+    special: [],
+  },
+  captureType: 'standard',
+};
+
+export const ALFIL: PieceType = {
+  id: 'alfil',
+  name: 'Alfil',
+  tier: 'pawn',
+  cost: 5,
+  victoryPoints: 5,
+  symbol: '◈',
+  description: 'Leaps exactly 2 squares diagonally. The historical elephant piece — can only reach 1/8 of all squares.',
+  isRoyal: false,
+  isMandatory: false,
+  canCastle: false,
+  canBeCaptured: true,
+  canFreeze: false,
+  canBeJumpedOver: true,
+  movement: {
+    slides: [],
+    leaps: [{ dx: 2, dy: 2, symmetric: true }],
+    special: [],
+  },
+  captureType: 'standard',
+};
+
+export const FERZ: PieceType = {
+  id: 'ferz',
+  name: 'Ferz',
+  tier: 'pawn',
+  cost: 6,
+  victoryPoints: 6,
+  symbol: '◇',
+  description: 'Moves one square diagonally in any direction. The predecessor to the modern Queen.',
+  isRoyal: false,
+  isMandatory: false,
+  canCastle: false,
+  canBeCaptured: true,
+  canFreeze: false,
+  canBeJumpedOver: true,
+  movement: {
+    slides: [],
+    leaps: [{ dx: 1, dy: 1, symmetric: true }],
+    special: [],
+  },
+  captureType: 'standard',
+};
+
+export const WAZIR: PieceType = {
+  id: 'wazir',
+  name: 'Wazir',
+  tier: 'pawn',
+  cost: 7,
+  victoryPoints: 7,
+  symbol: '▫',
+  description: 'Moves one square orthogonally in any direction.',
+  isRoyal: false,
+  isMandatory: false,
+  canCastle: false,
+  canBeCaptured: true,
+  canFreeze: false,
+  canBeJumpedOver: true,
+  movement: {
+    slides: [],
+    leaps: [{ dx: 1, dy: 0, symmetric: true }],
+    special: [],
+  },
+  captureType: 'standard',
+};
+
+export const LANCE: PieceType = {
+  id: 'lance',
+  name: 'Lance',
+  tier: 'pawn',
+  cost: 24,
+  victoryPoints: 24,
+  symbol: '⬆',
+  description: 'Slides forward any number of squares but cannot move backward or sideways. Powerful late-game piece.',
+  isRoyal: false,
+  isMandatory: false,
+  canCastle: false,
+  canBeCaptured: true,
+  canFreeze: false,
+  canBeJumpedOver: true,
+  movement: {
+    slides: [],
+    leaps: [],
+    special: ['lance'],
+  },
+  captureType: 'standard',
+};
+
 export const FOOL: PieceType = {
   id: 'fool',
   name: 'Fool',
@@ -379,6 +489,147 @@ export const BISON: PieceType = {
       { dx: 3, dy: 2, symmetric: true },  // zebra leap
     ],
     special: [],
+  },
+  captureType: 'standard',
+};
+
+export const FERFIL: PieceType = {
+  id: 'ferfil',
+  name: 'Ferfil',
+  tier: 'piece',
+  cost: 14,
+  victoryPoints: 14,
+  symbol: '⬦',
+  description: 'Ferz + Alfil combined. Moves 1 or 2 squares diagonally in any direction.',
+  isRoyal: false,
+  isMandatory: false,
+  canCastle: false,
+  canBeCaptured: true,
+  canFreeze: false,
+  canBeJumpedOver: true,
+  movement: {
+    slides: [],
+    leaps: [
+      { dx: 1, dy: 1, symmetric: true },  // ferz
+      { dx: 2, dy: 2, symmetric: true },  // alfil
+    ],
+    special: [],
+  },
+  captureType: 'standard',
+};
+
+export const ALIBABA: PieceType = {
+  id: 'alibaba',
+  name: 'Alibaba',
+  tier: 'piece',
+  cost: 20,
+  victoryPoints: 20,
+  symbol: '⊠',
+  description: 'Alfil + Dabbaba combined. Leaps exactly 2 squares orthogonally or diagonally.',
+  isRoyal: false,
+  isMandatory: false,
+  canCastle: false,
+  canBeCaptured: true,
+  canFreeze: false,
+  canBeJumpedOver: true,
+  movement: {
+    slides: [],
+    leaps: [
+      { dx: 2, dy: 0, symmetric: true },  // dabbaba
+      { dx: 2, dy: 2, symmetric: true },  // alfil
+    ],
+    special: [],
+  },
+  captureType: 'standard',
+};
+
+export const MAO: PieceType = {
+  id: 'mao',
+  name: 'Mao',
+  tier: 'piece',
+  cost: 22,
+  victoryPoints: 22,
+  symbol: '馬',
+  description: 'Moves like a knight but the first orthogonal step must be unoccupied. Can be blocked by pieces in its path.',
+  isRoyal: false,
+  isMandatory: false,
+  canCastle: false,
+  canBeCaptured: true,
+  canFreeze: false,
+  canBeJumpedOver: true,
+  movement: {
+    slides: [],
+    leaps: [],
+    special: ['mao'],
+  },
+  captureType: 'standard',
+};
+
+export const VAO: PieceType = {
+  id: 'vao',
+  name: 'Vao',
+  tier: 'piece',
+  cost: 34,
+  victoryPoints: 34,
+  symbol: '✕',
+  description: 'Diagonal cannon. Slides diagonally freely but can only capture by hopping over another piece diagonally.',
+  isRoyal: false,
+  isMandatory: false,
+  canCastle: false,
+  canBeCaptured: true,
+  canFreeze: false,
+  canBeJumpedOver: true,
+  movement: {
+    slides: [],
+    leaps: [],
+    special: ['vao'],
+  },
+  captureType: 'standard',
+};
+
+export const WILDEBEEST: PieceType = {
+  id: 'wildebeest',
+  name: 'Wildebeest',
+  tier: 'piece',
+  cost: 46,
+  victoryPoints: 46,
+  symbol: '⊹',
+  description: 'Knight + Camel combined. Leaps in a (2,1) or (3,1) L-shape.',
+  isRoyal: false,
+  isMandatory: false,
+  canCastle: false,
+  canBeCaptured: true,
+  canFreeze: false,
+  canBeJumpedOver: true,
+  movement: {
+    slides: [],
+    leaps: [
+      { dx: 2, dy: 1, symmetric: true },  // knight
+      { dx: 3, dy: 1, symmetric: true },  // camel
+    ],
+    special: [],
+  },
+  captureType: 'standard',
+};
+
+export const CENTAUR: PieceType = {
+  id: 'centaur',
+  name: 'Centaur',
+  tier: 'piece',
+  cost: 58,
+  victoryPoints: 58,
+  symbol: '⊛',
+  description: 'Knight + King combined. Leaps like a knight or moves one square in any direction.',
+  isRoyal: false,
+  isMandatory: false,
+  canCastle: false,
+  canBeCaptured: true,
+  canFreeze: false,
+  canBeJumpedOver: true,
+  movement: {
+    slides: [],
+    leaps: [{ dx: 2, dy: 1, symmetric: true }],  // knight
+    special: ['king-one-square'],                 // king moves
   },
   captureType: 'standard',
 };
@@ -1002,6 +1253,11 @@ export const ALL_PIECES: PieceType[] = [
   SOLDIER,
   GOLD_GENERAL,
   SILVER_GENERAL,
+  DABBABA,
+  ALFIL,
+  FERZ,
+  WAZIR,
+  LANCE,
   FOOL,
   CHECKER,
 
@@ -1009,8 +1265,14 @@ export const ALL_PIECES: PieceType[] = [
   CATAPULT,
   LANCER,
   ZEBRA,
+  FERFIL,
+  ALIBABA,
+  MAO,
   WIZARD,
+  VAO,
   BISON,
+  WILDEBEEST,
+  CENTAUR,
   CHAMBERLAIN,
   COURTESAN,
   THIEF,
