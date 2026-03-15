@@ -485,17 +485,22 @@ export function useChessGame(
   const undoMove = useCallback(() => {
     if (stateHistory.length === 0) return;
 
-    // Get the previous state
-    const previousState = stateHistory[stateHistory.length - 1];
+    // In AI games, undo 2 moves (human + AI) so it's the human's turn again.
+    // If the AI is still thinking, cancel it — only 1 state needs undoing.
+    const stepsToUndo = aiColor ? Math.min(2, stateHistory.length) : 1;
 
-    // Remove the last state from history
-    setStateHistory(prev => prev.slice(0, -1));
+    if (aiColor && workerRef.current) {
+      workerRef.current.terminate();
+      workerRef.current = null;
+      setIsAIThinking(false);
+    }
 
-    // Restore the previous state
+    const previousState = stateHistory[stateHistory.length - stepsToUndo];
+    setStateHistory(prev => prev.slice(0, -stepsToUndo));
     setGameState(previousState);
     setSelectedPieceId(null);
     setPromotionPending(null);
-  }, [stateHistory]);
+  }, [stateHistory, aiColor]);
 
   /**
    * Resign the game
