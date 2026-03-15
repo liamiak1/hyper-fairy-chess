@@ -1237,6 +1237,11 @@ export class GameRoom {
     let blackEloChange: number | null = null;
 
     // Only update ELO if both players are authenticated account users
+    if (this.settings.isPlaytest) {
+      console.log('[GameRoom] Playtest game — skipping ELO and game record.');
+      return;
+    }
+
     if (whitePlayer?.userId && blackPlayer?.userId) {
       try {
         [whiteEloBefore, blackEloBefore] = await Promise.all([
@@ -1407,6 +1412,7 @@ export class GameRoom {
       boardSize: this.settings.boardSize,
       placementMode: this.settings.placementMode,
       draftTimeLimit: this.settings.draftTimeLimit,
+      isPlaytest: this.settings.isPlaytest ?? false,
     };
   }
 

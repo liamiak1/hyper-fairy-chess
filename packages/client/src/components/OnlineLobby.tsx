@@ -47,6 +47,7 @@ export function OnlineLobby({
     draftTimeLimit: 180,
     moveTimeLimit: null,
     placementMode: 'blind',
+    isPlaytest: false,
   });
   const [budgetOption, setBudgetOption] = useState<string>('360');
 
@@ -296,6 +297,17 @@ export function OnlineLobby({
             </select>
           </div>
 
+          <div className="form-group form-group-checkbox">
+            <label>
+              <input
+                type="checkbox"
+                checked={settings.isPlaytest}
+                onChange={(e) => setSettings({ ...settings, isPlaytest: e.target.checked })}
+              />
+              Playtest mode (results not recorded)
+            </label>
+          </div>
+
           <div className="button-group">
             <button
               className="btn-primary"
@@ -340,6 +352,7 @@ export function OnlineLobby({
                       <span className="lobby-tag">{formatBoardSize(room.boardSize)}</span>
                       <span className="lobby-tag">{formatPlacement(room.placementMode)}</span>
                       <span className="lobby-tag">{formatTime(room.draftTimeLimit)} draft</span>
+                      {room.isPlaytest && <span className="lobby-tag lobby-tag-playtest">Playtest</span>}
                     </span>
                   </div>
                   <button

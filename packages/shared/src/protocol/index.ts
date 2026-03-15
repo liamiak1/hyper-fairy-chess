@@ -42,6 +42,7 @@ export interface RoomSettings {
   draftTimeLimit: number | null; // seconds, null = no limit
   moveTimeLimit: number | null; // seconds per move, null = no limit
   placementMode: 'alternating' | 'blind'; // alternating = take turns, blind = simultaneous hidden
+  isPlaytest: boolean; // if true, game results and stats are not recorded
 }
 
 // =============================================================================
@@ -344,6 +345,7 @@ export interface LobbyRoom {
   boardSize: BoardSize;
   placementMode: 'alternating' | 'blind';
   draftTimeLimit: number | null;
+  isPlaytest: boolean;
 }
 
 // Client -> Server
