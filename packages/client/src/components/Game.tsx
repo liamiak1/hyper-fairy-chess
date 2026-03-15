@@ -121,8 +121,15 @@ export function Game({ mode = 'draft', aiColor }: GameProps) {
     return <HandoffScreen nextPlayer="black" onReady={acknowledgeHandoff} />;
   }
 
-  // Draft phase - piece selection
+  // Draft phase - piece selection (skip DraftUI when it's the AI's turn)
   if (isDraftPhase && currentDraft) {
+    if (aiColor && currentDrafter === aiColor) {
+      return (
+        <div className="ai-draft-waiting">
+          <p>AI is building its army…</p>
+        </div>
+      );
+    }
     return (
       <DraftUI
         availablePieces={availablePieces}

@@ -106,6 +106,16 @@
 
 
 /* AI thinking overlay */
+.ai-draft-waiting {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-size: 1.2rem;
+  color: #74b9ff;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
 .ai-thinking-overlay {
   position: fixed;
   bottom: 24px;

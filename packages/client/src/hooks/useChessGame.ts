@@ -3,6 +3,7 @@
  */
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { buildAIDraft } from '../ai/aiDraft';
 import type {
   GameState,
   Position,
@@ -794,33 +795,28 @@ export function useChessGame(
     return () => clearTimeout(t);
   }, [showHandoff, aiColor]);
 
-  // Effect B — Build AI draft
-  useEffect(() => {
-    if (!aiColor || !isDraftPhase || currentDrafter !== aiColor) return;
-    // Only build if draft is still empty
-    const currentDraftForAI = aiColor === 'white' ? whiteDraft : blackDraft;
-    if (currentDraftForAI && currentDraftForAI.selections.length > 0) return;
-    import('../ai/aiDraft').then(({ buildAIDraft }) => {
-      const draft = buildAIDraft(budget, gameState.boardSize);
-      if (aiColor === 'white') setWhiteDraft(draft);
-      else setBlackDraft(draft);
-    });
-  }, [aiColor, isDraftPhase, currentDrafter, budget, gameState.boardSize]);
+  // Keep a ref so the setTimeout callback always reads the latest whiteDraft
+  const whiteDraftRef = useRef(whiteDraft);
+  whiteDraftRef.current = whiteDraft;
 
-  // Effect C — Confirm AI draft after it's been built
+  // Effect B+C — Build AI draft and immediately confirm (single step, no async import)
   useEffect(() => {
     if (!aiColor || !isDraftPhase || currentDrafter !== aiColor) return;
-    const currentDraftForAI = aiColor === 'white' ? whiteDraft : blackDraft;
-    if (!currentDraftForAI || currentDraftForAI.selections.length === 0) return;
+    // Only act once — when the draft is still empty
+    const currentDraftForAI = aiColor === 'black' ? blackDraft : whiteDraft;
+    if (currentDraftForAI && currentDraftForAI.selections.length > 0) return;
 
     const t = setTimeout(() => {
+      const builtDraft = buildAIDraft(budget, gameState.boardSize);
       if (aiColor === 'white') {
+        setWhiteDraft(builtDraft);
         setShowHandoff(true);
       } else {
-        // Black confirmed — move to placement
-        if (whiteDraft && blackDraft) {
+        // Use ref so we get the latest whiteDraft even if closure is stale
+        const currentWhite = whiteDraftRef.current;
+        if (currentWhite) {
           resetDraftPieceIdCounter();
-          const ps = createPlacementStateFromDrafts(whiteDraft, blackDraft);
+          const ps = createPlacementStateFromDrafts(currentWhite, builtDraft);
           setPlacementState(ps);
           setGameState((prev) => ({ ...prev, phase: 'placement', currentTurn: 'white' }));
           setWhiteDraft(null);
@@ -829,7 +825,7 @@ export function useChessGame(
       }
     }, 300);
     return () => clearTimeout(t);
-  }, [aiColor, isDraftPhase, currentDrafter, whiteDraft, blackDraft]);
+  }, [aiColor, isDraftPhase, currentDrafter, budget, gameState.boardSize]);
 
   // Effect D — AI placement
   useEffect(() => {
