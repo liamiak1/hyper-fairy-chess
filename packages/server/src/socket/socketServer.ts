@@ -9,6 +9,7 @@ import type {
   CreateRoomMessage,
   JoinRoomMessage,
   DraftSubmitMessage,
+  DraftRetractMessage,
   PlacePieceMessage,
   MakeMoveMessage,
   ReconnectMessage,
@@ -122,6 +123,10 @@ function handleMessage(
 
     case 'DRAFT_SUBMIT':
       handleDraftSubmit(socket, msg as DraftSubmitMessage, roomManager, state);
+      break;
+
+    case 'DRAFT_RETRACT':
+      handleDraftRetract(socket, msg as DraftRetractMessage, roomManager, state);
       break;
 
     case 'PLACE_PIECE':
@@ -344,6 +349,29 @@ function handleDraftSubmit(
       timestamp: Date.now(),
       error: 'INVALID_CODE',
       message: result.error || 'Invalid draft',
+    } as RoomErrorMessage);
+  }
+}
+
+function handleDraftRetract(
+  socket: Socket,
+  _msg: DraftRetractMessage,
+  roomManager: RoomManager,
+  state: SocketState
+): void {
+  if (!state.roomCode || !state.playerId) return;
+
+  const room = roomManager.getRoom(state.roomCode);
+  if (!room) return;
+
+  const result = room.retractDraft(state.playerId);
+
+  if (!result.success) {
+    socket.emit('message', {
+      type: 'ROOM_ERROR',
+      timestamp: Date.now(),
+      error: 'INVALID_CODE',
+      message: result.error || 'Cannot retract draft',
     } as RoomErrorMessage);
   }
 }

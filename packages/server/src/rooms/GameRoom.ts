@@ -372,6 +372,44 @@ export class GameRoom {
     return { success: true };
   }
 
+  retractDraft(playerId: string): { success: boolean; error?: string } {
+    if (this.phase !== 'drafting') {
+      return { success: false, error: 'Not in draft phase' };
+    }
+
+    const player = this.players.get(playerId);
+    if (!player || !player.color) {
+      return { success: false, error: 'Player not found' };
+    }
+
+    // Check that this player has actually submitted something
+    const existingDraft = player.color === 'white' ? this.whiteDraft : this.blackDraft;
+    if (!existingDraft) {
+      return { success: false, error: 'No draft submitted' };
+    }
+
+    // Check the opponent has NOT submitted — once both are in we can't retract
+    const opponentDraft = player.color === 'white' ? this.blackDraft : this.whiteDraft;
+    if (opponentDraft) {
+      return { success: false, error: 'Opponent has already locked in' };
+    }
+
+    // Clear this player's draft
+    if (player.color === 'white') {
+      this.whiteDraft = null;
+    } else {
+      this.blackDraft = null;
+    }
+
+    this.broadcast({
+      type: 'DRAFT_RETRACTED',
+      timestamp: Date.now(),
+      playerId,
+    });
+
+    return { success: true };
+  }
+
   private convertDraftPicksToPlayerDraft(picks: DraftPick[]): PlayerDraft {
     const draft = createEmptyDraft();
     draft.selections = picks.map(p => ({ pieceTypeId: p.pieceTypeId, count: p.count }));

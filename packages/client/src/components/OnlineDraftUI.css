@@ -449,6 +449,24 @@
   opacity: 0.7;
 }
 
+.unlock-draft-btn {
+  margin-top: 8px;
+  width: 100%;
+  padding: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: 1px solid #e17055;
+  border-radius: 8px;
+  background: transparent;
+  color: #e17055;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.unlock-draft-btn:hover {
+  background: rgba(225, 112, 85, 0.12);
+}
+
 /* Reveal screen */
 .online-draft-reveal {
   display: flex;

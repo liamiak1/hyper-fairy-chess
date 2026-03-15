@@ -239,7 +239,17 @@ export function useOnlineGame() {
           console.log('[useOnlineGame] DRAFT_SUBMITTED - submitterId:', message.playerId, 'myPlayerId:', prev.playerId, 'isOpponent:', isOpponent);
           return {
             ...prev,
-            opponentReady: isOpponent,
+            opponentReady: isOpponent ? true : prev.opponentReady,
+          };
+        });
+        break;
+
+      case 'DRAFT_RETRACTED':
+        setState(prev => {
+          const isOpponent = message.playerId !== prev.playerId;
+          return {
+            ...prev,
+            opponentReady: isOpponent ? false : prev.opponentReady,
           };
         });
         break;
@@ -559,6 +569,13 @@ export function useOnlineGame() {
     });
   }, [sendMessage]);
 
+  const retractDraft = useCallback(() => {
+    sendMessage({
+      type: 'DRAFT_RETRACT',
+      timestamp: Date.now(),
+    });
+  }, [sendMessage]);
+
   const placePiece = useCallback((pieceId: string, position: Position) => {
     sendMessage({
       type: 'PLACE_PIECE',
@@ -667,6 +684,7 @@ export function useOnlineGame() {
       joinRoom,
       leaveRoom,
       submitDraft,
+      retractDraft,
       placePiece,
       blindPlacePiece,
       blindUnplacePiece,

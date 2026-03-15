@@ -43,6 +43,7 @@ interface OnlineDraftUIProps {
   whiteDraft: DraftPick[] | null;
   blackDraft: DraftPick[] | null;
   onSubmitDraft: (draft: DraftPick[]) => void;
+  onRetractDraft: () => void;
 }
 
 export function OnlineDraftUI({
@@ -55,6 +56,7 @@ export function OnlineDraftUI({
   whiteDraft,
   blackDraft,
   onSubmitDraft,
+  onRetractDraft,
 }: OnlineDraftUIProps) {
   const [draft, setDraft] = useState<PlayerDraft>(createEmptyDraft());
   const [isLocked, setIsLocked] = useState(false);
@@ -107,6 +109,14 @@ export function OnlineDraftUI({
 
     setIsLocked(true);
     onSubmitDraft(draftPicks);
+  };
+
+  const canUnlock = isLocked && !opponentReady && (timeRemaining === null || timeRemaining > 0);
+
+  const handleUnlock = () => {
+    if (!canUnlock) return;
+    setIsLocked(false);
+    onRetractDraft();
   };
 
   const handlePieceRightClick = (piece: PieceType, e: React.MouseEvent) => {
@@ -286,7 +296,7 @@ export function OnlineDraftUI({
         </div>
       </div>
 
-      {/* Footer with lock in button */}
+      {/* Footer with lock in / unlock buttons */}
       <div className="draft-footer">
         <button
           className={`lock-in-btn ${isLocked ? 'locked' : ''}`}
@@ -295,6 +305,11 @@ export function OnlineDraftUI({
         >
           {isLocked ? 'Draft Locked In ✓' : 'Lock In Draft'}
         </button>
+        {canUnlock && (
+          <button className="unlock-draft-btn" onClick={handleUnlock}>
+            Unlock Draft
+          </button>
+        )}
       </div>
 
       {pieceInfo && (

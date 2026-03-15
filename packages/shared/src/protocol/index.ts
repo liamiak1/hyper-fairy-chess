@@ -147,10 +147,21 @@ export interface DraftSubmitMessage extends ClientMessage {
   draft: DraftPick[];
 }
 
+// Client -> Server: retract a previously submitted draft (only valid while opponent hasn't locked)
+export interface DraftRetractMessage extends ClientMessage {
+  type: 'DRAFT_RETRACT';
+}
+
 // Server -> Client
 export interface DraftSubmittedMessage extends ServerMessage {
   type: 'DRAFT_SUBMITTED';
   playerId: string; // Which player submitted (doesn't reveal content)
+}
+
+// Server -> Client: a player has retracted their draft
+export interface DraftRetractedMessage extends ServerMessage {
+  type: 'DRAFT_RETRACTED';
+  playerId: string;
 }
 
 export interface DraftRevealMessage extends ServerMessage {
@@ -453,6 +464,7 @@ export type ClientToServerMessage =
   | LeaveRoomMessage
   | GetLobbyMessage
   | DraftSubmitMessage
+  | DraftRetractMessage
   | PlacePieceMessage
   | BlindPlacePieceMessage
   | BlindUnplacePieceMessage
@@ -476,6 +488,7 @@ export type ServerToClientMessage =
   | DraftCountdownMessage
   | DraftStartMessage
   | DraftSubmittedMessage
+  | DraftRetractedMessage
   | DraftRevealMessage
   | DraftTimeoutMessage
   | PlacementStartMessage

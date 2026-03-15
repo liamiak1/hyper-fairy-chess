@@ -17,8 +17,8 @@ import {
   PIECE_BY_ID,
   BUDGET_PRESETS,
   MIN_BUDGET,
-  MAX_BUDGET,
   BUDGET_STEP,
+  getMaxBudget,
   type PlayerDraft,
 } from '@hyper-fairy-chess/shared';
 import { PieceInfoPopup } from './PieceInfoPopup';
@@ -158,7 +158,7 @@ export function ArmyBuilder({ editingArmy, onClose }: ArmyBuilderProps) {
               <input
                 type="range"
                 min={MIN_BUDGET}
-                max={MAX_BUDGET}
+                max={getMaxBudget(boardSize)}
                 step={BUDGET_STEP}
                 value={budget}
                 onChange={(e) => setBudget(Number(e.target.value))}

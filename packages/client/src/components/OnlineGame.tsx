@@ -261,6 +261,7 @@ export function OnlineGame({ onBack }: OnlineGameProps) {
         whiteDraft={state.whiteDraft}
         blackDraft={state.blackDraft}
         onSubmitDraft={actions.submitDraft}
+        onRetractDraft={actions.retractDraft}
       />
     );
   }

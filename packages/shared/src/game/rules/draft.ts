@@ -38,8 +38,22 @@ export interface PlayerDraft {
 // =============================================================================
 
 export const MIN_BUDGET = 260;
-export const MAX_BUDGET = 900;
+export const MAX_BUDGET = 900; // for 8x8; use getMaxBudget() for board-aware limit
 export const BUDGET_STEP = 10;
+
+/**
+ * Maximum draft budget for a given board size.
+ * Larger boards have more placement slots so they support higher budgets.
+ */
+export function getMaxBudget(boardSize: BoardSize): number {
+  switch (boardSize) {
+    case '10x8':
+    case '10x10':
+      return 1500;
+    default:
+      return 900;
+  }
+}
 
 export const BUDGET_PRESETS = [
   { label: 'Minimal', value: 260, description: 'Very tight, forces hard choices' },

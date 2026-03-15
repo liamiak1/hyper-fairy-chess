@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import type { RoomSettings, LobbyRoom } from '@hyper-fairy-chess/shared';
+import { getMaxBudget, MIN_BUDGET } from '@hyper-fairy-chess/shared';
 import { getValidSession, clearSession, getSavedPlayerName, savePlayerName } from '../utils/sessionStorage';
 import { useAuth } from '../context/AuthContext';
 import { useSocketContext } from '../context/SocketContext';
@@ -237,8 +238,9 @@ export function OnlineLobby({
                 const value = e.target.value;
                 setBudgetOption(value);
                 if (value === 'random') {
-                  // Random budget between 260 and 900
-                  const randomBudget = Math.floor(Math.random() * (900 - 260 + 1)) + 260;
+                  const maxB = getMaxBudget(settings.boardSize);
+                  const steps = Math.floor((maxB - MIN_BUDGET) / 10);
+                  const randomBudget = MIN_BUDGET + Math.floor(Math.random() * (steps + 1)) * 10;
                   setSettings({ ...settings, budget: randomBudget });
                 } else {
                   setSettings({ ...settings, budget: Number(value) });
@@ -251,6 +253,13 @@ export function OnlineLobby({
               <option value="600">600 (Large board)</option>
               <option value="700">700 (Long)</option>
               <option value="900">900 (Epic)</option>
+              {(settings.boardSize === '10x8' || settings.boardSize === '10x10') && (
+                <>
+                  <option value="1100">1100 (XL)</option>
+                  <option value="1300">1300 (XXL)</option>
+                  <option value="1500">1500 (Maximum)</option>
+                </>
+              )}
               <option value="random">Random</option>
             </select>
           </div>
@@ -263,7 +272,7 @@ export function OnlineLobby({
               onChange={(e) => {
                 const newSize = e.target.value as '8x8' | '10x8' | '10x10';
                 // Suggest a higher budget for larger boards (more placement slots)
-                const suggestedBudget = newSize === '8x8' ? 405 : 600;
+                const suggestedBudget = newSize === '8x8' ? 405 : 700;
                 const newBudgetStr = String(suggestedBudget);
                 setBudgetOption(newBudgetStr);
                 setSettings({ ...settings, boardSize: newSize, budget: suggestedBudget });
