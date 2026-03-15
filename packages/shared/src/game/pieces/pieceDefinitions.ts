@@ -1297,6 +1297,7 @@ export const MERCENARY: PieceType = {
   description: 'A captured pawn that switched sides. Moves and captures like a standard Pawn.',
   isRoyal: false,
   isMandatory: false,
+  promotionOnly: true, // Spawned in-game only, not draftable
   canCastle: false,
   canBeCaptured: true,
   canFreeze: false,

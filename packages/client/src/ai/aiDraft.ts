@@ -18,7 +18,7 @@ export function buildAIDraft(budget: number, boardSize: BoardSize): PlayerDraft 
   let draft = createEmptyDraft();
 
   const pieces = getAvailablePieces()
-    .filter((p) => !p.isRoyal) // skip royals — King is auto-included
+    .filter((p) => !p.isRoyal && p.cost > 0) // skip royals and zero-cost pieces
     .sort((a, b) => b.cost - a.cost);
 
   let changed = true;
