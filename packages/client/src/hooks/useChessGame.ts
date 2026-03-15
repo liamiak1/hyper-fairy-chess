@@ -2,7 +2,7 @@
  * React hook for managing chess game state
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import type {
   GameState,
   Position,
@@ -74,6 +74,9 @@ interface SpecialCaptureTarget {
 export type GameMode = 'standard' | 'placement' | 'draft';
 
 export interface UseChessGameReturn {
+  // AI state
+  isAIThinking: boolean;
+
   // State
   gameState: GameState;
   selectedPiece: PieceInstance | null;
@@ -136,7 +139,8 @@ export interface UseChessGameReturn {
 // =============================================================================
 
 export function useChessGame(
-  mode: GameMode = 'standard'
+  mode: GameMode = 'standard',
+  aiColor?: PlayerColor
 ): UseChessGameReturn {
   // Initialize game state
   const [gameState, setGameState] = useState<GameState>(() => {
@@ -161,6 +165,10 @@ export function useChessGame(
 
   // Undo history - stores previous game states
   const [stateHistory, setStateHistory] = useState<GameState[]>([]);
+
+  // AI state
+  const [isAIThinking, setIsAIThinking] = useState(false);
+  const workerRef = useRef<Worker | null>(null);
 
   // Draft state
   const [budget, setBudget] = useState<number>(400);
@@ -771,10 +779,234 @@ export function useChessGame(
   }, []);
 
   // ==========================================================================
+  // AI Effects
+  // ==========================================================================
+
+  // Effect A — Auto-acknowledge handoff when AI is black
+  useEffect(() => {
+    if (!aiColor || !showHandoff) return;
+    if (aiColor !== 'black') return;
+    const t = setTimeout(() => {
+      setShowHandoff(false);
+      setCurrentDrafter('black');
+      setBlackDraft(createEmptyDraft());
+    }, 50);
+    return () => clearTimeout(t);
+  }, [showHandoff, aiColor]);
+
+  // Effect B — Build AI draft
+  useEffect(() => {
+    if (!aiColor || !isDraftPhase || currentDrafter !== aiColor) return;
+    // Only build if draft is still empty
+    const currentDraftForAI = aiColor === 'white' ? whiteDraft : blackDraft;
+    if (currentDraftForAI && currentDraftForAI.selections.length > 0) return;
+    import('../ai/aiDraft').then(({ buildAIDraft }) => {
+      const draft = buildAIDraft(budget, gameState.boardSize);
+      if (aiColor === 'white') setWhiteDraft(draft);
+      else setBlackDraft(draft);
+    });
+  }, [aiColor, isDraftPhase, currentDrafter, budget, gameState.boardSize]);
+
+  // Effect C — Confirm AI draft after it's been built
+  useEffect(() => {
+    if (!aiColor || !isDraftPhase || currentDrafter !== aiColor) return;
+    const currentDraftForAI = aiColor === 'white' ? whiteDraft : blackDraft;
+    if (!currentDraftForAI || currentDraftForAI.selections.length === 0) return;
+
+    const t = setTimeout(() => {
+      if (aiColor === 'white') {
+        setShowHandoff(true);
+      } else {
+        // Black confirmed — move to placement
+        if (whiteDraft && blackDraft) {
+          resetDraftPieceIdCounter();
+          const ps = createPlacementStateFromDrafts(whiteDraft, blackDraft);
+          setPlacementState(ps);
+          setGameState((prev) => ({ ...prev, phase: 'placement', currentTurn: 'white' }));
+          setWhiteDraft(null);
+          setBlackDraft(null);
+        }
+      }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [aiColor, isDraftPhase, currentDrafter, whiteDraft, blackDraft]);
+
+  // Effect D — AI placement
+  useEffect(() => {
+    if (!aiColor || !isPlacementPhase || !placementState) return;
+    if (placementState.currentPlacer !== aiColor) return;
+
+    const piecesLeft = aiColor === 'white'
+      ? placementState.whitePiecesToPlace
+      : placementState.blackPiecesToPlace;
+    if (piecesLeft.length === 0) return;
+
+    const piece = piecesLeft[0];
+    const zones = getPlacementZones(gameState.boardSize, aiColor);
+    const validSquares = getValidPlacementSquares(
+      gameState.board,
+      piece,
+      zones,
+      gameState.board.dimensions
+    );
+    if (validSquares.length === 0) return;
+
+    // Pick center-most square
+    const files = gameState.board.dimensions.files;
+    const ranks = gameState.board.dimensions.ranks;
+    const centerFile = (files - 1) / 2;
+    const centerRank = (ranks - 1) / 2;
+
+    const best = validSquares.reduce((a, b) => {
+      const da = Math.abs(a.file.charCodeAt(0) - 'a'.charCodeAt(0) - centerFile)
+        + Math.abs(a.rank - 1 - centerRank);
+      const db = Math.abs(b.file.charCodeAt(0) - 'a'.charCodeAt(0) - centerFile)
+        + Math.abs(b.rank - 1 - centerRank);
+      return da <= db ? a : b;
+    });
+
+    const t = setTimeout(() => {
+      // Inline placement logic (mirrors placePiece callback)
+      const currentPlacer = aiColor;
+      let actualPosition = best;
+
+      let pawnToMove: PieceInstance | null = null;
+      let pawnNewPosition: import('@hyper-fairy-chess/shared').Position | null = null;
+
+      if (isHerald(piece)) {
+        actualPosition = getHeraldActualPosition(best, currentPlacer, gameState.board.dimensions);
+        const pawnRank = currentPlacer === 'white' ? 2 : (gameState.board.dimensions.ranks - 1);
+        const existingId = gameState.board.positionMap.get(`${actualPosition.file}${pawnRank}`);
+        if (existingId) {
+          const existing = gameState.board.pieces.find((p) => p.id === existingId);
+          if (existing) {
+            const et = PIECE_BY_ID[existing.typeId];
+            if (et?.tier === 'pawn' && existing.owner === currentPlacer) {
+              pawnToMove = existing;
+              pawnNewPosition = getPawnSwapPosition(actualPosition.file, currentPlacer, gameState.board.dimensions);
+            }
+          }
+        }
+      }
+
+      const pt = PIECE_BY_ID[piece.typeId];
+      if (pt?.tier === 'pawn') {
+        if (shouldPawnSwapToBackRank(gameState.board, best.file, currentPlacer, gameState.board.dimensions)) {
+          actualPosition = getPawnSwapPosition(best.file, currentPlacer, gameState.board.dimensions);
+        }
+      }
+
+      const placedPiece: PieceInstance = { ...piece, position: actualPosition };
+      let newPieces = [...gameState.board.pieces, placedPiece];
+      const newPositionMap = new Map(gameState.board.positionMap);
+
+      if (pawnToMove && pawnNewPosition) {
+        newPieces = newPieces.map((p) =>
+          p.id === pawnToMove!.id ? { ...p, position: pawnNewPosition } : p
+        );
+        newPositionMap.delete(`${pawnToMove.position!.file}${pawnToMove.position!.rank}`);
+        newPositionMap.set(`${pawnNewPosition.file}${pawnNewPosition.rank}`, pawnToMove.id);
+      }
+      newPositionMap.set(`${actualPosition.file}${actualPosition.rank}`, placedPiece.id);
+
+      const newWhitePieces = currentPlacer === 'white'
+        ? placementState.whitePiecesToPlace.filter((p) => p.id !== piece.id)
+        : placementState.whitePiecesToPlace;
+      const newBlackPieces = currentPlacer === 'black'
+        ? placementState.blackPiecesToPlace.filter((p) => p.id !== piece.id)
+        : placementState.blackPiecesToPlace;
+
+      const updatedPS: PlacementState = {
+        whitePiecesToPlace: newWhitePieces,
+        blackPiecesToPlace: newBlackPieces,
+        currentPlacer: getNextPlacer(
+          { ...placementState, whitePiecesToPlace: newWhitePieces, blackPiecesToPlace: newBlackPieces },
+          currentPlacer
+        ),
+        selectedPieceId: null,
+        mode: placementState.mode,
+        whiteReady: placementState.whiteReady,
+        blackReady: placementState.blackReady,
+      };
+
+      const placementComplete = isPlacementComplete(updatedPS);
+
+      setGameState((prev) => {
+        let newBoard = {
+          ...prev.board,
+          pieces: newPieces,
+          positionMap: newPositionMap,
+        };
+        if (placementComplete) {
+          newBoard = initializeRoyalTracking(newBoard);
+        }
+        return {
+          ...prev,
+          board: newBoard,
+          phase: placementComplete ? 'play' : 'placement',
+          currentTurn: placementComplete ? 'white' : updatedPS.currentPlacer,
+        };
+      });
+
+      setPlacementState(placementComplete ? null : updatedPS);
+    }, 80);
+
+    return () => clearTimeout(t);
+  }, [aiColor, isPlacementPhase, placementState, gameState]);
+
+  // Effect E — AI play moves
+  useEffect(() => {
+    if (!aiColor || gameState.phase !== 'play') return;
+    if (gameState.currentTurn !== aiColor) return;
+
+    const currentResult = getGameResult(gameState);
+    if (currentResult) return;
+
+    setIsAIThinking(true);
+
+    const worker = new Worker(
+      new URL('../ai/aiWorker.ts', import.meta.url),
+      { type: 'module' }
+    );
+    workerRef.current = worker;
+
+    worker.postMessage({ gameState, color: aiColor, depth: 3 });
+
+    worker.onmessage = (e: MessageEvent) => {
+      const aiMove = e.data as { pieceId: string; from: import('@hyper-fairy-chess/shared').Position; to: import('@hyper-fairy-chess/shared').Position; promotionPieceId?: string } | null;
+      if (aiMove) {
+        setGameState((prev) => {
+          const piece = prev.board.pieces.find((p) => p.id === aiMove.pieceId);
+          if (!piece) return prev;
+          const move = prepareMoveFromPositions(prev, piece, aiMove.from, aiMove.to, aiMove.promotionPieceId);
+          if (!move) return prev;
+          setStateHistory((h) => [...h, prev]);
+          return executeMove(prev, move);
+        });
+      }
+      worker.terminate();
+      workerRef.current = null;
+      setIsAIThinking(false);
+    };
+
+    worker.onerror = () => {
+      worker.terminate();
+      workerRef.current = null;
+      setIsAIThinking(false);
+    };
+
+    return () => {
+      worker.terminate();
+      workerRef.current = null;
+    };
+  }, [aiColor, gameState.currentTurn, gameState.phase]);
+
+  // ==========================================================================
   // Return
   // ==========================================================================
 
   return {
+    isAIThinking,
     gameState,
     selectedPiece,
     validMoves,

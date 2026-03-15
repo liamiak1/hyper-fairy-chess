@@ -8,7 +8,7 @@ import { SocketProvider } from './context/SocketContext';
 import { AuthProvider } from './context/AuthContext';
 import './App.css';
 
-type GameMode = 'menu' | 'local' | 'online' | 'profile';
+type GameMode = 'menu' | 'local' | 'ai' | 'online' | 'profile';
 
 function getResetToken(): string | null {
   const params = new URLSearchParams(window.location.search);
@@ -44,6 +44,7 @@ function AppContent() {
       <div className="app">
         <MainMenu
           onLocalPlay={() => setMode('local')}
+          onAIPlay={() => setMode('ai')}
           onOnlinePlay={() => setMode('online')}
           onProfile={() => setMode('profile')}
         />
@@ -55,6 +56,14 @@ function AppContent() {
     return (
       <div className="app">
         <Game />
+      </div>
+    );
+  }
+
+  if (mode === 'ai') {
+    return (
+      <div className="app">
+        <Game aiColor="black" />
       </div>
     );
   }

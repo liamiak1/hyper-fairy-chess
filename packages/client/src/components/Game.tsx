@@ -19,6 +19,7 @@ import './Game.css';
 
 interface GameProps {
   mode?: GameMode;
+  aiColor?: PlayerColor;
 }
 
 interface PieceInfoState {
@@ -28,7 +29,7 @@ interface PieceInfoState {
   y: number;
 }
 
-export function Game({ mode = 'draft' }: GameProps) {
+export function Game({ mode = 'draft', aiColor }: GameProps) {
   const [hoveredMove, setHoveredMove] = useState<Position | null>(null);
   const [pieceInfo, setPieceInfo] = useState<PieceInfoState | null>(null);
 
@@ -98,7 +99,8 @@ export function Game({ mode = 'draft' }: GameProps) {
     isGameOver,
     resultDescription,
     currentTurn,
-  } = useChessGame(mode);
+    isAIThinking,
+  } = useChessGame(mode, aiColor);
 
   // Handle board click - different behavior for placement vs play
   const handleSquareClick = (position: { file: string; rank: number }) => {
@@ -114,8 +116,8 @@ export function Game({ mode = 'draft' }: GameProps) {
     return <SetupScreen onStartGame={startDraft} />;
   }
 
-  // Draft phase - show handoff screen between players
-  if (showHandoff) {
+  // Draft phase - show handoff screen between players (skip for AI)
+  if (showHandoff && aiColor !== 'black') {
     return <HandoffScreen nextPlayer="black" onReady={acknowledgeHandoff} />;
   }
 
@@ -194,6 +196,12 @@ export function Game({ mode = 'draft' }: GameProps) {
           onSelect={selectPromotion}
           onCancel={cancelPromotion}
         />
+      )}
+
+      {isAIThinking && (
+        <div className="ai-thinking-overlay">
+          <span>AI is thinking…</span>
+        </div>
       )}
 
       {pieceInfo && (

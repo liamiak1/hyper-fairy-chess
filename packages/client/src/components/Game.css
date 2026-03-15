@@ -103,3 +103,24 @@
   color: #718096;
   margin-right: 4px;
 }
+
+
+/* AI thinking overlay */
+.ai-thinking-overlay {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: rgba(30, 30, 60, 0.92);
+  color: #74b9ff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  border: 1px solid #74b9ff44;
+  z-index: 100;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}

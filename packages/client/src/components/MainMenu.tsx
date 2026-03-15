@@ -11,11 +11,12 @@ import './MainMenu.css';
 
 interface MainMenuProps {
   onLocalPlay: () => void;
+  onAIPlay: () => void;
   onOnlinePlay: () => void;
   onProfile: () => void;
 }
 
-export function MainMenu({ onLocalPlay, onOnlinePlay, onProfile }: MainMenuProps) {
+export function MainMenu({ onLocalPlay, onAIPlay, onOnlinePlay, onProfile }: MainMenuProps) {
   const { isAuthenticated, user, authAvailable } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showPieceStats, setShowPieceStats] = useState(false);
@@ -40,6 +41,14 @@ export function MainMenu({ onLocalPlay, onOnlinePlay, onProfile }: MainMenuProps
             <span className="btn-text">
               <span className="btn-title">Local Game</span>
               <span className="btn-desc">Play on this device (hot-seat)</span>
+            </span>
+          </button>
+
+          <button className="menu-btn ai" onClick={onAIPlay}>
+            <span className="btn-icon">🤖</span>
+            <span className="btn-text">
+              <span className="btn-title">vs AI</span>
+              <span className="btn-desc">Play against the computer</span>
             </span>
           </button>
 
