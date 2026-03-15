@@ -499,7 +499,7 @@ export const FERFIL: PieceType = {
   tier: 'piece',
   cost: 14,
   victoryPoints: 14,
-  symbol: '⬦',
+  symbol: '◐',
   description: 'Ferz + Alfil combined. Moves 1 or 2 squares diagonally in any direction.',
   isRoyal: false,
   isMandatory: false,
