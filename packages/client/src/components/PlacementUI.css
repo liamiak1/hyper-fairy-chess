@@ -35,6 +35,11 @@
   color: #fff;
 }
 
+.placer-indicator.red {
+  background: #c0392b;
+  color: #fff;
+}
+
 .pieces-remaining {
   display: flex;
   justify-content: space-around;

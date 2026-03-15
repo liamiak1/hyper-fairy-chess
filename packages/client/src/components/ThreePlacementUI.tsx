@@ -42,19 +42,19 @@ export function ThreePlacementUI({
 
       <div className="pieces-section your-pieces">
         <h4 className="section-title">Your Pieces</h4>
-        <div className="pieces-to-place">
+        <div className="piece-list" style={{ gridTemplateColumns: 'repeat(4, 54px)', gap: '8px' }}>
           {piecesToPlace.map((piece) => {
             const pt = PIECE_BY_ID[piece.typeId];
             const isSelected = selectedPiece?.id === piece.id;
             return (
               <button
                 key={piece.id}
-                className={`piece-slot ${isSelected ? 'selected' : ''} ${placer}`}
+                className={`piece-button ${isSelected ? 'selected' : ''} ${placer}`}
                 onClick={() => onSelectPiece(piece)}
                 title={pt?.name ?? piece.typeId}
+                style={{ width: 54, height: 54 }}
               >
                 <span className="piece-symbol">{pt?.symbol ?? '?'}</span>
-                <span className="piece-name">{pt?.name ?? piece.typeId}</span>
               </button>
             );
           })}

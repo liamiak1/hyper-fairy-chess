@@ -278,18 +278,15 @@ export function useThreePlayerGame(initialBudget = 405): UseThreePlayerGameRetur
 
   const selectPieceToPlace = useCallback(
     (piece: ThreePiece) => {
-      setGameState((gs) => {
-        if (!placementState) return gs;
-        if (piece.owner !== placementState.currentPlacer) return gs;
-        const squares = getValidThreePlacementSquares(piece, gs);
-        setSelectedPieceToPlace(piece);
-        setValidPlacementSquares(squares);
-        setSelectedPos(null);
-        setValidMoves([]);
-        return gs;
-      });
+      if (!placementState) return;
+      if (piece.owner !== placementState.currentPlacer) return;
+      const squares = getValidThreePlacementSquares(piece, gameState);
+      setSelectedPieceToPlace(piece);
+      setValidPlacementSquares(squares);
+      setSelectedPos(null);
+      setValidMoves([]);
     },
-    [placementState],
+    [placementState, gameState],
   );
 
   // Handle play: select piece then select destination
