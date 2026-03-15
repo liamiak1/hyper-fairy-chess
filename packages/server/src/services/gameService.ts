@@ -130,7 +130,7 @@ export async function getPieceStats(): Promise<PieceStat[]> {
   try {
     const result = await pool.query(`
       WITH non_playtest AS (
-        SELECT id, winner_color, result_type, white_draft, black_draft
+        SELECT id, winner_color, result_type, white_draft, black_draft, played_at
         FROM games
         WHERE white_draft IS NOT NULL
           AND COALESCE(settings->>'isPlaytest', 'false') != 'true'
@@ -144,7 +144,8 @@ export async function getPieceStats(): Promise<PieceStat[]> {
           COALESCE((pick->>'count')::int, 1) AS draft_count,
           CASE WHEN g.winner_color = 'white' THEN 'win'
                WHEN g.result_type = 'draw'   THEN 'draw'
-               ELSE 'loss' END AS outcome
+               ELSE 'loss' END AS outcome,
+          g.played_at
         FROM non_playtest g, jsonb_array_elements(g.white_draft) AS pick
 
         UNION ALL
@@ -154,7 +155,8 @@ export async function getPieceStats(): Promise<PieceStat[]> {
           COALESCE((pick->>'count')::int, 1) AS draft_count,
           CASE WHEN g.winner_color = 'black' THEN 'win'
                WHEN g.result_type = 'draw'   THEN 'draw'
-               ELSE 'loss' END AS outcome
+               ELSE 'loss' END AS outcome,
+          g.played_at
         FROM non_playtest g, jsonb_array_elements(g.black_draft) AS pick
         WHERE g.black_draft IS NOT NULL
       )
@@ -167,6 +169,8 @@ export async function getPieceStats(): Promise<PieceStat[]> {
         SUM(CASE WHEN e.outcome = 'loss' THEN 1 ELSE 0 END)::int          AS losses,
         t.total::int                                                        AS total_games
       FROM exploded e, total_games t
+      LEFT JOIN piece_cost_resets pcr ON pcr.piece_id = e.piece_id
+      WHERE e.played_at >= COALESCE(pcr.reset_at, '1970-01-01'::timestamptz)
       GROUP BY e.piece_id, t.total
       ORDER BY appearances DESC
     `);

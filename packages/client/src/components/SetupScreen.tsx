@@ -11,7 +11,7 @@ interface SetupScreenProps {
 }
 
 export function SetupScreen({ onStartGame }: SetupScreenProps) {
-  const [budget, setBudget] = useState(400); // Default to "Standard"
+  const [budget, setBudget] = useState(405); // Default to "Chess"
 
   return (
     <div className="setup-screen">

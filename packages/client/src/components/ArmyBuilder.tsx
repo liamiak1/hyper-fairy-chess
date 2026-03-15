@@ -93,11 +93,13 @@ export function ArmyBuilder({ editingArmy, onClose }: ArmyBuilderProps) {
       count: s.count,
     }));
 
+    // Save with actual points spent, not the selected max budget
+    const budgetToSave = draft.budgetSpent;
     let result;
     if (editingArmy) {
-      result = await updateArmy(token, editingArmy.id, trimmedName, pieces, budget);
+      result = await updateArmy(token, editingArmy.id, trimmedName, pieces, budgetToSave);
     } else {
-      result = await createArmy(token, trimmedName, pieces, budget);
+      result = await createArmy(token, trimmedName, pieces, budgetToSave);
     }
 
     setSaving(false);

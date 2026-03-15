@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { PIECE_BY_ID } from '@hyper-fairy-chess/shared';
+import { getAvailablePieces } from '@hyper-fairy-chess/shared';
 import { getPieceStats } from '../api/stats';
 import type { PieceStat } from '../api/stats';
 import './PieceStats.css';
@@ -36,19 +36,33 @@ export function PieceStats({ onClose }: PieceStatsProps) {
         const totalGames = raw[0]?.totalGames ?? 0;
         const totalSlots = totalGames * 2; // one army per player per game
 
-        const enriched: EnrichedStat[] = raw
-          .map((s) => {
-            const pieceType = PIECE_BY_ID[s.pieceId];
-            const decisive = s.wins + s.losses;
-            return {
-              ...s,
-              name: pieceType?.name ?? s.pieceId,
-              symbol: pieceType?.symbol ?? '?',
-              cost: pieceType?.cost ?? 0,
-              pickRate: totalSlots > 0 ? (s.appearances / totalSlots) * 100 : 0,
-              winRate: decisive > 0 ? (s.wins / decisive) * 100 : -1,
-            };
-          });
+        // Build a map of server data by pieceId
+        const serverMap = new Map(raw.map((s) => [s.pieceId, s]));
+
+        // Merge with all draftable pieces (so zero-pick pieces show up)
+        const allPieces = getAvailablePieces();
+        const enriched: EnrichedStat[] = allPieces.map((pieceType) => {
+          const s = serverMap.get(pieceType.id);
+          const appearances = s?.appearances ?? 0;
+          const wins = s?.wins ?? 0;
+          const draws = s?.draws ?? 0;
+          const losses = s?.losses ?? 0;
+          const decisive = wins + losses;
+          return {
+            pieceId: pieceType.id,
+            appearances,
+            totalCopies: s?.totalCopies ?? 0,
+            wins,
+            draws,
+            losses,
+            totalGames,
+            name: pieceType.name,
+            symbol: pieceType.symbol,
+            cost: pieceType.cost,
+            pickRate: totalSlots > 0 ? (appearances / totalSlots) * 100 : 0,
+            winRate: decisive > 0 ? (wins / decisive) * 100 : -1,
+          };
+        });
 
         setStats(enriched);
         setLoading(false);
@@ -116,13 +130,7 @@ export function PieceStats({ onClose }: PieceStatsProps) {
         {loading && <div className="piece-stats-loading">Loading…</div>}
         {error && <div className="piece-stats-error">{error}</div>}
 
-        {!loading && !error && stats.length === 0 && (
-          <div className="piece-stats-empty">
-            No data yet — play some non-playtest games to see piece statistics.
-          </div>
-        )}
-
-        {!loading && !error && stats.length > 0 && (
+        {!loading && !error && (
           <div className="piece-stats-table-wrap">
             <table className="piece-stats-table">
               <thead>

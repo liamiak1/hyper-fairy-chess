@@ -43,7 +43,7 @@ export const BUDGET_STEP = 10;
 
 export const BUDGET_PRESETS = [
   { label: 'Minimal', value: 260, description: 'Very tight, forces hard choices' },
-  { label: 'Standard', value: 400, description: 'Similar to standard chess value' },
+  { label: 'Chess', value: 405, description: 'Equivalent to a standard chess army' },
   { label: 'Expanded', value: 600, description: 'Room for experimentation' },
   { label: 'Maximum', value: 900, description: 'Everything available' },
 ];

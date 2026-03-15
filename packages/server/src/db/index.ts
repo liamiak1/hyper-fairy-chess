@@ -1,4 +1,5 @@
 import pg from 'pg';
+import { PIECE_BY_ID } from '@hyper-fairy-chess/shared';
 
 const { Pool } = pg;
 
@@ -119,6 +120,19 @@ export async function initDatabase(): Promise<pg.Pool | null> {
       CREATE INDEX IF NOT EXISTS idx_prt_user ON password_reset_tokens(user_id);
     `);
 
+    // Create piece cost resets table — tracks when a piece's cost changed so
+    // stats prior to that date are excluded from analytics.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS piece_cost_resets (
+        piece_id TEXT PRIMARY KEY,
+        cost INT NOT NULL,
+        reset_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Check current piece costs against stored; insert reset entries for any that changed.
+    await syncPieceCosts(pool);
+
     console.log('[DB] Migrations complete');
 
     return pool;
@@ -126,6 +140,34 @@ export async function initDatabase(): Promise<pg.Pool | null> {
     console.error('[DB] Failed to connect:', error);
     pool = null;
     return null;
+  }
+}
+
+/**
+ * Compare current piece costs against stored; upsert a reset entry for any changed piece.
+ */
+async function syncPieceCosts(pool: pg.Pool): Promise<void> {
+  try {
+    const stored = await pool.query('SELECT piece_id, cost FROM piece_cost_resets');
+    const storedMap = new Map<string, number>(stored.rows.map((r: { piece_id: string; cost: number }) => [r.piece_id, r.cost]));
+
+    for (const [id, pieceType] of Object.entries(PIECE_BY_ID)) {
+      const currentCost = pieceType.cost;
+      const storedCost = storedMap.get(id);
+      if (storedCost === undefined || storedCost !== currentCost) {
+        await pool.query(
+          `INSERT INTO piece_cost_resets (piece_id, cost, reset_at)
+           VALUES ($1, $2, NOW())
+           ON CONFLICT (piece_id) DO UPDATE SET cost = $2, reset_at = NOW()`,
+          [id, currentCost]
+        );
+        if (storedCost !== undefined) {
+          console.log(`[DB] Piece cost changed for "${id}": ${storedCost} → ${currentCost}. Stats reset.`);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[DB] Failed to sync piece costs:', err);
   }
 }
 

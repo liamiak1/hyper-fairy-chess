@@ -42,14 +42,14 @@ export function OnlineLobby({
   });
   const [roomCode, setRoomCode] = useState('');
   const [settings, setSettings] = useState<RoomSettings>({
-    budget: 360,
+    budget: 405,
     boardSize: '8x8',
     draftTimeLimit: 180,
     moveTimeLimit: null,
     placementMode: 'blind',
     isPlaytest: false,
   });
-  const [budgetOption, setBudgetOption] = useState<string>('360');
+  const [budgetOption, setBudgetOption] = useState<string>('405');
 
   // Check for valid session on each render
   const validSession = getValidSession();
@@ -246,8 +246,9 @@ export function OnlineLobby({
               }}
             >
               <option value="260">260 (Quick)</option>
-              <option value="360">360 (Standard)</option>
+              <option value="405">405 (Chess)</option>
               <option value="500">500 (Extended)</option>
+              <option value="600">600 (Large board)</option>
               <option value="700">700 (Long)</option>
               <option value="900">900 (Epic)</option>
               <option value="random">Random</option>
@@ -259,7 +260,14 @@ export function OnlineLobby({
             <select
               id="boardSize"
               value={settings.boardSize}
-              onChange={(e) => setSettings({ ...settings, boardSize: e.target.value as '8x8' | '10x8' | '10x10' })}
+              onChange={(e) => {
+                const newSize = e.target.value as '8x8' | '10x8' | '10x10';
+                // Suggest a higher budget for larger boards (more placement slots)
+                const suggestedBudget = newSize === '8x8' ? 405 : 600;
+                const newBudgetStr = String(suggestedBudget);
+                setBudgetOption(newBudgetStr);
+                setSettings({ ...settings, boardSize: newSize, budget: suggestedBudget });
+              }}
             >
               <option value="8x8">8x8 (Standard)</option>
               <option value="10x8">10x8 (Extended)</option>
