@@ -180,6 +180,7 @@ export function Game({ mode = 'draft', aiColor }: GameProps) {
             onSquareHover={isPlacementPhase ? undefined : setHoveredMove}
             currentTurn={gameState.currentTurn}
             onPieceRightClick={handlePieceRightClick}
+            flipped={aiColor === 'white'}
             isViewingEnemy={!isPlacementPhase && selectedPiece !== null && selectedPiece.owner !== gameState.currentTurn}
           />
         </div>
