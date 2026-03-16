@@ -88,6 +88,9 @@ export interface UseThreePlayerGameReturn {
 
   // Placement
   placementState: ThreePlacementState | null;
+  showPlacementHandoff: boolean;
+  nextPlacer: Section | null;
+  acknowledgePlacementHandoff: () => void;
   selectedPos: ThreePos | null;
   selectedPieceToPlace: ThreePiece | null;
   validMoves: ThreePos[];
@@ -121,6 +124,8 @@ export function useThreePlayerGame(initialBudget = 405): UseThreePlayerGameRetur
 
   // Placement state
   const [placementState, setPlacementState] = useState<ThreePlacementState | null>(null);
+  const [showPlacementHandoff, setShowPlacementHandoff] = useState(false);
+  const [pendingNextPlacer, setPendingNextPlacer] = useState<Section | null>(null);
 
   // Selection state
   const [selectedPos, setSelectedPos] = useState<ThreePos | null>(null);
@@ -142,6 +147,8 @@ export function useThreePlayerGame(initialBudget = 405): UseThreePlayerGameRetur
     setShowHandoff(false);
     setPendingNextDraftIndex(null);
     setPlacementState(null);
+    setShowPlacementHandoff(false);
+    setPendingNextPlacer(null);
     setSelectedPos(null);
     setSelectedPieceToPlace(null);
     setValidMoves([]);
@@ -191,6 +198,13 @@ export function useThreePlayerGame(initialBudget = 405): UseThreePlayerGameRetur
     setPendingNextDraftIndex(null);
     setGameState((prev) => ({ ...prev, phase: 'draft' }));
   }, [pendingNextDraftIndex]);
+
+  const acknowledgePlacementHandoff = useCallback(() => {
+    if (pendingNextPlacer === null) return;
+    setPlacementState((prev) => prev ? { ...prev, currentPlacer: pendingNextPlacer } : prev);
+    setShowPlacementHandoff(false);
+    setPendingNextPlacer(null);
+  }, [pendingNextPlacer]);
 
   const transitionToPlacement = useCallback(() => {
     // Build all pieces for all players
@@ -253,14 +267,17 @@ export function useThreePlayerGame(initialBudget = 405): UseThreePlayerGameRetur
           const remaining = getUnplacedPiecesForSection(newPs, placer);
           if (remaining.length === 0) {
             // Advance to next player or start game
-            const nextPlacer = advancePlacer(placer, newPs);
-            if (nextPlacer === null || isThreePlacementComplete(newPs)) {
+            const next = advancePlacer(placer, newPs);
+            if (next === null || isThreePlacementComplete(newPs)) {
               // All placed — start game
               setPlacementState({ ...newPs, currentPlacer: placer });
               setGameState({ ...newGs, phase: 'play' });
               return;
             }
-            setPlacementState({ ...newPs, currentPlacer: nextPlacer });
+            // Show placement handoff screen
+            setPlacementState(newPs);
+            setPendingNextPlacer(next);
+            setShowPlacementHandoff(true);
           } else {
             setPlacementState(newPs);
           }
@@ -348,6 +365,8 @@ export function useThreePlayerGame(initialBudget = 405): UseThreePlayerGameRetur
     setShowHandoff(false);
     setPendingNextDraftIndex(null);
     setPlacementState(null);
+    setShowPlacementHandoff(false);
+    setPendingNextPlacer(null);
     setSelectedPos(null);
     setSelectedPieceToPlace(null);
     setValidMoves([]);
@@ -368,6 +387,9 @@ export function useThreePlayerGame(initialBudget = 405): UseThreePlayerGameRetur
     confirmDraft,
     acknowledgeHandoff,
     placementState,
+    showPlacementHandoff,
+    nextPlacer: pendingNextPlacer,
+    acknowledgePlacementHandoff,
     selectedPos,
     selectedPieceToPlace,
     validMoves,

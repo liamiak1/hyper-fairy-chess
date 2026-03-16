@@ -1,10 +1,9 @@
 /**
  * SVG board for 3-player GreenChess.
  *
- * Three 8×4 sections arranged around a triangular center.
- * White = bottom (rank 1 at bottom), Red = upper-left, Black = upper-right.
- *
- * Each square is SQUARE_SIZE px. Sections are oriented so rank-4 faces center.
+ * Three 8×4 sections arranged around a central equilateral triangle.
+ * Each section's rank-4 edge forms one side of the triangle.
+ * White = bottom, Red = upper-left, Black = upper-right.
  */
 
 import type {
@@ -16,9 +15,11 @@ import type {
 import { threeposKey, threeposEqual, PIECE_BY_ID } from '@hyper-fairy-chess/shared';
 import './BoardThreePlayer.css';
 
-const SQUARE_SIZE = 52;
-const SECTION_W = 8 * SQUARE_SIZE; // 416
-const SECTION_H = 4 * SQUARE_SIZE; // 208
+const SQUARE_SIZE = 44;
+const SECTION_W = 8 * SQUARE_SIZE; // 352
+const SECTION_H = 4 * SQUARE_SIZE; // 176
+// Height of equilateral triangle with side = SECTION_W
+const TRI_HEIGHT = Math.round(SECTION_W * Math.sqrt(3) / 2); // 305
 
 interface BoardThreePlayerProps {
   state: ThreeGameState;
@@ -30,7 +31,6 @@ interface BoardThreePlayerProps {
   onPieceRightClick?: (piece: ThreePiece, x: number, y: number) => void;
 }
 
-// Piece symbols by typeId — fall back to PIECE_BY_ID symbol
 function getPieceSymbol(typeId: string): string {
   const pt = PIECE_BY_ID[typeId];
   return pt?.symbol ?? '?';
@@ -54,7 +54,8 @@ function getPieceStroke(owner: Section): string {
 
 /**
  * Renders a single 8×4 section as an SVG <g>.
- * The section is always rendered with sfile 1..8 left→right and srank 1..4 bottom→top.
+ * Section local coords: sfile 1..8 left→right, srank 1..4 bottom→top.
+ * rank-4 (seam) is at y=0; rank-1 (back rank) is at y=SECTION_H.
  * The <g> transform applied by the parent will rotate/translate into position.
  */
 interface SectionGridProps {
@@ -83,13 +84,11 @@ function SectionGrid({
       const pos: ThreePos = { section, sfile: sfile as ThreePos['sfile'], srank: srank as ThreePos['srank'] };
       const key = threeposKey(pos);
 
-      // x = (sfile-1)*SQUARE_SIZE, y = (4-srank)*SQUARE_SIZE (rank 1 at bottom)
+      // rank-4 (seam) at y=0 (top), rank-1 at y=SECTION_H (bottom)
       const x = (sfile - 1) * SQUARE_SIZE;
       const y = (4 - srank) * SQUARE_SIZE;
 
-      // Checkerboard: light when (sfile + srank) % 2 === 0
       const isLight = (sfile + srank) % 2 === 0;
-
       const isSelected = selectedPos !== null && threeposEqual(pos, selectedPos);
       const isValidMove = validMoves.some((m) => threeposEqual(m, pos));
       const isValidPlacement = validPlacementSquares.some((m) => threeposEqual(m, pos));
@@ -135,7 +134,6 @@ function SectionGrid({
                 onPieceRightClick
                   ? (e) => {
                       e.preventDefault();
-                      // We can't get SVG-to-screen coords easily here; pass 0,0 and let parent handle
                       onPieceRightClick(piece, e.clientX, e.clientY);
                     }
                   : undefined
@@ -153,21 +151,25 @@ function SectionGrid({
 }
 
 /**
- * The three sections are positioned so their rank-8 edges meet at the triangular center.
+ * Three-section board layout using equilateral triangle geometry.
  *
- * White: bottom center. Rendered normally (rank 1 at bottom, rank 8 at top).
- * Red: upper-left. The section is rotated 120° around the center point.
- * Black: upper-right. Rotated -120°.
+ * Canvas: 700×640, center at cx=350.
+ * cy_seam = y-coordinate of the bottom side of the central triangle (White's rank-4 row).
  *
- * SVG canvas: 700×640. Center of board ~(350, 300).
+ * Triangle vertices:
+ *   Bottom-left  (BL): (cx - SECTION_W/2, cy_seam) = (174, 430)
+ *   Bottom-right (BR): (cx + SECTION_W/2, cy_seam) = (526, 430)
+ *   Top          (T):  (cx, cy_seam - TRI_HEIGHT)  = (350, 125)
  *
- * White section: rank-8 top edge at y=centerY - SECTION_H + some offset.
- * We place the section so rank-8 is at the top, touching center.
+ * Section transforms (SVG: "A B" = first apply B then A):
+ *   White:  translate(174, 430)          — rank-4 at top, rank-1 extends down
+ *   Red:    translate(350, 125) rotate(120)  — rank-4 edge = left side of triangle
+ *   Black:  translate(526, 430) rotate(-120) — rank-4 edge = right side of triangle
  *
- * Layout math:
- *   White section: origin at (350 - SECTION_W/2, 300) with rank-8 at top (y=300) and rank-1 at y=300+SECTION_H
- *   Red section: rotated 120° around center (350, 300)
- *   Black section: rotated -120° around center (350, 300)
+ * Seam adjacency check:
+ *   White sfile=1 (top-left corner of section, at BL vertex) connects to Red sfile=8 (bottom-right after rotation, also at BL vertex) ✓
+ *   White sfile=8 (top-right, at BR vertex) connects to Black sfile=1 (at BR vertex) ✓
+ *   Red sfile=1 (at T vertex) connects to Black sfile=8 (also at T vertex) ✓
  */
 export function BoardThreePlayer({
   state,
@@ -178,14 +180,14 @@ export function BoardThreePlayer({
   onSquareClick,
   onPieceRightClick,
 }: BoardThreePlayerProps) {
-  // Center of board in SVG coords
   const cx = 350;
-  const cy = 310;
+  const cy_seam = 430;
 
-  // White section: rank-8 row at top, rank-1 at bottom
-  // Position so rank-8 (y=0 in section coords) is at cy, rank-1 (y=SECTION_H) is below
-  const whiteX = cx - SECTION_W / 2;
-  const whiteY = cy;
+  // Triangle vertices
+  const bx = cx - SECTION_W / 2; // 174 (bottom-left x)
+  const tx = cx;                  // 350 (top x)
+  const brx = cx + SECTION_W / 2; // 526 (bottom-right x)
+  const ty = cy_seam - TRI_HEIGHT; // 125 (top y)
 
   const sectionProps = (section: Section) => ({
     section,
@@ -205,82 +207,34 @@ export function BoardThreePlayer({
         height="640"
         className="three-board-svg"
       >
-        {/* White section: at bottom, rank-8 at top facing center */}
-        <g transform={`translate(${whiteX}, ${whiteY})`}>
-          <SectionGrid {...sectionProps('white')} />
-        </g>
-
-        {/* Red section: upper-left — rotate the white section 120° around center */}
-        <g transform={`rotate(120, ${cx}, ${cy}) translate(${whiteX}, ${whiteY})`}>
-          <SectionGrid {...sectionProps('red')} />
-        </g>
-
-        {/* Black section: upper-right — rotate -120° around center */}
-        <g transform={`rotate(-120, ${cx}, ${cy}) translate(${whiteX}, ${whiteY})`}>
-          <SectionGrid {...sectionProps('black')} />
-        </g>
-
-        {/* Center triangle fill */}
+        {/* Center triangle fill — covers the gap between sections */}
         <polygon
-          points={getCenterTrianglePoints(cx, cy, whiteX, whiteY)}
+          points={`${bx},${cy_seam} ${brx},${cy_seam} ${tx},${ty}`}
           fill="#1a1a2e"
-          stroke="#444"
+          stroke="#555"
           strokeWidth="1"
         />
 
+        {/* White section: bottom. translate(bx, cy_seam) — rank-4 at top touching triangle base */}
+        <g transform={`translate(${bx}, ${cy_seam})`}>
+          <SectionGrid {...sectionProps('white')} />
+        </g>
+
+        {/* Red section: upper-left. translate(top-vertex) rotate(120°) */}
+        <g transform={`translate(${tx}, ${ty}) rotate(120)`}>
+          <SectionGrid {...sectionProps('red')} />
+        </g>
+
+        {/* Black section: upper-right. translate(bottom-right vertex) rotate(-120°) */}
+        <g transform={`translate(${brx}, ${cy_seam}) rotate(-120)`}>
+          <SectionGrid {...sectionProps('black')} />
+        </g>
+
         {/* Section labels */}
-        <text x={cx} y={cy + SECTION_H + 24} textAnchor="middle" className="section-label white-label">WHITE</text>
+        <text x={cx} y={cy_seam + SECTION_H + 22} textAnchor="middle" className="section-label white-label">WHITE</text>
+        <text x={bx - 20} y={(cy_seam + ty) / 2} textAnchor="middle" className="section-label red-label">RED</text>
+        <text x={brx + 20} y={(cy_seam + ty) / 2} textAnchor="middle" className="section-label black-label">BLACK</text>
       </svg>
     </div>
   );
-}
-
-/**
- * Compute the three corner points of the center triangle.
- * The triangle connects rank-8 midpoints of each section.
- */
-function getCenterTrianglePoints(cx: number, cy: number, _sectionX: number, _sectionY: number): string {
-  // The rank-8 row top edge midpoints:
-  // White: midpoint of rank-8 top edge = (cx, cy)
-  // Red: rotate (cx, cy) by 120° around (cx, cy) = same point... that's the center.
-  // Actually the inner corners of rank-8 of each section all converge at the center.
-  // The triangle is formed by the 3 inner corners of the seam edges.
-  //
-  // White section seam: from (whiteX, cy) to (whiteX + SECTION_W, cy) — left and right corners
-  // But those left/right corners are where other sections start.
-  //
-  // The center triangle is the gap between sections.
-  // White rank-8 top edge: y=cy, x from whiteX to whiteX+SECTION_W
-  // Left corner of white rank-8: (cx - SECTION_W/2, cy)
-  // Right corner of white rank-8: (cx + SECTION_W/2, cy)
-  //
-  // Red section (rotated 120°): its equivalent corners are at
-  //   rotate(120°, cx, cy) applied to white left/right corners
-  //
-  // The center triangle corners = left corner of white, rotate 120°, rotate 240°
-
-  // Midpoint of white top edge = (cx, cy) — this is the center apex of white section
-  // The triangle uses the 3 apex points of each section, which are all at the center
-  // Actually the "gap" is a triangle formed by the three inner corners where sections don't meet.
-  // Simpler: just fill the overlap region as a triangle from the 3 rank-8 midpoints.
-  // Each section's rank-8 midpoint (top edge center of rank-8):
-  const wMid = { x: cx, y: cy + SQUARE_SIZE / 2 }; // slightly below to show rank-8
-
-  // Rotate wMid by ±120°
-  const r1 = rotatePoint(wMid, cx, cy, 120);
-  const r2 = rotatePoint(wMid, cx, cy, -120);
-
-  return `${wMid.x},${wMid.y} ${r1.x},${r1.y} ${r2.x},${r2.y}`;
-}
-
-function rotatePoint(p: { x: number; y: number }, cx: number, cy: number, angleDeg: number) {
-  const rad = (angleDeg * Math.PI) / 180;
-  const cos = Math.cos(rad);
-  const sin = Math.sin(rad);
-  const dx = p.x - cx;
-  const dy = p.y - cy;
-  return {
-    x: cx + dx * cos - dy * sin,
-    y: cy + dx * sin + dy * cos,
-  };
 }

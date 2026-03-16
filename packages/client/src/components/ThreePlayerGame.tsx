@@ -87,6 +87,18 @@ export function ThreePlayerGame({ onBack }: ThreePlayerGameProps) {
   }
 
   if (game.phase === 'placement' && game.placementState) {
+    // Show handoff screen when switching placement turns
+    if (game.showPlacementHandoff && game.nextPlacer) {
+      return (
+        <div className="three-player-game">
+          <HandoffScreen
+            nextPlayer={SECTION_TO_COLOR[game.nextPlacer]}
+            onReady={game.acknowledgePlacementHandoff}
+          />
+        </div>
+      );
+    }
+
     return (
       <div className="three-player-game">
         <div className="three-player-layout">
