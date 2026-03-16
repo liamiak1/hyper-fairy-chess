@@ -17,7 +17,6 @@ import './BoardThreePlayer.css';
 
 const SQUARE_SIZE = 44;
 const SECTION_W = 8 * SQUARE_SIZE; // 352
-const SECTION_H = 4 * SQUARE_SIZE; // 176
 // Height of equilateral triangle with side = SECTION_W
 const TRI_HEIGHT = Math.round(SECTION_W * Math.sqrt(3) / 2); // 305
 
@@ -210,9 +209,9 @@ export function BoardThreePlayer({
         {/* Center triangle fill — covers the gap between sections */}
         <polygon
           points={`${bx},${cy_seam} ${brx},${cy_seam} ${tx},${ty}`}
-          fill="#1a1a2e"
-          stroke="#555"
-          strokeWidth="1"
+          fill="#c8a87a"
+          stroke="#b08060"
+          strokeWidth="0.5"
         />
 
         {/* White section: bottom. translate(bx, cy_seam) — rank-4 at top touching triangle base */}
@@ -230,10 +229,6 @@ export function BoardThreePlayer({
           <SectionGrid {...sectionProps('black')} />
         </g>
 
-        {/* Section labels */}
-        <text x={cx} y={cy_seam + SECTION_H + 22} textAnchor="middle" className="section-label white-label">WHITE</text>
-        <text x={bx - 20} y={(cy_seam + ty) / 2} textAnchor="middle" className="section-label red-label">RED</text>
-        <text x={brx + 20} y={(cy_seam + ty) / 2} textAnchor="middle" className="section-label black-label">BLACK</text>
       </svg>
     </div>
   );

@@ -82,8 +82,8 @@ export function isValidThreePlacement(
     return target.srank === 2;
   }
 
-  // Pieces: must go on srank 1
-  return target.srank === 1;
+  // Pieces: srank 1, excluding royalty squares (sfile 4-5)
+  return target.srank === 1 && target.sfile !== 4 && target.sfile !== 5;
 }
 
 /**

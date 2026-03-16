@@ -35,13 +35,3 @@
   pointer-events: all;
 }
 
-/* Section labels */
-.section-label {
-  fill: #888;
-  font-size: 13px;
-  font-family: sans-serif;
-  font-weight: 600;
-  pointer-events: none;
-}
-
-.white-label { fill: #ccc; }
