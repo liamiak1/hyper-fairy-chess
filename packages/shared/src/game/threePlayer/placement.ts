@@ -1,9 +1,13 @@
 /**
- * Placement phase logic for 3-player GreenChess.
+ * Placement phase logic for 3-player circular GreenChess.
  *
- * Each section has an 8×2 placement zone:
- *   - srank 1 (back rank): royalty at sfile 4-5, regular pieces at sfile 1-8
- *   - srank 2 (pawn rank): pawns, and herald edge squares at sfile 1 and 8
+ * Each section has a 4×4 placement zone (middle 4 files × 4 ranks):
+ *   - srank 1–2 (outer 2 rings): pawn-type pieces, files 3–6
+ *   - srank 3 (next-to-outer piece ring): royalty at files 4–5, other pieces at files 3 & 6
+ *   - srank 4 (inner piece ring): other pieces at files 3–6
+ *
+ * Total per player: 8 pawns + 2 royalty + 6 pieces = 16 pieces.
+ * Files 1–2 and 7–8 are open territory (no starting pieces).
  */
 
 import type { ThreePos, Section, SFile, SRank, ThreePiece, ThreeGameState } from './types';
@@ -16,46 +20,47 @@ export interface ThreePlacementZone {
   allowedTiers: PieceTier[];
 }
 
-/** Get the placement zone for a section (srank 1-2, sfile 1-8). */
+/** The middle 4 files used for piece placement. */
+const PIECE_FILES: SFile[] = [3, 4, 5, 6];
+
+/** Get all valid placement squares for a section (srank 1–4, sfile 3–6). */
 export function getThreePlacementZones(section: Section): ThreePos[] {
   const zones: ThreePos[] = [];
-  for (const srank of [1, 2] as SRank[]) {
-    for (const sfile of [1, 2, 3, 4, 5, 6, 7, 8] as SFile[]) {
+  for (const srank of [1, 2, 3, 4] as SRank[]) {
+    for (const sfile of PIECE_FILES) {
       zones.push({ section, sfile, srank });
     }
   }
   return zones;
 }
 
-/** Royalty must go on srank 1, sfile 4 or 5 (center 2 of 8). */
+/** Royalty goes on srank=3, files 4–5 (next-to-outer piece ring, center). */
 export function getRoyaltySquares(section: Section): ThreePos[] {
   return [
-    { section, sfile: 4, srank: 1 },
-    { section, sfile: 5, srank: 1 },
-  ];
-}
-
-/** Herald can only go on srank 2, sfile 1 or 8 (edge files of pawn rank). */
-export function getHeraldSquares(section: Section): ThreePos[] {
-  return [
-    { section, sfile: 1, srank: 2 },
-    { section, sfile: 8, srank: 2 },
+    { section, sfile: 4, srank: 3 },
+    { section, sfile: 5, srank: 3 },
   ];
 }
 
 /**
  * Check if a piece can be placed at the given position.
+ *
+ * Rules:
+ *   - Must be in own section, sfile 3–6
+ *   - Pawns: srank 1 or 2
+ *   - Royalty: srank 3, sfile 4 or 5
+ *   - Other pieces: srank 3 (sfile 3 or 6 only) or srank 4
  */
 export function isValidThreePlacement(
   piece: ThreePiece,
   target: ThreePos,
   state: ThreeGameState,
 ): boolean {
-  // Must be in own section
+  // Must be own section
   if (target.section !== piece.owner) return false;
 
-  // Must be within placement zone (srank 1-2)
-  if (target.srank > 2) return false;
+  // Must be in middle 4 files
+  if (target.sfile < 3 || target.sfile > 6) return false;
 
   // Must not be occupied
   if (state.board.positionMap.has(threeposKey(target))) return false;
@@ -63,27 +68,26 @@ export function isValidThreePlacement(
   const pt = PIECE_BY_ID[piece.typeId];
   if (!pt) return false;
 
-  const isHerald = piece.typeId === 'herald';
   const isRoyalty = pt.tier === 'royalty';
   const isPawn = pt.tier === 'pawn';
 
-  // Herald: must go on edge files of pawn rank
-  if (isHerald) {
-    return target.srank === 2 && (target.sfile === 1 || target.sfile === 8);
-  }
-
-  // Royalty: must go on center files of back rank
-  if (isRoyalty) {
-    return target.srank === 1 && (target.sfile === 4 || target.sfile === 5);
-  }
-
-  // Pawns: must go on srank 2
   if (isPawn) {
-    return target.srank === 2;
+    return target.srank === 1 || target.srank === 2;
   }
 
-  // Pieces: srank 1, excluding royalty squares (sfile 4-5)
-  return target.srank === 1 && target.sfile !== 4 && target.sfile !== 5;
+  if (isRoyalty) {
+    return target.srank === 3 && (target.sfile === 4 || target.sfile === 5);
+  }
+
+  // Other pieces: srank=3 outer flanks (files 3 or 6) or srank=4 (any of 3–6)
+  if (target.srank === 3) {
+    return target.sfile === 3 || target.sfile === 6;
+  }
+  if (target.srank === 4) {
+    return true; // files 3–6 already checked above
+  }
+
+  return false;
 }
 
 /**

@@ -1,50 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { seamNeighbor, stepInDirection, isSeamSquare } from './adjacency';
+import { stepInDirection } from './adjacency';
 
-describe('seamNeighbor', () => {
-  it('W(1,4) → R(8,4)', () => {
-    const r = seamNeighbor({ section: 'white', sfile: 1, srank: 4 });
-    expect(r).toEqual({ section: 'red', sfile: 8, srank: 4 });
-  });
-  it('W(4,4) → R(5,4)', () => {
-    const r = seamNeighbor({ section: 'white', sfile: 4, srank: 4 });
-    expect(r).toEqual({ section: 'red', sfile: 5, srank: 4 });
-  });
-  it('R(1,4) → B(8,4)', () => {
-    const r = seamNeighbor({ section: 'red', sfile: 1, srank: 4 });
-    expect(r).toEqual({ section: 'black', sfile: 8, srank: 4 });
-  });
-  it('B(8,4) → W(1,4)', () => {
-    const r = seamNeighbor({ section: 'black', sfile: 8, srank: 4 });
-    expect(r).toEqual({ section: 'white', sfile: 1, srank: 4 });
-  });
-  it('forms a full cycle', () => {
-    const wb = seamNeighbor({ section: 'white', sfile: 2, srank: 4 });
-    expect(wb?.section).toBe('red');
-    expect(wb?.sfile).toBe(7); // 9-2=7
-    const rb = seamNeighbor(wb!);
-    expect(rb?.section).toBe('black');
-    expect(rb?.sfile).toBe(2); // 9-7=2
-    // B–W seam: B(7,4) ↔ W(2,4)
-    const bw = seamNeighbor({ section: 'black', sfile: 7, srank: 4 });
-    expect(bw).toEqual({ section: 'white', sfile: 2, srank: 4 });
-  });
-  it('returns null for non-seam square', () => {
-    expect(seamNeighbor({ section: 'white', sfile: 1, srank: 3 })).toBeNull();
-  });
-});
-
-describe('isSeamSquare', () => {
-  it('srank 4 is seam', () => {
-    expect(isSeamSquare({ section: 'white', sfile: 1, srank: 4 })).toBe(true);
-  });
-  it('srank 3 is not seam', () => {
-    expect(isSeamSquare({ section: 'white', sfile: 1, srank: 3 })).toBe(false);
-  });
-});
-
-describe('stepInDirection', () => {
-  it('steps forward inside section', () => {
+describe('stepInDirection (circular file-edge topology)', () => {
+  it('steps inward (forward) inside section', () => {
     const r = stepInDirection({ section: 'white', sfile: 2, srank: 2 }, 1, 0);
     expect(r).toEqual({
       pos: { section: 'white', sfile: 2, srank: 3 },
@@ -62,28 +20,82 @@ describe('stepInDirection', () => {
     });
   });
 
-  it('direction negates when crossing seam', () => {
-    // White(2,4) stepping forward (+1,0) crosses to red(7,4) neighbor, then continues to (7,3)
-    const r = stepInDirection({ section: 'white', sfile: 2, srank: 4 }, 1, 0);
-    expect(r).not.toBeNull();
-    expect(r!.pos.section).toBe('red');
-    expect(r!.pos.srank).toBe(3); // entered at srank=4, stepped -1 = 3
-    expect(r!.newDsrank).toBe(-1); // negated
-    expect(r!.newDsfile).toBe(0);
+  it('White sfile=8 clockwise → Black sfile=1 (same srank)', () => {
+    const r = stepInDirection({ section: 'white', sfile: 8, srank: 2 }, 0, 1);
+    expect(r).toEqual({
+      pos: { section: 'black', sfile: 1, srank: 2 },
+      newDsrank: 0,
+      newDsfile: 1,
+    });
   });
 
-  it('returns null when stepping off back rank (srank<1)', () => {
-    const r = stepInDirection({ section: 'white', sfile: 2, srank: 1 }, -1, 0);
-    expect(r).toBeNull();
+  it('Black sfile=8 clockwise → Red sfile=1 (same srank)', () => {
+    const r = stepInDirection({ section: 'black', sfile: 8, srank: 3 }, 0, 1);
+    expect(r).toEqual({
+      pos: { section: 'red', sfile: 1, srank: 3 },
+      newDsrank: 0,
+      newDsfile: 1,
+    });
   });
 
-  it('returns null when stepping off side (sfile<1)', () => {
-    const r = stepInDirection({ section: 'white', sfile: 1, srank: 3 }, 0, -1);
-    expect(r).toBeNull();
+  it('Red sfile=8 clockwise → White sfile=1 (same srank)', () => {
+    const r = stepInDirection({ section: 'red', sfile: 8, srank: 1 }, 0, 1);
+    expect(r).toEqual({
+      pos: { section: 'white', sfile: 1, srank: 1 },
+      newDsrank: 0,
+      newDsfile: 1,
+    });
   });
 
-  it('returns null when stepping off side (sfile>8)', () => {
+  it('White sfile=1 counterclockwise → Red sfile=8', () => {
+    const r = stepInDirection({ section: 'white', sfile: 1, srank: 2 }, 0, -1);
+    expect(r).toEqual({
+      pos: { section: 'red', sfile: 8, srank: 2 },
+      newDsrank: 0,
+      newDsfile: -1,
+    });
+  });
+
+  it('Red sfile=1 counterclockwise → Black sfile=8', () => {
+    const r = stepInDirection({ section: 'red', sfile: 1, srank: 1 }, 0, -1);
+    expect(r).toEqual({
+      pos: { section: 'black', sfile: 8, srank: 1 },
+      newDsrank: 0,
+      newDsfile: -1,
+    });
+  });
+
+  it('direction is NOT negated when crossing file boundary', () => {
     const r = stepInDirection({ section: 'white', sfile: 8, srank: 3 }, 0, 1);
-    expect(r).toBeNull();
+    expect(r!.newDsrank).toBe(0);
+    expect(r!.newDsfile).toBe(1); // unchanged
+  });
+
+  it('diagonal across file boundary preserves both direction components', () => {
+    const r = stepInDirection({ section: 'white', sfile: 8, srank: 3 }, 1, 1);
+    expect(r).toEqual({
+      pos: { section: 'black', sfile: 1, srank: 4 },
+      newDsrank: 1,
+      newDsfile: 1,
+    });
+  });
+
+  it('returns null when stepping off inner edge (srank > 4)', () => {
+    expect(stepInDirection({ section: 'white', sfile: 2, srank: 4 }, 1, 0)).toBeNull();
+  });
+
+  it('returns null when stepping off outer edge (srank < 1)', () => {
+    expect(stepInDirection({ section: 'white', sfile: 2, srank: 1 }, -1, 0)).toBeNull();
+  });
+
+  it('full clockwise traversal stays on the ring', () => {
+    // Start at white(1,2), step clockwise 24 times → back to start
+    let pos: ThreePos = { section: 'white', sfile: 1, srank: 2 };
+    for (let i = 0; i < 24; i++) {
+      const r = stepInDirection(pos, 0, 1);
+      expect(r).not.toBeNull();
+      pos = r!.pos;
+    }
+    expect(pos).toEqual({ section: 'white', sfile: 1, srank: 2 });
   });
 });
