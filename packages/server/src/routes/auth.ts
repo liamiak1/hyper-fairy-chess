@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router, type IRouter, Request, Response } from 'express';
 import { isDatabaseAvailable } from '../db/index.js';
 import { verifyToken } from '../auth/jwt.js';
 import {
@@ -14,10 +14,10 @@ import {
 } from '../auth/userService.js';
 import { isEmailAvailable, sendPasswordResetEmail, testSmtpConnection } from '../auth/email.js';
 
-export const authRouter = Router();
+export const authRouter: IRouter = Router();
 
 // JSON body parsing middleware for auth routes
-authRouter.use((req: Request, res: Response, next) => {
+authRouter.use((req: Request, _res: Response, next) => {
   if (!req.body) {
     req.body = {};
   }

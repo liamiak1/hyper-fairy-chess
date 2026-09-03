@@ -2,9 +2,10 @@
  * Armies API Routes - CRUD for saved armies
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, type IRouter, Request, Response } from 'express';
 import { isDatabaseAvailable } from '../db/index.js';
 import { verifyToken } from '../auth/jwt.js';
+import { getStringParam } from './routeUtils.js';
 import {
   getUserArmies,
   createArmy,
@@ -12,7 +13,7 @@ import {
   deleteArmy,
 } from '../services/armyService.js';
 
-export const armiesRouter = Router();
+export const armiesRouter: IRouter = Router();
 
 /**
  * Extract and verify JWT token from Authorization header
@@ -143,7 +144,15 @@ armiesRouter.put('/:id', async (req: Request, res: Response) => {
     return;
   }
 
-  const { id } = req.params;
+  const id = getStringParam(req, 'id');
+  if (!id) {
+    res.status(400).json({
+      error: 'invalid_id',
+      message: 'Army id must be a single value',
+    });
+    return;
+  }
+
   const { name, pieces, budget } = req.body;
 
   if (!name || typeof name !== 'string' || name.trim().length === 0) {
@@ -213,7 +222,15 @@ armiesRouter.delete('/:id', async (req: Request, res: Response) => {
     return;
   }
 
-  const { id } = req.params;
+  const id = getStringParam(req, 'id');
+  if (!id) {
+    res.status(400).json({
+      error: 'invalid_id',
+      message: 'Army id must be a single value',
+    });
+    return;
+  }
+
   const success = await deleteArmy(id, payload.userId);
 
   if (!success) {

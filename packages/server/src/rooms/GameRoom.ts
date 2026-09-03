@@ -37,7 +37,6 @@ import {
   isHerald,
   getHeraldActualPosition,
   getPawnSwapPosition,
-  shouldPawnSwapToBackRank,
 } from '@hyper-fairy-chess/shared';
 import { PIECE_BY_ID } from '@hyper-fairy-chess/shared';
 import {
@@ -55,8 +54,17 @@ import {
   getGameResult,
   createDrawAgreementResult,
 } from '@hyper-fairy-chess/shared';
-import { recordGameResult, getUserElo, type EloUpdateResult } from '../services/eloService.js';
+import { recordGameResult, getUserElo } from '../services/eloService.js';
 import { saveGame } from '../services/gameService.js';
+
+/**
+ * Online play is 2-player, so only white/black carry an ELO rating.
+ * Narrows a PlayerColor result winner to the rated colors; anything else
+ * (a 4-player red/blue winner) is treated as unrated.
+ */
+function toRatedColor(color: PlayerColor | null): 'white' | 'black' | null {
+  return color === 'white' || color === 'black' ? color : null;
+}
 
 interface RoomPlayer extends PlayerInfo {
   socketId: string;
@@ -1090,8 +1098,8 @@ export class GameRoom {
         finalState: this.gameState,
       } as GameOverMessage);
 
-      // Update ELO ratings
-      this.updateEloRatings(result.type, result.winner);
+      // Update ELO ratings (online play is 2-player, so only white/black rate)
+      this.updateEloRatings(result.type, toRatedColor(result.winner));
     }
   }
 
@@ -1173,7 +1181,7 @@ export class GameRoom {
 
     if (accept) {
       // Game ends in draw by agreement
-      this.gameState.result = createDrawAgreementResult();
+      this.gameState.result = createDrawAgreementResult(this.gameState.board);
       this.phase = 'ended';
       this.drawOffer = null;
 

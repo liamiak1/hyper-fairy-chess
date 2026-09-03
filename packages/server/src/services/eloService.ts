@@ -1,7 +1,6 @@
 import { getPool, isDatabaseAvailable } from '../db/index.js';
 
 const K_FACTOR = 32;
-const DEFAULT_ELO = 1200;
 
 export interface EloUpdateResult {
   whiteEloChange: number;

@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Stray npm lockfiles (this is a pnpm workspace)
+package-lock.json
+
 # Build outputs
 dist/
 dist-ssr/
@@ -26,6 +29,7 @@ pnpm-debug.log*
 # OS files
 .DS_Store
 Thumbs.db
+nul
 
 # Environment files (keep .env.example if needed)
 .env

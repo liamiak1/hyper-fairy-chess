@@ -91,13 +91,19 @@ cd packages/client && npx vitest run
 - **Edge cases**: Test boundary conditions, null/undefined, expiry times
 
 ### Current Test Coverage
-| Package | Test File | Tests |
-|---------|-----------|-------|
-| shared | `draft.test.ts` | 36 |
-| shared | `boardUtils.test.ts` | 45 |
-| shared | `types.test.ts` | 13 |
-| client | `sessionStorage.test.ts` | 21 |
-| **Total** | | **115** |
+Run `npx pnpm -r run test` for the live count — don't maintain a table here, it drifts.
+Covered today: shared (`draft`, `boardUtils`, `types`, `checkers`, `specialMoves`,
+`threePlayer/adjacency`) and client (`sessionStorage`).
+
+**Gap: the server has no tests.** `packages/server` holds the authoritative game
+logic for online play (`GameRoom.ts`), ELO, and auth. New server code should come
+with tests and a `test` script.
+
+## CI
+`.github/workflows/ci.yml` runs typecheck + tests + build on every push and PR.
+Note that `Dockerfile.server` bundles with esbuild, which does NOT typecheck —
+`packages/server`'s `build` script runs `tsc --noEmit` first so type errors can't
+reach production.
 
 ## GitHub
 - Repo: https://github.com/liamiak1/hyper-fairy-chess
@@ -113,5 +119,3 @@ Railway deploys from GitHub, NOT from local files. Before deploying or when the 
 1. **Always check for uncommitted changes**: `git status`
 2. **Commit and push** any changes before deploying
 3. **Verify** the push succeeded before telling the user to redeploy
-
-If changes work locally but not on Railway, the most likely cause is uncommitted/unpushed changes.

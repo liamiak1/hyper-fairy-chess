@@ -1,17 +1,14 @@
-Other new features
+Other new features:
 Saved games between people
-Game replay
-piece elo/point value tracking (only in ranked games)
 3+ players at once (would also need new board(s)
-AI player
-Other board sizes
+-AI player refinements
+Other boards
+  Horizontal wrapping
 
 -New pieces
  -others from other chess variants
+  - Grasshopper variants — Rose (circular knight), Moa (Mao's mirror: diagonal step first), Nao (diagonal then orthogonal)
 
+  Housekeeping
+  - With ~40 pieces now, the draft UI might be getting crowded — worth checking if anything needs layout work
 
--Add note on join room that it will try to paste (to explain the "requesting access to clipboard" popup)
--Add lobby
-
-Working
-save/load armies (i.e. select a bunch of pieces at one)

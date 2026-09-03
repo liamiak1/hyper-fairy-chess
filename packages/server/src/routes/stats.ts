@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import { Router, type IRouter } from 'express';
 import { findUserByUsername } from '../auth/userService.js';
 import { getPieceStats } from '../services/gameService.js';
 
-const router = Router();
+const router: IRouter = Router();
 
 /**
  * GET /stats/pieces — per-piece draft and win-rate stats (non-playtest games only)

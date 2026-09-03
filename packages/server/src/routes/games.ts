@@ -2,12 +2,13 @@
  * Games API Routes - game history and replay data
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, type IRouter, Request, Response } from 'express';
 import { isDatabaseAvailable } from '../db/index.js';
 import { verifyToken } from '../auth/jwt.js';
 import { getUserGames, getGame } from '../services/gameService.js';
+import { getStringParam } from './routeUtils.js';
 
-export const gamesRouter = Router();
+export const gamesRouter: IRouter = Router();
 
 function getAuthPayload(req: Request): { userId: string; username: string } | null {
   const authHeader = req.headers.authorization;
@@ -44,7 +45,12 @@ gamesRouter.get('/:id', async (req: Request, res: Response) => {
     return res.status(503).json({ error: 'Database unavailable' });
   }
 
-  const game = await getGame(req.params.id);
+  const id = getStringParam(req, 'id');
+  if (!id) {
+    return res.status(400).json({ error: 'Game id must be a single value' });
+  }
+
+  const game = await getGame(id);
   if (!game) {
     return res.status(404).json({ error: 'Game not found' });
   }
