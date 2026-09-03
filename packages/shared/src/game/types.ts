@@ -290,9 +290,23 @@ export interface GameResult {
   type: GameResultType;
   winner: PlayerColor | null; // null for draws
 
-  // VP totals for stalemate resolution
+  // VP totals for stalemate resolution.
+  // Kept as named fields because the online DB records and replay UI read
+  // them directly; in 3-/4-player games use `victoryPoints` instead.
   whiteVP: number;
   blackVP: number;
+
+  /**
+   * VP for every player in the game, including red and blue.
+   * Present on all results; whiteVP/blackVP mirror the white and black entries.
+   */
+  victoryPoints?: Partial<Record<PlayerColor, number>>;
+
+  /**
+   * Players knocked out before the game ended, in elimination order.
+   * Only meaningful in 3-/4-player games.
+   */
+  eliminated?: PlayerColor[];
 }
 
 // =============================================================================

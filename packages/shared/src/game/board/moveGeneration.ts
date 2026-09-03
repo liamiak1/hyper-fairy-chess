@@ -30,6 +30,7 @@ import {
   canCaptureByDisplacement,
   getPieceAt,
   fileToIndex,
+  isPlayerActive,
 } from './boardUtils';
 import { positionToString } from '../types';
 
@@ -49,6 +50,8 @@ export function generatePseudoLegalMoves(
 ): Position[] {
   if (!piece.position) return [];
   if (piece.isFrozen) return [];
+  // An eliminated player's pieces are inert obstacles — they never move again.
+  if (!isPlayerActive(board, piece.owner)) return [];
 
   const pieceType = PIECE_BY_ID[piece.typeId];
   if (!pieceType) return [];
@@ -2182,6 +2185,8 @@ export function getAttackedSquares(
 ): Position[] {
   if (!piece.position) return [];
   if (piece.isFrozen) return []; // Frozen pieces cannot attack
+  // Eliminated players' pieces block squares but no longer threaten them.
+  if (!isPlayerActive(board, piece.owner)) return [];
 
   const pType = PIECE_BY_ID[piece.typeId];
   if (!pType) return [];

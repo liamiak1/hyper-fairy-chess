@@ -489,6 +489,44 @@ export function getOpponentColors(board: BoardState, color: PlayerColor): Player
   return players.filter(p => p !== color);
 }
 
+// =============================================================================
+// Player Elimination (3- and 4-player)
+// =============================================================================
+
+/**
+ * The players still in the game.
+ *
+ * `activePlayers` is the single source of truth for who is still playing.
+ * A board without it is a classic 2-player game.
+ */
+export function getActivePlayers(board: BoardState): PlayerColor[] {
+  return board.activePlayers ?? ['white', 'black'];
+}
+
+/**
+ * Is this player still in the game?
+ *
+ * An eliminated player's pieces stay on the board as neutral obstacles: they
+ * never move, never give check, and can be captured by any survivor for
+ * Victory Points. Everything that makes them inert derives from this check
+ * rather than from a flag on the pieces, so there is nothing to keep in sync.
+ */
+export function isPlayerActive(board: BoardState, color: PlayerColor): boolean {
+  return getActivePlayers(board).includes(color);
+}
+
+/**
+ * Remove a player from the game, leaving their pieces on the board.
+ *
+ * No-op if they are already out. Returns the same board reference when
+ * nothing changes so callers can cheaply detect "did anyone get eliminated".
+ */
+export function eliminatePlayer(board: BoardState, color: PlayerColor): BoardState {
+  const players = getActivePlayers(board);
+  if (!players.includes(color)) return board;
+  return { ...board, activePlayers: players.filter(p => p !== color) };
+}
+
 /**
  * Check if a pawn-type piece is in its starting zone (for double-move eligibility).
  * Supports all 4 player colors.

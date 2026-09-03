@@ -29,6 +29,7 @@ import { isCastlingMove } from './castling';
 import { isInCheck } from './checkDetection';
 import { isPromotionMove } from './promotion';
 import { updateFrozenStates } from './freeze';
+import { resolveTurnTransition } from './gameEndDetection';
 
 // =============================================================================
 // Special Capture Calculations
@@ -838,11 +839,11 @@ export function executeMove(gameState: GameState, move: Move): GameState {
     }
   }
 
-  // Switch turn — supports both 2-player and 4-player
+  // Switch turn — supports both 2-player and 3-/4-player
   let nextTurn: PlayerColor;
   const activePlayers = boardWithFrozen.activePlayers;
   if (activePlayers && activePlayers.length > 2) {
-    // 4-player: cycle through TURN_ORDER skipping eliminated players
+    // Multiplayer: cycle through TURN_ORDER skipping eliminated players
     const currentIdx = TURN_ORDER.indexOf(gameState.currentTurn);
     let nextIdx = (currentIdx + 1) % TURN_ORDER.length;
     while (!activePlayers.includes(TURN_ORDER[nextIdx])) {
@@ -853,12 +854,6 @@ export function executeMove(gameState: GameState, move: Move): GameState {
     nextTurn = getOpponentColor(gameState.currentTurn);
   }
 
-  // Increment turn number (after last player in order moves)
-  const newTurnNumber = nextTurn === 'white' ? gameState.turnNumber + 1 : gameState.turnNumber;
-
-  // Check if opponent is now in check
-  const inCheck = isInCheck(boardWithFrozen, nextTurn) ? nextTurn : null;
-
   // Update halfmove clock for 50-move rule
   // Reset to 0 if pawn moved or any capture occurred, otherwise increment
   const isPawnMove = pieceType?.tier === 'pawn';
@@ -866,19 +861,42 @@ export function executeMove(gameState: GameState, move: Move): GameState {
     (move.additionalCaptures && move.additionalCaptures.length > 0);
   const newHalfmoveClock = (isPawnMove || hasCapture) ? 0 : gameState.halfmoveClock + 1;
 
-  // Calculate position hash for threefold repetition detection
-  const positionHash = hashPosition(boardWithFrozen, nextTurn, enPassantTarget);
-  const newPositionHistory = [...gameState.positionHistory, positionHash];
-
-  return {
+  const movedState: GameState = {
     ...gameState,
     board: boardWithFrozen,
     currentTurn: nextTurn,
-    turnNumber: newTurnNumber,
     enPassantTarget,
-    inCheck,
+    inCheck: null,
     moveHistory: [...gameState.moveHistory, move],
     halfmoveClock: newHalfmoveClock,
+  };
+
+  // In 3-/4-player games, step past anyone who cannot move: a checkmated
+  // player is eliminated (their pieces stay on as neutral obstacles), and a
+  // stalemated player is skipped and may rejoin once someone frees them.
+  // No-op in 2-player games, where checkmate and stalemate end the game.
+  const resolved = resolveTurnTransition(movedState);
+  const finalTurn = resolved.currentTurn;
+  const finalBoard = resolved.board;
+
+  // Increment turn number when play comes back round to the first player still
+  // in the game (which is not necessarily white, once white has been knocked out)
+  const remaining = finalBoard.activePlayers ?? ['white', 'black'];
+  const leadPlayer = TURN_ORDER.find(c => remaining.includes(c)) ?? 'white';
+  const newTurnNumber =
+    finalTurn === leadPlayer ? gameState.turnNumber + 1 : gameState.turnNumber;
+
+  // Check if the player to move is now in check
+  const inCheck = isInCheck(finalBoard, finalTurn) ? finalTurn : null;
+
+  // Calculate position hash for threefold repetition detection
+  const positionHash = hashPosition(finalBoard, finalTurn, enPassantTarget);
+  const newPositionHistory = [...gameState.positionHistory, positionHash];
+
+  return {
+    ...resolved,
+    turnNumber: newTurnNumber,
+    inCheck,
     positionHistory: newPositionHistory,
   };
 }
