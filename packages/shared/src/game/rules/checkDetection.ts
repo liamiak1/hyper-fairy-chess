@@ -4,6 +4,7 @@
 
 import type { Position, BoardState, PieceInstance, PlayerColor, File, Rank } from '../types';
 import { positionToString } from '../types';
+import type { Step } from '../board/topology';
 import { PIECE_BY_ID } from '../pieces/pieceDefinitions';
 import {
   getKing,
@@ -16,6 +17,9 @@ import {
   fileToIndex,
   offsetPosition,
   isSquareEmpty,
+  stepPosition,
+  stepPositionFrom,
+  geometryOf,
 } from '../board/boardUtils';
 import { getAttackedSquares, generatePseudoLegalMoves } from '../board/moveGeneration';
 import { updateFrozenStates } from './freeze';
@@ -87,7 +91,7 @@ function canBoxerThreaten(
     const oppositeRank = targetPos.rank + dy;
 
     if (oppositeFileIndex < 0 || oppositeFileIndex >= files.length) continue;
-    if (oppositeRank < 1 || oppositeRank > board.dimensions.ranks) continue;
+    if (oppositeRank < 1 || oppositeRank > geometryOf(board).ranks) continue;
 
     const oppositePos: Position = {
       file: files[oppositeFileIndex],
@@ -168,7 +172,7 @@ function canThiefThreaten(
     const stepY = dy === 0 ? 0 : dy / Math.abs(dy);
 
     // The capture position is one more step past the landing
-    const capturePos = offsetPosition(move, stepX, stepY, board.dimensions);
+    const capturePos = offsetPosition(move, stepX, stepY, geometryOf(board));
     if (!capturePos) continue;
 
     if (capturePos.file === targetPos.file && capturePos.rank === targetPos.rank) {
@@ -202,19 +206,21 @@ function canCannonThreaten(
 
   // Count pieces between cannon and target - need exactly one (the screen)
   let piecesInBetween = 0;
-  let currentPos = cannon.position;
+  let cursor: Step = { pos: cannon.position, dx: stepX, dy: stepY };
 
   while (true) {
-    currentPos = offsetPosition(currentPos, stepX, stepY, board.dimensions)!;
-    if (!currentPos) return false;
+    const walked = stepPosition(cursor.pos, cursor.dx, cursor.dy, geometryOf(board));
+    if (!walked) return false;
+    cursor = walked;
+    if (!cursor.pos) return false;
 
     // Reached target position - check if we had exactly one screen piece
-    if (currentPos.file === targetPos.file && currentPos.rank === targetPos.rank) {
+    if (cursor.pos.file === targetPos.file && cursor.pos.rank === targetPos.rank) {
       return piecesInBetween === 1;
     }
 
     // Count pieces in between
-    if (!isSquareEmpty(board, currentPos)) {
+    if (!isSquareEmpty(board, cursor.pos)) {
       piecesInBetween++;
       if (piecesInBetween > 1) return false; // Too many pieces, can't cannon-capture
     }
@@ -251,14 +257,16 @@ function canLongLeaperThreaten(
   const stepY = dy === 0 ? 0 : dy / Math.abs(dy);
 
   // Check that path to target is clear
-  let currentPos = longLeaper.position;
+  let cursor: Step = { pos: longLeaper.position, dx: stepX, dy: stepY };
   while (true) {
-    currentPos = offsetPosition(currentPos, stepX, stepY, board.dimensions)!;
-    if (!currentPos) return false;
+    const walked = stepPosition(cursor.pos, cursor.dx, cursor.dy, geometryOf(board));
+    if (!walked) return false;
+    cursor = walked;
+    if (!cursor.pos) return false;
 
-    if (currentPos.file === targetPos.file && currentPos.rank === targetPos.rank) {
+    if (cursor.pos.file === targetPos.file && cursor.pos.rank === targetPos.rank) {
       // Reached the target - now check if we can land past it
-      const landingPos = offsetPosition(currentPos, stepX, stepY, board.dimensions);
+      const landingPos = stepPositionFrom(cursor.pos, walked, geometryOf(board));
       if (landingPos && isSquareEmpty(board, landingPos)) {
         return true;
       }
@@ -266,7 +274,7 @@ function canLongLeaperThreaten(
     }
 
     // Path must be clear before reaching target
-    if (!isSquareEmpty(board, currentPos)) {
+    if (!isSquareEmpty(board, cursor.pos)) {
       return false;
     }
   }
@@ -303,7 +311,7 @@ function canChameleonThreaten(
 
   // Leaps
   for (const leap of targetType.movement.leaps) {
-    if (canReachByLeap(chameleon.position, targetPos, leap, board.dimensions)) {
+    if (canReachByLeap(chameleon.position, targetPos, leap, geometryOf(board))) {
       return true;
     }
   }
@@ -360,7 +368,7 @@ function canChameleonReachWithSpecial(
       // Check intermediate square is empty
       const midX = dx === 0 ? 0 : dx / 2;
       const midY = dy === 0 ? 0 : dy / 2;
-      const midPos = offsetPosition(chameleon.position, midX, midY, board.dimensions);
+      const midPos = offsetPosition(chameleon.position, midX, midY, geometryOf(board));
       return midPos !== null && isSquareEmpty(board, midPos);
     }
 
@@ -396,13 +404,15 @@ function canChameleonCaptureLongLeaperStyle(
 
   // Walk the path and check for long leapers
   let hasLongLeaper = false;
-  let currentPos = chameleon.position;
+  let cursor: Step = { pos: chameleon.position, dx: stepX, dy: stepY };
 
   for (let i = 0; i < distance - 1; i++) {
-    currentPos = offsetPosition(currentPos, stepX, stepY, board.dimensions)!;
-    if (!currentPos) return false;
+    const walked = stepPosition(cursor.pos, cursor.dx, cursor.dy, geometryOf(board));
+    if (!walked) return false;
+    cursor = walked;
+    if (!cursor.pos) return false;
 
-    const piece = getPieceAt(board, currentPos);
+    const piece = getPieceAt(board, cursor.pos);
     if (piece) {
       if (piece.owner === chameleon.owner) return false; // Blocked by friendly
       const pieceType = PIECE_BY_ID[piece.typeId];
@@ -442,11 +452,13 @@ function canReachBySlide(
   const stepY = dy === 0 ? 0 : dy / Math.abs(dy);
   const distance = Math.max(Math.abs(dx), Math.abs(dy));
 
-  let currentPos = from;
+  let cursor: Step = { pos: from, dx: stepX, dy: stepY };
   for (let i = 0; i < distance - 1; i++) {
-    currentPos = offsetPosition(currentPos, stepX, stepY, board.dimensions)!;
-    if (!currentPos) return false;
-    if (!isSquareEmpty(board, currentPos)) return false;
+    const walked = stepPosition(cursor.pos, cursor.dx, cursor.dy, geometryOf(board));
+    if (!walked) return false;
+    cursor = walked;
+    if (!cursor.pos) return false;
+    if (!isSquareEmpty(board, cursor.pos)) return false;
   }
 
   return true;

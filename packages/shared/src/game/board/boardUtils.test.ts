@@ -39,7 +39,9 @@ describe('Board Utilities', () => {
 
     it('returns null for invalid index', () => {
       expect(indexToFile(-1)).toBeNull();
-      expect(indexToFile(12)).toBeNull(); // beyond 'l' (index 11)
+      expect(indexToFile(24)).toBeNull(); // beyond 'x' (index 23)
+      // index 12 ('m') is valid now — the 3-player board uses 24 files
+      expect(indexToFile(12)).toBe('m');
     });
   });
 

@@ -3,7 +3,6 @@
  */
 
 import type {
-  File,
   Rank,
   Position,
   BoardDimensions,
@@ -13,22 +12,15 @@ import type {
   PlayerColor,
 } from '../types';
 import { positionToString } from '../types';
+import { getTopology, type Step } from './topology';
 import { PIECE_BY_ID } from '../pieces/pieceDefinitions';
 
 // =============================================================================
 // File/Rank Conversion
 // =============================================================================
 
-const FILES: File[] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'];
-
-export function fileToIndex(file: File): number {
-  return FILES.indexOf(file);
-}
-
-export function indexToFile(index: number): File | null {
-  if (index < 0 || index >= FILES.length) return null;
-  return FILES[index];
-}
+import { FILES, fileToIndex, indexToFile } from './files';
+export { FILES, fileToIndex, indexToFile };
 
 // =============================================================================
 // Position Manipulation
@@ -44,23 +36,95 @@ export function offsetPosition(
   dy: number,
   dimensions: BoardDimensions & { boardSize?: BoardSize }
 ): Position | null {
-  const newFileIndex = fileToIndex(pos.file) + dx;
-  const newRank = pos.rank + dy;
+  return getTopology(dimensions).offset(pos, dx, dy);
+}
 
-  if (newFileIndex < 0 || newFileIndex >= dimensions.files) return null;
-  if (newRank < 1 || newRank > dimensions.ranks) return null;
+/**
+ * Move one square in direction (dx, dy), reporting the direction to carry on in.
+ *
+ * On every rectangular board the direction comes back unchanged, so a sliding
+ * piece behaves exactly as it always has. On the folded 3-player board a step
+ * through the centre seam flips the direction, and threading that returned
+ * direction back in is what keeps a rook going the right way afterwards.
+ *
+ * Sliding loops should use this rather than calling offsetPosition repeatedly
+ * with the original direction.
+ */
+export function stepPosition(
+  pos: Position,
+  dx: number,
+  dy: number,
+  dimensions: BoardDimensions & { boardSize?: BoardSize }
+): Step | null {
+  return getTopology(dimensions).step(pos, dx, dy);
+}
 
-  const newFile = indexToFile(newFileIndex);
-  if (!newFile) return null;
+/**
+ * A board's geometry: its dimensions together with which board it is.
+ *
+ * BoardState keeps `dimensions` and `boardSize` as separate fields, but the
+ * topology needs both — dimensions alone cannot tell a 12x12 rectangle from the
+ * 4-player cross, or a 24x4 rectangle from the folded 3-player board. Every
+ * call that used to pass `board.dimensions` should pass this instead.
+ *
+ * Memoised per board object, so the extra object is allocated once per position
+ * rather than once per move generated.
+ */
+const geometryCache = new WeakMap<object, BoardDimensions & { boardSize?: BoardSize }>();
 
-  const newPos: Position = { file: newFile, rank: newRank as Rank };
+export function geometryOf(
+  board: BoardState
+): BoardDimensions & { boardSize?: BoardSize } {
+  const cached = geometryCache.get(board);
+  if (cached) return cached;
+  const geometry = { ...board.dimensions, boardSize: board.boardSize };
+  geometryCache.set(board, geometry);
+  return geometry;
+}
 
-  // Reject void corner squares on 4-player board
-  if ((dimensions as { boardSize?: BoardSize }).boardSize === '4player') {
-    if (isVoidSquare(newPos, '4player')) return null;
+/**
+ * The square one further on from a square you reached by walking.
+ *
+ * Pieces that jump a screen or a captured piece — cannon, grasshopper, long
+ * leaper, checkers — need the square beyond the one they are looking at. That
+ * has to continue in the direction the walk is *now* facing, which on a folded
+ * board is not the direction it set off in.
+ */
+export function stepPositionFrom(
+  pos: Position,
+  walked: Step | null,
+  dimensions: BoardDimensions & { boardSize?: BoardSize }
+): Position | null {
+  if (!walked) return null;
+  const next = getTopology(dimensions).step(pos, walked.dx, walked.dy);
+  return next ? next.pos : null;
+}
+
+/**
+ * Walk square by square in a direction, following the board's topology.
+ *
+ * Yields each square reached along with the direction to continue in, and stops
+ * at the edge of the board. On a folded board the direction changes as the walk
+ * passes through a seam, which is exactly what a sliding piece needs; callers
+ * that want the square *beyond* the one they are looking at should step from
+ * the yielded `dx`/`dy`, not from the direction they started with.
+ *
+ * `limit` guards against a topology that loops back on itself.
+ */
+export function* walkDirection(
+  pos: Position,
+  dx: number,
+  dy: number,
+  dimensions: BoardDimensions & { boardSize?: BoardSize },
+  limit = 64
+): Generator<Step> {
+  let cursor: Step = { pos, dx, dy };
+  for (let i = 0; i < limit; i++) {
+    const next = getTopology(dimensions).step(cursor.pos, cursor.dx, cursor.dy);
+    if (!next) return;
+    yield next;
+    cursor = next;
   }
-
-  return newPos;
 }
 
 /**

@@ -56,12 +56,16 @@ function piece(typeId: string, owner: PlayerColor, square: string): PieceInstanc
   };
 }
 
+/**
+ * A plain 12x12 board. Deliberately NOT boardSize '4player': the cross board
+ * voids its 2x2 corners, and these tests are about who is still in the game
+ * rather than about board shape, so they want every square usable.
+ */
 function board(pieces: PieceInstance[], activePlayers?: PlayerColor[]): BoardState {
   return {
     dimensions: { files: 12, ranks: 12 },
     pieces,
     positionMap: createPositionMap(pieces),
-    boardSize: '4player',
     ...(activePlayers ? { activePlayers } : {}),
   } as BoardState;
 }

@@ -6,7 +6,12 @@
 // Board & Position Types
 // =============================================================================
 
-export type File = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j' | 'k' | 'l';
+// Files run a..x. Rectangular boards use at most a..l (12); the 3-player
+// board is three 8-file sections laid end to end, so it needs all 24.
+export type File =
+  | 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h'
+  | 'i' | 'j' | 'k' | 'l' | 'm' | 'n' | 'o' | 'p'
+  | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w' | 'x';
 export type Rank = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
 export interface Position {
@@ -19,13 +24,15 @@ export interface BoardDimensions {
   ranks: number; // 8, 10, etc.
 }
 
-export type BoardSize = '8x8' | '10x8' | '10x10' | '4player';
+export type BoardSize = '8x8' | '10x8' | '10x10' | '4player' | '3player';
 
 export const BOARD_CONFIGS: Record<BoardSize, BoardDimensions & { pawnSlots: number; pieceSlots: number; royaltySlots: number }> = {
   '8x8': { files: 8, ranks: 8, pawnSlots: 8, pieceSlots: 6, royaltySlots: 2 },
   '10x8': { files: 10, ranks: 8, pawnSlots: 10, pieceSlots: 8, royaltySlots: 2 },
   '10x10': { files: 10, ranks: 10, pawnSlots: 10, pieceSlots: 8, royaltySlots: 2 },
   '4player': { files: 12, ranks: 12, pawnSlots: 8, pieceSlots: 6, royaltySlots: 2 },
+  // Three 8x4 sections folded together at the centre (24 x 4 = 96 squares)
+  '3player': { files: 24, ranks: 4, pawnSlots: 8, pieceSlots: 6, royaltySlots: 2 },
 };
 
 // =============================================================================
@@ -318,7 +325,7 @@ export function positionToString(pos: Position): string {
 }
 
 export function stringToPosition(str: string): Position | null {
-  const match = str.match(/^([a-l])(\d+)$/);
+  const match = str.match(/^([a-x])(\d+)$/);
   if (!match) return null;
 
   const file = match[1] as File;

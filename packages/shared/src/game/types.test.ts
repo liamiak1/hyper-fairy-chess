@@ -40,7 +40,9 @@ describe('Type Utilities', () => {
     it('returns null for invalid string', () => {
       expect(stringToPosition('invalid')).toBeNull();
       expect(stringToPosition('')).toBeNull();
-      expect(stringToPosition('m1')).toBeNull(); // invalid file (beyond 'l')
+      expect(stringToPosition('y1')).toBeNull(); // invalid file (beyond 'x')
+      // 'm'..'x' ARE valid now — the 3-player board uses 24 files
+      expect(stringToPosition('m1')).toEqual({ file: 'm', rank: 1 });
     });
 
     it('returns null for out-of-range rank', () => {

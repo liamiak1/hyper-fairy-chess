@@ -31,7 +31,12 @@ import {
   getPieceAt,
   fileToIndex,
   isPlayerActive,
+  walkDirection,
+  stepPosition,
+  stepPositionFrom,
+  geometryOf,
 } from './boardUtils';
+import type { Step } from './topology';
 import { positionToString } from '../types';
 
 // =============================================================================
@@ -99,15 +104,14 @@ export function generateSlideMoves(
     const dirVectors = getDirectionVectors(slideDir);
 
     for (const dir of dirVectors) {
-      let currentPos = piece.position;
-
-      // Slide in this direction until we hit something
-      while (true) {
-        const nextPos = offsetPosition(currentPos, dir.dx, dir.dy, board.dimensions);
-
-        // Off the board
-        if (!nextPos) break;
-
+      // walkDirection follows the board's topology, so on the folded 3-player
+      // board a slide comes out of the centre seam pointing the right way.
+      for (const { pos: nextPos } of walkDirection(
+        piece.position,
+        dir.dx,
+        dir.dy,
+        geometryOf(board)
+      )) {
         // Hit a friendly piece - can't move here or beyond
         if (hasFriendlyPiece(board, nextPos, piece.owner)) break;
 
@@ -125,8 +129,6 @@ export function generateSlideMoves(
 
         // Empty square - can move here
         moves.push(nextPos);
-
-        currentPos = nextPos;
       }
     }
   }
@@ -155,7 +157,7 @@ export function generateLeapMoves(
     const offsets = expandLeapOffset(leap);
 
     for (const offset of offsets) {
-      const targetPos = offsetPosition(piece.position, offset.dx, offset.dy, board.dimensions);
+      const targetPos = offsetPosition(piece.position, offset.dx, offset.dy, geometryOf(board));
 
       if (!targetPos) continue;
 
@@ -306,13 +308,13 @@ function generatePawnForwardMoves(board: BoardState, piece: PieceInstance): Posi
   const { dx: fdx, dy: fdy } = getForwardVector(piece.owner);
 
   // Single step forward
-  const oneStep = offsetPosition(piece.position, fdx, fdy, board.dimensions);
+  const oneStep = offsetPosition(piece.position, fdx, fdy, geometryOf(board));
   if (oneStep && isSquareEmpty(board, oneStep)) {
     moves.push(oneStep);
 
     // Double step from starting position
-    if (canPawnDoubleMove(piece, piece.owner, board.dimensions)) {
-      const twoStep = offsetPosition(piece.position, fdx * 2, fdy * 2, board.dimensions);
+    if (canPawnDoubleMove(piece, piece.owner, geometryOf(board))) {
+      const twoStep = offsetPosition(piece.position, fdx * 2, fdy * 2, geometryOf(board));
       if (twoStep && isSquareEmpty(board, twoStep)) {
         moves.push(twoStep);
       }
@@ -341,7 +343,7 @@ function generatePawnCaptureMoves(
     : [{ dx: 0, dy: -1 }, { dx: 0, dy: 1 }];
 
   for (const p of perps) {
-    const capturePos = offsetPosition(piece.position, fdx + p.dx, fdy + p.dy, board.dimensions);
+    const capturePos = offsetPosition(piece.position, fdx + p.dx, fdy + p.dy, geometryOf(board));
     if (!capturePos) continue;
 
     // Regular capture - only if enemy piece is capturable
@@ -369,7 +371,7 @@ function generateShogiPawnMoves(board: BoardState, piece: PieceInstance): Positi
   const canDisplacementCapture = canCaptureByDisplacement(piece);
 
   // Single step forward (move or capture)
-  const oneStep = offsetPosition(piece.position, fdx, fdy, board.dimensions);
+  const oneStep = offsetPosition(piece.position, fdx, fdy, geometryOf(board));
   if (oneStep) {
     // Can move if empty
     if (isSquareEmpty(board, oneStep)) {
@@ -398,7 +400,7 @@ function generateSwapMoves(board: BoardState, piece: PieceInstance): Position[] 
 
   // Check all adjacent squares for friendly pieces to swap with
   for (const dir of ALL_DIRECTIONS) {
-    const targetPos = offsetPosition(piece.position, dir.dx, dir.dy, board.dimensions);
+    const targetPos = offsetPosition(piece.position, dir.dx, dir.dy, geometryOf(board));
 
     if (!targetPos) continue;
 
@@ -437,13 +439,13 @@ function generateBounceMoves(board: BoardState, piece: PieceInstance): Position[
 
     // Follow the path with bounces
     for (let steps = 0; steps < 50; steps++) { // Safety limit
-      let nextPos = offsetPosition(currentPos, dx, dy, board.dimensions);
+      let walked = stepPosition(currentPos, dx, dy, geometryOf(board));
 
       // Handle bouncing
-      if (!nextPos) {
+      if (!walked) {
         // Hit an edge - need to bounce
-        const testX = offsetPosition(currentPos, dx, 0, board.dimensions);
-        const testY = offsetPosition(currentPos, 0, dy, board.dimensions);
+        const testX = offsetPosition(currentPos, dx, 0, geometryOf(board));
+        const testY = offsetPosition(currentPos, 0, dy, geometryOf(board));
 
         if (!testX && !testY) {
           // Corner - reflect both
@@ -457,9 +459,14 @@ function generateBounceMoves(board: BoardState, piece: PieceInstance): Position[
           dy = -dy;
         }
 
-        nextPos = offsetPosition(currentPos, dx, dy, board.dimensions);
-        if (!nextPos) break; // Still off board after bounce - stop
+        walked = stepPosition(currentPos, dx, dy, geometryOf(board));
+        if (!walked) break; // Still off board after bounce - stop
       }
+
+      const nextPos = walked.pos;
+      // A crossing on a folded board turns the piece; keep bouncing from there.
+      dx = walked.dx;
+      dy = walked.dy;
 
       const posKey = `${nextPos.file}${nextPos.rank}`;
 
@@ -511,13 +518,13 @@ function generateHeraldMoves(board: BoardState, piece: PieceInstance): Position[
 
   for (const dir of orthoDirs) {
     // Check if first square is clear (blockable)
-    const firstStep = offsetPosition(piece.position, dir.dx, dir.dy, board.dimensions);
+    const firstStep = offsetPosition(piece.position, dir.dx, dir.dy, geometryOf(board));
     if (!firstStep) continue;
     if (hasFriendlyPiece(board, firstStep, piece.owner)) continue;
     if (hasEnemyPiece(board, firstStep, piece.owner)) continue; // Blocked by enemy too
 
     // Second square - can move here if empty, or capture if allowed
-    const secondStep = offsetPosition(piece.position, dir.dx * 2, dir.dy * 2, board.dimensions);
+    const secondStep = offsetPosition(piece.position, dir.dx * 2, dir.dy * 2, geometryOf(board));
     if (!secondStep) continue;
     if (hasFriendlyPiece(board, secondStep, piece.owner)) continue;
 
@@ -574,13 +581,13 @@ function generateRegentMoves(board: BoardState, piece: PieceInstance): Position[
     // Limited mode: exactly 2 squares in any direction (blockable)
     for (const dir of ALL_DIRECTIONS) {
       // Check if first square is clear (blockable)
-      const firstStep = offsetPosition(piece.position, dir.dx, dir.dy, board.dimensions);
+      const firstStep = offsetPosition(piece.position, dir.dx, dir.dy, geometryOf(board));
       if (!firstStep) continue;
       if (hasFriendlyPiece(board, firstStep, piece.owner)) continue;
       if (hasEnemyPiece(board, firstStep, piece.owner)) continue; // Blocked by enemy too
 
       // Second square - can move here if empty or capture if allowed
-      const secondStep = offsetPosition(piece.position, dir.dx * 2, dir.dy * 2, board.dimensions);
+      const secondStep = offsetPosition(piece.position, dir.dx * 2, dir.dy * 2, geometryOf(board));
       if (!secondStep) continue;
       if (hasFriendlyPiece(board, secondStep, piece.owner)) continue;
 
@@ -596,10 +603,11 @@ function generateRegentMoves(board: BoardState, piece: PieceInstance): Position[
     // Full power mode: queen movement (slides in all directions)
     const queenDirs = getDirectionVectors('all');
     for (const dir of queenDirs) {
-      let currentPos = piece.position;
+      let cursor: Step = { pos: piece.position, dx: dir.dx, dy: dir.dy };
 
       while (true) {
-        const nextPos = offsetPosition(currentPos, dir.dx, dir.dy, board.dimensions);
+        const walked = stepPosition(cursor.pos, cursor.dx, cursor.dy, geometryOf(board));
+        const nextPos = walked ? walked.pos : null;
         if (!nextPos) break;
         if (hasFriendlyPiece(board, nextPos, piece.owner)) break;
 
@@ -611,7 +619,7 @@ function generateRegentMoves(board: BoardState, piece: PieceInstance): Position[
         }
 
         moves.push(nextPos);
-        currentPos = nextPos;
+        cursor = walked!;
       }
     }
   }
@@ -640,13 +648,13 @@ function generatePeasantDiagonalMoves(board: BoardState, piece: PieceInstance): 
   for (const p of perps) {
     const ddx = fdx + p.dx;
     const ddy = fdy + p.dy;
-    const oneStep = offsetPosition(piece.position, ddx, ddy, board.dimensions);
+    const oneStep = offsetPosition(piece.position, ddx, ddy, geometryOf(board));
     if (oneStep && isSquareEmpty(board, oneStep)) {
       moves.push(oneStep);
 
       // Double diagonal on first move (same diagonal direction)
       if (!piece.hasMoved) {
-        const twoStep = offsetPosition(piece.position, ddx * 2, ddy * 2, board.dimensions);
+        const twoStep = offsetPosition(piece.position, ddx * 2, ddy * 2, geometryOf(board));
         if (twoStep && isSquareEmpty(board, twoStep)) {
           moves.push(twoStep);
         }
@@ -668,7 +676,7 @@ function generatePeasantCaptureMoves(board: BoardState, piece: PieceInstance): P
   const { dx: fdx, dy: fdy } = getForwardVector(piece.owner);
 
   // Capture forward only
-  const capturePos = offsetPosition(piece.position, fdx, fdy, board.dimensions);
+  const capturePos = offsetPosition(piece.position, fdx, fdy, geometryOf(board));
   if (capturePos && hasCapturableEnemyPiece(board, capturePos, piece.owner)) {
     moves.push(capturePos);
   }
@@ -692,11 +700,12 @@ function generateGrasshopperMoves(board: BoardState, piece: PieceInstance): Posi
 
   // Check all 8 directions (queen lines)
   for (const dir of ALL_DIRECTIONS) {
-    let currentPos = piece.position;
+    let cursor: Step = { pos: piece.position, dx: dir.dx, dy: dir.dy };
 
     // Slide until we find a piece to hop over
     while (true) {
-      const nextPos = offsetPosition(currentPos, dir.dx, dir.dy, board.dimensions);
+      const walked = stepPosition(cursor.pos, cursor.dx, cursor.dy, geometryOf(board));
+      const nextPos = walked ? walked.pos : null;
       if (!nextPos) break;
 
       const hasPiece = hasFriendlyPiece(board, nextPos, piece.owner) ||
@@ -704,7 +713,7 @@ function generateGrasshopperMoves(board: BoardState, piece: PieceInstance): Posi
 
       if (hasPiece) {
         // Found the hurdle - check landing square
-        const landingPos = offsetPosition(nextPos, dir.dx, dir.dy, board.dimensions);
+        const landingPos = stepPositionFrom(nextPos, walked, geometryOf(board));
         if (landingPos) {
           // Can't land on friendly piece
           if (!hasFriendlyPiece(board, landingPos, piece.owner)) {
@@ -721,7 +730,7 @@ function generateGrasshopperMoves(board: BoardState, piece: PieceInstance): Posi
         break; // Only hop over first piece found
       }
 
-      currentPos = nextPos;
+      cursor = walked!;
     }
   }
 
@@ -747,11 +756,12 @@ function generateNightriderMoves(board: BoardState, piece: PieceInstance): Posit
   ];
 
   for (const dir of knightDirs) {
-    let currentPos = piece.position;
+    let cursor: Step = { pos: piece.position, dx: dir.dx, dy: dir.dy };
 
     // Keep moving in this knight direction until blocked
     while (true) {
-      const nextPos = offsetPosition(currentPos, dir.dx, dir.dy, board.dimensions);
+      const walked = stepPosition(cursor.pos, cursor.dx, cursor.dy, geometryOf(board));
+      const nextPos = walked ? walked.pos : null;
       if (!nextPos) break;
 
       // Hit a friendly piece - can't move here or beyond
@@ -767,7 +777,7 @@ function generateNightriderMoves(board: BoardState, piece: PieceInstance): Posit
 
       // Empty square - can move here and continue
       moves.push(nextPos);
-      currentPos = nextPos;
+      cursor = walked!;
     }
   }
 
@@ -786,27 +796,28 @@ function generateCannonMoves(board: BoardState, piece: PieceInstance): Position[
   const orthogonalDirs = getDirectionVectors('orthogonal');
 
   for (const dir of orthogonalDirs) {
-    let currentPos = piece.position;
+    let cursor: Step = { pos: piece.position, dx: dir.dx, dy: dir.dy };
     let foundScreen = false;
 
     while (true) {
-      const nextPos = offsetPosition(currentPos, dir.dx, dir.dy, board.dimensions);
+      const walked = stepPosition(cursor.pos, cursor.dx, cursor.dy, geometryOf(board));
+      const nextPos = walked ? walked.pos : null;
       if (!nextPos) break;
 
       if (!foundScreen) {
         // Looking for empty squares to move to, or a screen piece
         if (isSquareEmpty(board, nextPos)) {
           moves.push(nextPos); // Can move to empty squares
-          currentPos = nextPos;
+          cursor = walked!;
         } else {
           // Found the screen piece (friendly or enemy)
           foundScreen = true;
-          currentPos = nextPos;
+          cursor = walked!;
         }
       } else {
         // Already found screen - looking for capture target
         if (isSquareEmpty(board, nextPos)) {
-          currentPos = nextPos; // Keep sliding past empty squares
+          cursor = walked!; // Keep sliding past empty squares
         } else if (hasCapturableEnemyPiece(board, nextPos, piece.owner)) {
           moves.push(nextPos); // Can capture this enemy
           break; // Stop after finding capture target
@@ -839,10 +850,11 @@ function generateChameleonMoves(board: BoardState, piece: PieceInstance): Positi
   // 1. Non-capturing moves: Queen-like slides to empty squares
   const allDirs = getDirectionVectors('all');
   for (const dir of allDirs) {
-    let currentPos = piece.position;
+    let cursor: Step = { pos: piece.position, dx: dir.dx, dy: dir.dy };
 
     while (true) {
-      const nextPos = offsetPosition(currentPos, dir.dx, dir.dy, board.dimensions);
+      const walked = stepPosition(cursor.pos, cursor.dx, cursor.dy, geometryOf(board));
+      const nextPos = walked ? walked.pos : null;
       if (!nextPos) break;
 
       // Stop at any piece (friendly or enemy)
@@ -856,7 +868,7 @@ function generateChameleonMoves(board: BoardState, piece: PieceInstance): Positi
         visited.add(posKey);
       }
 
-      currentPos = nextPos;
+      cursor = walked!;
     }
   }
 
@@ -949,11 +961,12 @@ function exploreLongLeaperJumpPath(
   positions: Position[],
   visited: Set<string>
 ): void {
-  let currentPos = fromPos;
+  let cursor: Step = { pos: fromPos, dx: dir.dx, dy: dir.dy };
 
   // Slide until we hit something
   while (true) {
-    const nextPos = offsetPosition(currentPos, dir.dx, dir.dy, board.dimensions);
+    const walked = stepPosition(cursor.pos, cursor.dx, cursor.dy, geometryOf(board));
+    const nextPos = walked ? walked.pos : null;
     if (!nextPos) break;
 
     // Hit a friendly piece - stop
@@ -975,7 +988,7 @@ function exploreLongLeaperJumpPath(
           }
         }
       }
-      currentPos = nextPos;
+      cursor = walked!;
       continue;
     }
 
@@ -989,7 +1002,7 @@ function exploreLongLeaperJumpPath(
       if (enemyType?.canBeCaptured === false) break;
 
       // Check if there's a square beyond to potentially land on or continue jumping
-      const beyondPos = offsetPosition(nextPos, dir.dx, dir.dy, board.dimensions);
+      const beyondPos = stepPositionFrom(nextPos, walked, geometryOf(board));
       if (!beyondPos) break;
 
       // Can only continue if beyond is empty or another enemy (for chain jumps)
@@ -1020,7 +1033,7 @@ function exploreLongLeaperJumpPath(
       break;
     }
 
-    currentPos = nextPos;
+    cursor = walked!;
   }
 }
 
@@ -1069,7 +1082,7 @@ function exploreCheckersJumpPath(
 ): void {
   for (const dir of allowedDirs) {
     // Position of potential enemy to jump over (must be immediately adjacent)
-    const enemyPos = offsetPosition(fromPos, dir.dx, dir.dy, board.dimensions);
+    const enemyPos = offsetPosition(fromPos, dir.dx, dir.dy, geometryOf(board));
     if (!enemyPos) continue;
 
     // Must have an enemy piece to jump over
@@ -1084,7 +1097,7 @@ function exploreCheckersJumpPath(
     if (enemyType?.canBeCaptured === false) continue;
 
     // Position to land on (beyond the enemy)
-    const landingPos = offsetPosition(enemyPos, dir.dx, dir.dy, board.dimensions);
+    const landingPos = offsetPosition(enemyPos, dir.dx, dir.dy, geometryOf(board));
     if (!landingPos) continue;
 
     // Landing square must be empty
@@ -1164,7 +1177,7 @@ function getChameleonCapturePositions(
 
   // Handle leaps (Knight, Catapult, etc.)
   for (const leap of enemyType.movement.leaps) {
-    if (canReachByLeap(chameleon.position, enemy.position, leap, board.dimensions)) {
+    if (canReachByLeap(chameleon.position, enemy.position, leap, geometryOf(board))) {
       positions.push(enemy.position);
     }
   }
@@ -1202,11 +1215,11 @@ function getChameleonBoxerCapturePositions(
   // For each orthogonal direction from the boxer...
   for (const dir of orthogonalDirs) {
     // Position adjacent to boxer (where chameleon needs to move)
-    const adjacentPos = offsetPosition(boxer.position, dir.dx, dir.dy, board.dimensions);
+    const adjacentPos = offsetPosition(boxer.position, dir.dx, dir.dy, geometryOf(board));
     if (!adjacentPos) continue;
 
     // Position on opposite side of boxer (must have friendly piece)
-    const oppositePos = offsetPosition(boxer.position, -dir.dx, -dir.dy, board.dimensions);
+    const oppositePos = offsetPosition(boxer.position, -dir.dx, -dir.dy, geometryOf(board));
     if (!oppositePos) continue;
 
     // Check if there's a friendly piece on the opposite side
@@ -1261,9 +1274,10 @@ function getChameleonWithdrawerCapturePositions(
   const moveDir = { dx: Math.sign(dx), dy: Math.sign(dy) };
 
   // Generate all positions in the "away" direction (queen-like slide)
-  let currentPos = chameleon.position;
+  let cursor: Step = { pos: chameleon.position, dx: moveDir.dx, dy: moveDir.dy };
   while (true) {
-    const nextPos = offsetPosition(currentPos, moveDir.dx, moveDir.dy, board.dimensions);
+    const walked = stepPosition(cursor.pos, cursor.dx, cursor.dy, geometryOf(board));
+    const nextPos = walked ? walked.pos : null;
     if (!nextPos) break;
 
     // Stop if blocked by friendly piece
@@ -1274,7 +1288,7 @@ function getChameleonWithdrawerCapturePositions(
 
     // Valid position to move to (this move will capture the withdrawer)
     positions.push(nextPos);
-    currentPos = nextPos;
+    cursor = walked!;
   }
 
   return positions;
@@ -1316,10 +1330,11 @@ function getChameleonCoordinatorCapturePositions(
     // Generate all queen-like slide positions on that rank
     const allDirs = getDirectionVectors('all');
     for (const dir of allDirs) {
-      let currentPos = chameleon.position;
+      let cursor: Step = { pos: chameleon.position, dx: dir.dx, dy: dir.dy };
 
       while (true) {
-        const nextPos = offsetPosition(currentPos, dir.dx, dir.dy, board.dimensions);
+        const walked = stepPosition(cursor.pos, cursor.dx, cursor.dy, geometryOf(board));
+        const nextPos = walked ? walked.pos : null;
         if (!nextPos) break;
 
         // Can't pass through pieces
@@ -1335,7 +1350,7 @@ function getChameleonCoordinatorCapturePositions(
           positions.push(nextPos);
         }
 
-        currentPos = nextPos;
+        cursor = walked!;
       }
     }
   }
@@ -1346,10 +1361,11 @@ function getChameleonCoordinatorCapturePositions(
 
     const allDirs = getDirectionVectors('all');
     for (const dir of allDirs) {
-      let currentPos = chameleon.position;
+      let cursor: Step = { pos: chameleon.position, dx: dir.dx, dy: dir.dy };
 
       while (true) {
-        const nextPos = offsetPosition(currentPos, dir.dx, dir.dy, board.dimensions);
+        const walked = stepPosition(cursor.pos, cursor.dx, cursor.dy, geometryOf(board));
+        const nextPos = walked ? walked.pos : null;
         if (!nextPos) break;
 
         if (hasFriendlyPiece(board, nextPos, chameleon.owner)) break;
@@ -1360,7 +1376,7 @@ function getChameleonCoordinatorCapturePositions(
           positions.push(nextPos);
         }
 
-        currentPos = nextPos;
+        cursor = walked!;
       }
     }
   }
@@ -1392,10 +1408,11 @@ function getChameleonCannonCapturePositions(
 
   // Count pieces between chameleon and cannon - need exactly one (the screen)
   let piecesInBetween = 0;
-  let currentPos = chameleon.position;
+  let cursor: Step = { pos: chameleon.position, dx: stepX, dy: stepY };
 
   while (true) {
-    const nextPos = offsetPosition(currentPos, stepX, stepY, board.dimensions);
+    const walked = stepPosition(cursor.pos, cursor.dx, cursor.dy, geometryOf(board));
+    const nextPos = walked ? walked.pos : null;
     if (!nextPos) return [];
 
     // Reached cannon position - check if we had exactly one screen piece
@@ -1412,7 +1429,7 @@ function getChameleonCannonCapturePositions(
       if (piecesInBetween > 1) return []; // Too many pieces, can't cannon-capture
     }
 
-    currentPos = nextPos;
+    cursor = walked!;
   }
 }
 
@@ -1429,10 +1446,11 @@ function canReachBySlide(
   const dirVectors = getDirectionVectors(direction);
 
   for (const dir of dirVectors) {
-    let currentPos = from;
+    let cursor: Step = { pos: from, dx: dir.dx, dy: dir.dy };
 
     while (true) {
-      const nextPos = offsetPosition(currentPos, dir.dx, dir.dy, board.dimensions);
+      const walked = stepPosition(cursor.pos, cursor.dx, cursor.dy, geometryOf(board));
+      const nextPos = walked ? walked.pos : null;
       if (!nextPos) break;
 
       // Reached target
@@ -1445,7 +1463,7 @@ function canReachBySlide(
         break;
       }
 
-      currentPos = nextPos;
+      cursor = walked!;
     }
   }
 
@@ -1525,7 +1543,7 @@ function canChameleonCaptureWithSpecial(
       // Check that the intermediate square is empty
       const stepX = dx === 0 ? 0 : dx / 2;
       const stepY = dy === 0 ? 0 : dy / 2;
-      const midPos = offsetPosition(chameleon.position, stepX, stepY, board.dimensions);
+      const midPos = offsetPosition(chameleon.position, stepX, stepY, geometryOf(board));
       if (!midPos) return false;
       return isSquareEmpty(board, midPos);
     }
@@ -1564,9 +1582,10 @@ function canChameleonCaptureWithSpecial(
 
       // Count pieces between chameleon and enemy
       let piecesInBetween = 0;
-      let currentPos = chameleon.position;
+      let cursor: Step = { pos: chameleon.position, dx: stepX, dy: stepY };
       while (true) {
-        const nextPos = offsetPosition(currentPos, stepX, stepY, board.dimensions);
+        const walked = stepPosition(cursor.pos, cursor.dx, cursor.dy, geometryOf(board));
+        const nextPos = walked ? walked.pos : null;
         if (!nextPos) return false;
 
         // Reached enemy position - check if we hopped exactly one piece
@@ -1577,7 +1596,7 @@ function canChameleonCaptureWithSpecial(
         if (!isSquareEmpty(board, nextPos)) {
           piecesInBetween++;
         }
-        currentPos = nextPos;
+        cursor = walked!;
       }
     }
 
@@ -1604,7 +1623,7 @@ function canChameleonCaptureWithSpecial(
           // Check path is clear (all intermediate positions must be empty)
           let pathClear = true;
           for (let i = 1; i < mult; i++) {
-            const midPos = offsetPosition(chameleon.position, dir.dx * i, dir.dy * i, board.dimensions);
+            const midPos = offsetPosition(chameleon.position, dir.dx * i, dir.dy * i, geometryOf(board));
             if (!midPos || !isSquareEmpty(board, midPos)) {
               pathClear = false;
               break;
@@ -1629,9 +1648,10 @@ function canChameleonCaptureWithSpecial(
 
       // Count pieces between chameleon and enemy (need exactly one screen)
       let piecesInBetween = 0;
-      let currentPos = chameleon.position;
+      let cursor: Step = { pos: chameleon.position, dx: stepX, dy: stepY };
       while (true) {
-        const nextPos = offsetPosition(currentPos, stepX, stepY, board.dimensions);
+        const walked = stepPosition(cursor.pos, cursor.dx, cursor.dy, geometryOf(board));
+        const nextPos = walked ? walked.pos : null;
         if (!nextPos) return false;
 
         // Reached enemy position
@@ -1643,7 +1663,7 @@ function canChameleonCaptureWithSpecial(
           piecesInBetween++;
           if (piecesInBetween > 1) return false; // Too many pieces
         }
-        currentPos = nextPos;
+        cursor = walked!;
       }
     }
 
@@ -1663,12 +1683,12 @@ function canChameleonCaptureWithSpecial(
 
         // Follow the path with bounces
         for (let steps = 0; steps < 50; steps++) {
-          let nextPos = offsetPosition(currentPos, dx, dy, board.dimensions);
+          let walked = stepPosition(currentPos, dx, dy, geometryOf(board));
 
           // Handle bouncing
-          if (!nextPos) {
-            const testX = offsetPosition(currentPos, dx, 0, board.dimensions);
-            const testY = offsetPosition(currentPos, 0, dy, board.dimensions);
+          if (!walked) {
+            const testX = offsetPosition(currentPos, dx, 0, geometryOf(board));
+            const testY = offsetPosition(currentPos, 0, dy, geometryOf(board));
 
             if (!testX && !testY) {
               dx = -dx;
@@ -1679,9 +1699,14 @@ function canChameleonCaptureWithSpecial(
               dy = -dy;
             }
 
-            nextPos = offsetPosition(currentPos, dx, dy, board.dimensions);
-            if (!nextPos) break;
+            walked = stepPosition(currentPos, dx, dy, geometryOf(board));
+            if (!walked) break;
           }
+
+          const nextPos = walked.pos;
+          // A crossing on a folded board turns the piece; keep bouncing.
+          dx = walked.dx;
+          dy = walked.dy;
 
           const posKey = `${nextPos.file}${nextPos.rank}`;
 
@@ -1718,7 +1743,7 @@ function canChameleonCaptureWithSpecial(
       if (Math.abs(dx) !== 1 || dy !== -checkerDir) return false;
 
       // Check that the landing square (beyond the checker) is empty
-      const landingPos = offsetPosition(enemy.position, dx, checkerDir, board.dimensions);
+      const landingPos = offsetPosition(enemy.position, dx, checkerDir, geometryOf(board));
       if (!landingPos) return false;
       if (!isSquareEmpty(board, landingPos)) return false;
 
@@ -1734,7 +1759,7 @@ function canChameleonCaptureWithSpecial(
       if (Math.abs(dx) !== 1 || Math.abs(dy) !== 1) return false;
 
       // Check that the landing square (beyond the checkers king) is empty
-      const landingPos = offsetPosition(enemy.position, dx, dy, board.dimensions);
+      const landingPos = offsetPosition(enemy.position, dx, dy, geometryOf(board));
       if (!landingPos) return false;
       if (!isSquareEmpty(board, landingPos)) return false;
 
@@ -1784,11 +1809,12 @@ function generateLongLeapInDirection(
   visited: Set<string>,
   _hasJumped: boolean
 ): void {
-  let currentPos = fromPos;
+  let cursor: Step = { pos: fromPos, dx: dir.dx, dy: dir.dy };
 
   // Slide in this direction
   while (true) {
-    const nextPos = offsetPosition(currentPos, dir.dx, dir.dy, board.dimensions);
+    const walked = stepPosition(cursor.pos, cursor.dx, cursor.dy, geometryOf(board));
+    const nextPos = walked ? walked.pos : null;
     if (!nextPos) break;
 
     const posKey = positionToString(nextPos);
@@ -1804,7 +1830,7 @@ function generateLongLeapInDirection(
         moves.push(nextPos);
         visited.add(posKey);
       }
-      currentPos = nextPos;
+      cursor = walked!;
       continue;
     }
 
@@ -1820,7 +1846,7 @@ function generateLongLeapInDirection(
       }
 
       // Check the square beyond for landing
-      const landingPos = offsetPosition(nextPos, dir.dx, dir.dy, board.dimensions);
+      const landingPos = stepPositionFrom(nextPos, walked, geometryOf(board));
       if (!landingPos) break; // No landing square - can't jump
 
       // Can only land on empty square
@@ -1840,7 +1866,7 @@ function generateLongLeapInDirection(
       break;
     }
 
-    currentPos = nextPos;
+    cursor = walked!;
   }
 }
 
@@ -1869,7 +1895,7 @@ function generateCheckersForwardMoves(board: BoardState, piece: PieceInstance): 
 
   // 1. Non-capturing moves: 1 square diagonally forward
   for (const dir of forwardDiagonals) {
-    const targetPos = offsetPosition(piece.position, dir.dx, dir.dy, board.dimensions);
+    const targetPos = offsetPosition(piece.position, dir.dx, dir.dy, geometryOf(board));
     if (!targetPos) continue;
 
     if (isSquareEmpty(board, targetPos)) {
@@ -1927,14 +1953,14 @@ function generateCheckersJumps(
 ): void {
   for (const dir of allowedDirections) {
     // Position of potential enemy to jump over
-    const enemyPos = offsetPosition(fromPos, dir.dx, dir.dy, board.dimensions);
+    const enemyPos = offsetPosition(fromPos, dir.dx, dir.dy, geometryOf(board));
     if (!enemyPos) continue;
 
     // Must have a capturable enemy piece to jump over
     if (!hasCapturableEnemyPiece(board, enemyPos, piece.owner)) continue;
 
     // Position to land on (beyond the enemy)
-    const landingPos = offsetPosition(enemyPos, dir.dx, dir.dy, board.dimensions);
+    const landingPos = offsetPosition(enemyPos, dir.dx, dir.dy, geometryOf(board));
     if (!landingPos) continue;
 
     // Landing square must be empty
@@ -1967,7 +1993,7 @@ function generateKingMoves(board: BoardState, piece: PieceInstance): Position[] 
   const moves: Position[] = [];
 
   for (const dir of ALL_DIRECTIONS) {
-    const targetPos = offsetPosition(piece.position, dir.dx, dir.dy, board.dimensions);
+    const targetPos = offsetPosition(piece.position, dir.dx, dir.dy, geometryOf(board));
 
     if (!targetPos) continue;
 
@@ -2014,7 +2040,7 @@ function generateGoldGeneralMoves(board: BoardState, piece: PieceInstance): Posi
   ];
 
   for (const offset of offsets) {
-    const targetPos = offsetPosition(piece.position, offset.dx, offset.dy, board.dimensions);
+    const targetPos = offsetPosition(piece.position, offset.dx, offset.dy, geometryOf(board));
     if (!targetPos) continue;
     if (hasFriendlyPiece(board, targetPos, piece.owner)) continue;
     if (hasEnemyPiece(board, targetPos, piece.owner) &&
@@ -2048,7 +2074,7 @@ function generateSilverGeneralMoves(board: BoardState, piece: PieceInstance): Po
   ];
 
   for (const offset of offsets) {
-    const targetPos = offsetPosition(piece.position, offset.dx, offset.dy, board.dimensions);
+    const targetPos = offsetPosition(piece.position, offset.dx, offset.dy, geometryOf(board));
     if (!targetPos) continue;
     if (hasFriendlyPiece(board, targetPos, piece.owner)) continue;
     if (hasEnemyPiece(board, targetPos, piece.owner) &&
@@ -2085,10 +2111,10 @@ function generateMaoMoves(board: BoardState, piece: PieceInstance): Position[] {
   ];
 
   for (const { step, land } of maoOffsets) {
-    const stepPos = offsetPosition(piece.position, step.dx, step.dy, board.dimensions);
+    const stepPos = offsetPosition(piece.position, step.dx, step.dy, geometryOf(board));
     if (!stepPos || !isSquareEmpty(board, stepPos)) continue;
 
-    const landPos = offsetPosition(piece.position, land.dx, land.dy, board.dimensions);
+    const landPos = offsetPosition(piece.position, land.dx, land.dy, geometryOf(board));
     if (!landPos) continue;
     if (hasFriendlyPiece(board, landPos, piece.owner)) continue;
     if (hasEnemyPiece(board, landPos, piece.owner) &&
@@ -2109,15 +2135,16 @@ function generateLanceMoves(board: BoardState, piece: PieceInstance): Position[]
 
   const { dx: fdx, dy: fdy } = getForwardVector(piece.owner);
   const moves: Position[] = [];
-  let currentPos = piece.position;
+  let cursor: Step = { pos: piece.position, dx: fdx, dy: fdy };
 
   while (true) {
-    const nextPos = offsetPosition(currentPos, fdx, fdy, board.dimensions);
+    const walked = stepPosition(cursor.pos, cursor.dx, cursor.dy, geometryOf(board));
+    const nextPos = walked ? walked.pos : null;
     if (!nextPos) break;
 
     if (isSquareEmpty(board, nextPos)) {
       moves.push(nextPos);
-      currentPos = nextPos;
+      cursor = walked!;
     } else if (hasCapturableEnemyPiece(board, nextPos, piece.owner)) {
       moves.push(nextPos);
       break;
@@ -2140,24 +2167,25 @@ function generateVaoMoves(board: BoardState, piece: PieceInstance): Position[] {
   const diagonalDirs = getDirectionVectors('diagonal');
 
   for (const dir of diagonalDirs) {
-    let currentPos = piece.position;
+    let cursor: Step = { pos: piece.position, dx: dir.dx, dy: dir.dy };
     let foundScreen = false;
 
     while (true) {
-      const nextPos = offsetPosition(currentPos, dir.dx, dir.dy, board.dimensions);
+      const walked = stepPosition(cursor.pos, cursor.dx, cursor.dy, geometryOf(board));
+      const nextPos = walked ? walked.pos : null;
       if (!nextPos) break;
 
       if (!foundScreen) {
         if (isSquareEmpty(board, nextPos)) {
           moves.push(nextPos);
-          currentPos = nextPos;
+          cursor = walked!;
         } else {
           foundScreen = true;
-          currentPos = nextPos;
+          cursor = walked!;
         }
       } else {
         if (isSquareEmpty(board, nextPos)) {
-          currentPos = nextPos;
+          cursor = walked!;
         } else if (hasCapturableEnemyPiece(board, nextPos, piece.owner)) {
           moves.push(nextPos);
           break;
@@ -2291,7 +2319,7 @@ function getPawnAttackSquares(board: BoardState, piece: PieceInstance): Position
   const direction = getPawnDirection(piece.owner);
 
   for (const dx of [-1, 1]) {
-    const attackPos = offsetPosition(piece.position, dx, direction, board.dimensions);
+    const attackPos = offsetPosition(piece.position, dx, direction, geometryOf(board));
     if (attackPos) {
       squares.push(attackPos);
     }
@@ -2307,7 +2335,7 @@ function getShogiPawnAttackSquares(board: BoardState, piece: PieceInstance): Pos
   if (!piece.position) return [];
 
   const direction = getPawnDirection(piece.owner);
-  const attackPos = offsetPosition(piece.position, 0, direction, board.dimensions);
+  const attackPos = offsetPosition(piece.position, 0, direction, geometryOf(board));
 
   return attackPos ? [attackPos] : [];
 }
@@ -2331,11 +2359,11 @@ function getCheckersAttackSquares(board: BoardState, piece: PieceInstance, forwa
 
   for (const dir of diagonals) {
     // Position that would be jumped over (this is the "attacked" position for check detection)
-    const jumpedPos = offsetPosition(piece.position, dir.dx, dir.dy, board.dimensions);
+    const jumpedPos = offsetPosition(piece.position, dir.dx, dir.dy, geometryOf(board));
     if (!jumpedPos) continue;
 
     // Position to land on (must be empty for the jump to be valid)
-    const landingPos = offsetPosition(jumpedPos, dir.dx, dir.dy, board.dimensions);
+    const landingPos = offsetPosition(jumpedPos, dir.dx, dir.dy, geometryOf(board));
     if (!landingPos) continue;
 
     // Landing square must be empty for the capture to be possible
