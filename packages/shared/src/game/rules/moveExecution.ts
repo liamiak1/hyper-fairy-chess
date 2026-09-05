@@ -30,6 +30,7 @@ import { isInCheck } from './checkDetection';
 import { isPromotionMove } from './promotion';
 import { updateFrozenStates } from './freeze';
 import { resolveTurnTransition } from './gameEndDetection';
+import { THREE_PLAYER_SEATS } from '../board/topology';
 
 // =============================================================================
 // Special Capture Calculations
@@ -1079,6 +1080,7 @@ export function createEmptyGameState(
     '10x8': { files: 10, ranks: 8 },
     '10x10': { files: 10, ranks: 10 },
     '4player': { files: 12, ranks: 12 },
+    '3player': { files: 24, ranks: 4 },
   };
   const dimensions = dimensionMap[boardSize] ?? { files: 8, ranks: 8 };
 
@@ -1126,6 +1128,30 @@ export function createFourPlayerGameState(pointBudget: number = 0): GameState {
       black: { color: 'black', budget: pointBudget, remainingBudget: 0, victoryPoints: 0 },
       red: { color: 'red', budget: pointBudget, remainingBudget: 0, victoryPoints: 0 },
       blue: { color: 'blue', budget: pointBudget, remainingBudget: 0, victoryPoints: 0 },
+    },
+  };
+}
+
+/**
+ * Create empty game state for a 3-player game.
+ *
+ * Three 8x4 sections folded together at the centre — see board/topology.ts.
+ * Seats are white, black and red in that order, which is also the order play
+ * passes round the fold.
+ */
+export function createThreePlayerGameState(pointBudget: number = 0): GameState {
+  const state = createEmptyGameState('3player', pointBudget);
+  return {
+    ...state,
+    board: {
+      ...state.board,
+      activePlayers: [...THREE_PLAYER_SEATS],
+      boardSize: '3player',
+    },
+    players: {
+      white: { color: 'white', budget: pointBudget, remainingBudget: 0, victoryPoints: 0 },
+      black: { color: 'black', budget: pointBudget, remainingBudget: 0, victoryPoints: 0 },
+      red: { color: 'red', budget: pointBudget, remainingBudget: 0, victoryPoints: 0 },
     },
   };
 }

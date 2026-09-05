@@ -2,7 +2,6 @@ import { useState, useCallback } from 'react';
 import type { PlayerColor } from '@hyper-fairy-chess/shared';
 import { Game } from './components/Game';
 import { MainMenu } from './components/MainMenu';
-import { ThreePlayerGame } from './components/ThreePlayerGame';
 import { OnlineGame } from './components/OnlineGame';
 import { ProfilePage } from './components/ProfilePage';
 import { ResetPasswordForm } from './components/ResetPasswordForm';
@@ -87,9 +86,11 @@ function AppContent() {
   }
 
   if (mode === '3player') {
+    // Three seats on the folded 3-player board — the same draft, placement and
+    // play flow as every other mode, since there is only one engine now.
     return (
       <div className="app">
-        <ThreePlayerGame onBack={() => setMode('menu')} />
+        <Game playerColors={['white', 'black', 'red']} />
       </div>
     );
   }

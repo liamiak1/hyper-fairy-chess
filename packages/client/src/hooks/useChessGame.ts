@@ -57,7 +57,9 @@ import {
   resetDraftPieceIdCounter,
   TURN_ORDER,
   createFourPlayerGameState,
+  createThreePlayerGameState,
   createFourPlayerPlacementState,
+  createThreePlayerPlacementState,
 } from '@hyper-fairy-chess/shared';
 
 // =============================================================================
@@ -148,13 +150,27 @@ export function useChessGame(
   aiColor?: PlayerColor,
   playerColors?: PlayerColor[]
 ): UseChessGameReturn {
-  const is4Player = playerColors !== undefined && playerColors.length === 4;
+  // Who is sitting at this game, and the order play passes round.
+  // TURN_ORDER is white -> blue -> black -> red; filtering it to the seats in
+  // play keeps 4-player exactly as it was and gives 3-player white -> black ->
+  // red, which is the order they sit round the fold.
+  const seats = playerColors ?? ['white', 'black'];
+  const draftOrder = useMemo(
+    () => TURN_ORDER.filter((c) => seats.includes(c)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [seats.join(',')]
+  );
+  const isMultiplayer = seats.length > 2;
+  const is4Player = seats.length === 4;
 
   // Initialize game state
   const [gameState, setGameState] = useState<GameState>(() => {
     if (mode === 'draft') {
-      if (playerColors && playerColors.length === 4) {
+      if (playerColors?.length === 4) {
         return { ...createFourPlayerGameState(0), phase: 'setup' as const };
+      }
+      if (playerColors?.length === 3) {
+        return { ...createThreePlayerGameState(0), phase: 'setup' as const };
       }
       return { ...createEmptyGameState('8x8'), phase: 'setup' as const };
     }
@@ -316,12 +332,12 @@ export function useChessGame(
 
   // Computed: next drafter (player who drafts after current one)
   const nextDrafter = useMemo((): PlayerColor => {
-    if (is4Player) {
-      const idx = TURN_ORDER.indexOf(currentDrafter);
-      return TURN_ORDER[(idx + 1) % TURN_ORDER.length];
+    if (isMultiplayer) {
+      const idx = draftOrder.indexOf(currentDrafter);
+      return draftOrder[(idx + 1) % draftOrder.length];
     }
     return currentDrafter === 'white' ? 'black' : 'white';
-  }, [is4Player, currentDrafter]);
+  }, [isMultiplayer, draftOrder, currentDrafter]);
 
   // Computed: available pieces for draft
   const availablePieces = useMemo(() => {
@@ -496,6 +512,9 @@ export function useChessGame(
         setGameState({ ...createFourPlayerGameState(0), phase: 'setup' as const });
         setRedDraft(null);
         setBlueDraft(null);
+      } else if (isMultiplayer) {
+        setGameState({ ...createThreePlayerGameState(0), phase: 'setup' as const });
+        setRedDraft(null);
       } else {
         setGameState({ ...createEmptyGameState('8x8'), phase: 'setup' as const });
       }
@@ -515,7 +534,7 @@ export function useChessGame(
     setSelectedPieceId(null);
     setPromotionPending(null);
     setStateHistory([]); // Clear undo history
-  }, [mode, is4Player]);
+  }, [mode, is4Player, isMultiplayer]);
 
   /**
    * Undo the last move
@@ -815,27 +834,39 @@ export function useChessGame(
    * Confirm the current player's draft
    */
   const confirmDraft = useCallback(() => {
-    if (is4Player) {
-      const draftOrder = TURN_ORDER; // white → blue → black → red
+    if (isMultiplayer) {
       const idx = draftOrder.indexOf(currentDrafter);
       if (idx < draftOrder.length - 1) {
         setShowHandoff(true);
-      } else {
-        // All 4 drafted → move to placement
+        return;
+      }
+
+      // Everyone has drafted → move to placement
+      resetDraftPieceIdCounter();
+      let newPlacementState = null;
+      if (is4Player) {
         if (whiteDraft && blueDraft && blackDraft && redDraft) {
-          resetDraftPieceIdCounter();
-          const newPlacementState = createFourPlayerPlacementState(whiteDraft, blueDraft, blackDraft, redDraft);
-          setPlacementState(newPlacementState);
-          setGameState((prev) => ({
-            ...prev,
-            phase: 'placement',
-            currentTurn: 'white',
-          }));
-          setWhiteDraft(null);
-          setBlackDraft(null);
-          setRedDraft(null);
-          setBlueDraft(null);
+          newPlacementState = createFourPlayerPlacementState(
+            whiteDraft, blueDraft, blackDraft, redDraft
+          );
         }
+      } else if (whiteDraft && blackDraft && redDraft) {
+        newPlacementState = createThreePlayerPlacementState(
+          whiteDraft, blackDraft, redDraft
+        );
+      }
+
+      if (newPlacementState) {
+        setPlacementState(newPlacementState);
+        setGameState((prev) => ({
+          ...prev,
+          phase: 'placement',
+          currentTurn: 'white',
+        }));
+        setWhiteDraft(null);
+        setBlackDraft(null);
+        setRedDraft(null);
+        setBlueDraft(null);
       }
       return;
     }
@@ -856,15 +887,14 @@ export function useChessGame(
         setBlackDraft(null);
       }
     }
-  }, [is4Player, currentDrafter, whiteDraft, blueDraft, blackDraft, redDraft]);
+  }, [isMultiplayer, is4Player, draftOrder, currentDrafter, whiteDraft, blueDraft, blackDraft, redDraft]);
 
   /**
    * Acknowledge handoff and start next player's draft
    */
   const acknowledgeHandoff = useCallback(() => {
     setShowHandoff(false);
-    if (is4Player) {
-      const draftOrder = TURN_ORDER;
+    if (isMultiplayer) {
       const idx = draftOrder.indexOf(currentDrafter);
       const next = draftOrder[idx + 1];
       if (next) {
@@ -880,7 +910,7 @@ export function useChessGame(
     }
     setCurrentDrafter('black');
     setBlackDraft(createEmptyDraft());
-  }, [is4Player, currentDrafter]);
+  }, [isMultiplayer, draftOrder, currentDrafter]);
 
   // ==========================================================================
   // AI Effects

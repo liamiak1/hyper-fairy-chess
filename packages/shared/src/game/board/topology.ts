@@ -23,7 +23,14 @@
  * plain arithmetic, so those boards behave exactly as they always have.
  */
 
-import type { Position, BoardDimensions, BoardSize, File, Rank } from '../types';
+import type {
+  Position,
+  BoardDimensions,
+  BoardSize,
+  File,
+  Rank,
+  PlayerColor,
+} from '../types';
 import { fileToIndex, indexToFile } from './files';
 
 /** One square of travel: where you land, and which way you are now facing. */
@@ -289,4 +296,34 @@ export function threePlayerSquare(
   const file = indexToFile(section * 8 + (local - 1));
   if (!file) throw new Error(`bad 3-player square: ${section}/${local}`);
   return { file: file as File, rank: rank as Rank };
+}
+
+// =============================================================================
+// 3-player sections and seats
+// =============================================================================
+
+/**
+ * Which colour owns which section, in board order.
+ *
+ * Section 0 is files a-h, section 1 files i-p, section 2 files q-x. Play passes
+ * white -> black -> red, which is the order they sit round the fold; that also
+ * falls out of filtering TURN_ORDER down to these three, so turn advancement
+ * needs no special case.
+ */
+export const THREE_PLAYER_SEATS: PlayerColor[] = ['white', 'black', 'red'];
+
+/** The colour whose home section this is. */
+export function sectionColor(section: number): PlayerColor {
+  return THREE_PLAYER_SEATS[section] ?? 'white';
+}
+
+/** The section a colour starts in. */
+export function colorSection(color: PlayerColor): number {
+  const i = THREE_PLAYER_SEATS.indexOf(color);
+  return i === -1 ? 0 : i;
+}
+
+/** Is this square inside the given player's own section? */
+export function isHomeSection(pos: Position, color: PlayerColor): boolean {
+  return sectionOf(pos) === colorSection(color);
 }

@@ -16,6 +16,7 @@ import { BOARD_CONFIGS, positionToString } from '../types';
 import { PIECE_BY_ID } from '../pieces/pieceDefinitions';
 import type { PlayerDraft } from './draft';
 import { createPiecesFromDraft } from './draft';
+import { colorSection, threePlayerSquare } from '../board/topology';
 
 // =============================================================================
 // Types
@@ -95,6 +96,10 @@ export function getPlacementZones(boardSize: BoardSize, color: PlayerColor): Pla
     return getFourPlayerPlacementZones(color);
   }
 
+  if (boardSize === '3player') {
+    return getThreePlayerPlacementZones(color);
+  }
+
   // Determine ranks based on color (white/black)
   const backRank: Rank = color === 'white' ? 1 : (config.ranks as Rank);
   const pawnRank: Rank = color === 'white' ? 2 : ((config.ranks - 1) as Rank);
@@ -121,6 +126,36 @@ export function getPlacementZones(boardSize: BoardSize, color: PlayerColor): Pla
   for (const file of allFiles) {
     const position: Position = { file, rank: pawnRank };
     zones.push({ position, allowedTiers: ['pawn'] });
+  }
+
+  return zones;
+}
+
+/**
+ * Placement zones for a player in 3-player mode.
+ *
+ * Each player fills the two ranks at the back of their own 8-file section,
+ * mirroring the standard layout: pieces and royalty on rank 1, pawns on rank 2.
+ * That leaves ranks 3 and 4 empty in front of them, and rank 4 is the fold, so
+ * the armies are three squares apart rather than the four of a normal board.
+ */
+function getThreePlayerPlacementZones(color: PlayerColor): PlacementZone[] {
+  const zones: PlacementZone[] = [];
+  const section = colorSection(color);
+
+  // Local files 1-8 of this player's own section
+  for (let local = 1; local <= 8; local++) {
+    const back = threePlayerSquare(section, local, 1);
+    // Royalty takes the middle two files, pieces the rest
+    if (local === 4 || local === 5) {
+      zones.push({ position: back, allowedTiers: ['royalty'] });
+    } else {
+      zones.push({ position: back, allowedTiers: ['piece'] });
+    }
+    zones.push({
+      position: threePlayerSquare(section, local, 2),
+      allowedTiers: ['pawn'],
+    });
   }
 
   return zones;
@@ -590,4 +625,28 @@ export function shouldPawnSwapToBackRank(
 
   const piece = board.pieces.find((p) => p.id === pieceId);
   return piece?.typeId === 'herald';
+}
+
+/**
+ * Placement state for a 3-player game: white, black and red, in seat order.
+ *
+ * Blue does not play, so bluePiecesToPlace is left off entirely rather than set
+ * to an empty array — the placement flow advances by looking for the next
+ * player who still has pieces, and an empty list reads the same as "done".
+ */
+export function createThreePlayerPlacementState(
+  whiteDraft: PlayerDraft,
+  blackDraft: PlayerDraft,
+  redDraft: PlayerDraft,
+): PlacementState {
+  return {
+    whitePiecesToPlace: createPiecesFromDraft(whiteDraft, 'white'),
+    blackPiecesToPlace: createPiecesFromDraft(blackDraft, 'black'),
+    redPiecesToPlace: createPiecesFromDraft(redDraft, 'red'),
+    currentPlacer: 'white',
+    selectedPieceId: null,
+    mode: 'alternating',
+    whiteReady: false,
+    blackReady: false,
+  };
 }

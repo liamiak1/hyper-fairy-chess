@@ -305,7 +305,7 @@ function generatePawnForwardMoves(board: BoardState, piece: PieceInstance): Posi
   if (!piece.position) return [];
 
   const moves: Position[] = [];
-  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner);
+  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner, piece.position, geometryOf(board));
 
   // Single step forward
   const oneStep = offsetPosition(piece.position, fdx, fdy, geometryOf(board));
@@ -335,7 +335,7 @@ function generatePawnCaptureMoves(
   if (!piece.position) return [];
 
   const moves: Position[] = [];
-  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner);
+  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner, piece.position, geometryOf(board));
 
   // Perpendicular directions (the "sideways" component of diagonal captures)
   const perps = fdy !== 0
@@ -367,7 +367,7 @@ function generateShogiPawnMoves(board: BoardState, piece: PieceInstance): Positi
   if (!piece.position) return [];
 
   const moves: Position[] = [];
-  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner);
+  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner, piece.position, geometryOf(board));
   const canDisplacementCapture = canCaptureByDisplacement(piece);
 
   // Single step forward (move or capture)
@@ -639,7 +639,7 @@ function generatePeasantDiagonalMoves(board: BoardState, piece: PieceInstance): 
   if (!piece.position) return [];
 
   const moves: Position[] = [];
-  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner);
+  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner, piece.position, geometryOf(board));
   const perps = fdy !== 0
     ? [{ dx: -1, dy: 0 }, { dx: 1, dy: 0 }]
     : [{ dx: 0, dy: -1 }, { dx: 0, dy: 1 }];
@@ -673,7 +673,7 @@ function generatePeasantCaptureMoves(board: BoardState, piece: PieceInstance): P
   if (!piece.position) return [];
 
   const moves: Position[] = [];
-  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner);
+  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner, piece.position, geometryOf(board));
 
   // Capture forward only
   const capturePos = offsetPosition(piece.position, fdx, fdy, geometryOf(board));
@@ -1515,7 +1515,7 @@ function canChameleonCaptureWithSpecial(
     case 'peasant-capture-forward': {
       // Chameleon captures as the pawn would (from the pawn's perspective)
       // The pawn captures forward-diagonally, so Chameleon must approach from behind-diagonally
-      const pawnDir = getPawnDirection(enemy.owner);
+      const pawnDir = getPawnDirection(enemy.owner, enemy.position, geometryOf(board));
       // Enemy captures diagonally forward from their perspective
       // Chameleon must be on a square that the enemy pawn could capture
       const dx = fileToIndex(chameleon.position.file) - fileToIndex(enemy.position.file);
@@ -1734,7 +1734,7 @@ function canChameleonCaptureWithSpecial(
     case 'checkers-forward': {
       // Chameleon captures a checker by jumping diagonally forward over it
       // "Forward" is from the checker's perspective (enemy's forward direction)
-      const checkerDir = getPawnDirection(enemy.owner);
+      const checkerDir = getPawnDirection(enemy.owner, enemy.position, geometryOf(board));
       const dx = fileToIndex(enemy.position.file) - fileToIndex(chameleon.position.file);
       const dy = enemy.position.rank - chameleon.position.rank;
 
@@ -1885,7 +1885,7 @@ function generateCheckersForwardMoves(board: BoardState, piece: PieceInstance): 
 
   const moves: Position[] = [];
   const visited = new Set<string>();
-  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner);
+  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner, piece.position, geometryOf(board));
   const perps = fdy !== 0
     ? [{ dx: -1, dy: 0 }, { dx: 1, dy: 0 }]
     : [{ dx: 0, dy: -1 }, { dx: 0, dy: 1 }];
@@ -2023,7 +2023,7 @@ function generateKingMoves(board: BoardState, piece: PieceInstance): Position[] 
 function generateGoldGeneralMoves(board: BoardState, piece: PieceInstance): Position[] {
   if (!piece.position) return [];
 
-  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner);
+  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner, piece.position, geometryOf(board));
   const perps = fdy !== 0
     ? [{ dx: -1, dy: 0 }, { dx: 1, dy: 0 }]
     : [{ dx: 0, dy: -1 }, { dx: 0, dy: 1 }];
@@ -2058,7 +2058,7 @@ function generateGoldGeneralMoves(board: BoardState, piece: PieceInstance): Posi
 function generateSilverGeneralMoves(board: BoardState, piece: PieceInstance): Position[] {
   if (!piece.position) return [];
 
-  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner);
+  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner, piece.position, geometryOf(board));
   const perps = fdy !== 0
     ? [{ dx: -1, dy: 0 }, { dx: 1, dy: 0 }]
     : [{ dx: 0, dy: -1 }, { dx: 0, dy: 1 }];
@@ -2133,7 +2133,7 @@ function generateMaoMoves(board: BoardState, piece: PieceInstance): Position[] {
 function generateLanceMoves(board: BoardState, piece: PieceInstance): Position[] {
   if (!piece.position) return [];
 
-  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner);
+  const { dx: fdx, dy: fdy } = getForwardVector(piece.owner, piece.position, geometryOf(board));
   const moves: Position[] = [];
   let cursor: Step = { pos: piece.position, dx: fdx, dy: fdy };
 
@@ -2316,7 +2316,7 @@ function getPawnAttackSquares(board: BoardState, piece: PieceInstance): Position
   if (!piece.position) return [];
 
   const squares: Position[] = [];
-  const direction = getPawnDirection(piece.owner);
+  const direction = getPawnDirection(piece.owner, piece.position, geometryOf(board));
 
   for (const dx of [-1, 1]) {
     const attackPos = offsetPosition(piece.position, dx, direction, geometryOf(board));
@@ -2334,7 +2334,7 @@ function getPawnAttackSquares(board: BoardState, piece: PieceInstance): Position
 function getShogiPawnAttackSquares(board: BoardState, piece: PieceInstance): Position[] {
   if (!piece.position) return [];
 
-  const direction = getPawnDirection(piece.owner);
+  const direction = getPawnDirection(piece.owner, piece.position, geometryOf(board));
   const attackPos = offsetPosition(piece.position, 0, direction, geometryOf(board));
 
   return attackPos ? [attackPos] : [];
@@ -2350,7 +2350,7 @@ function getCheckersAttackSquares(board: BoardState, piece: PieceInstance, forwa
   if (!piece.position) return [];
 
   const squares: Position[] = [];
-  const direction = getPawnDirection(piece.owner);
+  const direction = getPawnDirection(piece.owner, piece.position, geometryOf(board));
 
   // Diagonal directions (forward only for regular checkers, all for king)
   const diagonals = forwardOnly

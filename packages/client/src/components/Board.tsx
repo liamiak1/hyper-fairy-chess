@@ -4,6 +4,7 @@
 
 import type { BoardSize, Position, PieceInstance, Move, PlayerColor } from '@hyper-fairy-chess/shared';
 import { BOARD_CONFIGS, positionToString, PIECE_BY_ID, isVoidSquare } from '@hyper-fairy-chess/shared';
+import { ThreePlayerBoard } from './ThreePlayerBoard';
 import './Board.css';
 
 interface SpecialCaptureTarget {
@@ -48,6 +49,27 @@ export function Board({
   flipped = false,
   isViewingEnemy = false,
 }: BoardProps) {
+  // The 3-player board is three sections folded together at the centre; it is
+  // not a rectangle and gets its own renderer.
+  if (size === '3player') {
+    return (
+      <ThreePlayerBoard
+        pieces={pieces}
+        selectedSquare={selectedSquare}
+        validMoves={validMoves}
+        onSquareClick={onSquareClick}
+        lastMove={lastMove}
+        validPlacementSquares={validPlacementSquares}
+        specialCaptureTargets={specialCaptureTargets}
+        hoveredMove={hoveredMove}
+        onSquareHover={onSquareHover}
+        currentTurn={currentTurn}
+        onPieceRightClick={onPieceRightClick}
+        isViewingEnemy={isViewingEnemy}
+      />
+    );
+  }
+
   const config = BOARD_CONFIGS[size];
   const baseFiles = FILES.slice(0, config.files);
   const baseRanks = Array.from({ length: config.ranks }, (_, i) => config.ranks - i);

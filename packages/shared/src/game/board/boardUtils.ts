@@ -12,7 +12,7 @@ import type {
   PlayerColor,
 } from '../types';
 import { positionToString } from '../types';
-import { getTopology, type Step } from './topology';
+import { getTopology, isHomeSection, type Step } from './topology';
 import { PIECE_BY_ID } from '../pieces/pieceDefinitions';
 
 // =============================================================================
@@ -459,10 +459,30 @@ export function expandLeapOffset(leap: { dx: number; dy: number; symmetric: bool
 // =============================================================================
 
 /**
- * Get the forward direction vector for a player color.
- * White/Black move vertically; Red/Blue move horizontally.
+ * Which way is "forwards" for this player's pawns.
+ *
+ * On rectangular boards this depends only on the colour: white and black move
+ * vertically, red and blue horizontally.
+ *
+ * On the folded 3-player board it also depends on WHERE the piece is. All three
+ * players advance towards the centre, which is +rank inside their own section;
+ * once a pawn has crossed the fold it is in an opponent's section, heading down
+ * their ranks towards the back rank it will promote on, so forwards is -rank.
+ * A pawn can only ever cross once — after crossing it moves away from the seam
+ * — so the section it stands in is enough to say which way it faces.
+ *
+ * Pass the piece's position and the board geometry to get this right on a
+ * folded board; without them it falls back to the colour-only answer.
  */
-export function getForwardVector(color: PlayerColor): { dx: number; dy: number } {
+export function getForwardVector(
+  color: PlayerColor,
+  pos?: Position,
+  geometry?: BoardDimensions & { boardSize?: BoardSize }
+): { dx: number; dy: number } {
+  if (geometry?.boardSize === '3player' && pos) {
+    return isHomeSection(pos, color) ? { dx: 0, dy: 1 } : { dx: 0, dy: -1 };
+  }
+
   switch (color) {
     case 'white': return { dx: 0, dy: 1 };
     case 'black': return { dx: 0, dy: -1 };
@@ -475,8 +495,12 @@ export function getForwardVector(color: PlayerColor): { dx: number; dy: number }
  * Get the forward direction for a player color (2-player helper, kept for backward compat)
  * Returns ±1 (dy) for white/black, and ±1 (dx) for red/blue mapped to dy
  */
-export function getPawnDirection(color: PlayerColor): number {
-  const { dx, dy } = getForwardVector(color);
+export function getPawnDirection(
+  color: PlayerColor,
+  pos?: Position,
+  geometry?: BoardDimensions & { boardSize?: BoardSize }
+): number {
+  const { dx, dy } = getForwardVector(color, pos, geometry);
   return dy !== 0 ? dy : dx;
 }
 
@@ -510,9 +534,17 @@ export function getPromotionRank(color: PlayerColor, dimensions: BoardDimensions
  * For white/black: checks rank-based start zone.
  * For red/blue: checks file-based start zone.
  */
-export function canPawnDoubleMove(piece: PieceInstance, color: PlayerColor, dimensions?: BoardDimensions): boolean {
+export function canPawnDoubleMove(
+  piece: PieceInstance,
+  color: PlayerColor,
+  dimensions?: BoardDimensions & { boardSize?: BoardSize }
+): boolean {
   if (!piece.position) return false;
   if (piece.hasMoved) return false;
+
+  if ((dimensions as { boardSize?: BoardSize } | undefined)?.boardSize === '3player') {
+    return isInPawnStartZone(piece, color, dimensions!);
+  }
 
   if (color === 'red' || color === 'blue') {
     if (!dimensions) return false;
@@ -598,9 +630,16 @@ export function eliminatePlayer(board: BoardState, color: PlayerColor): BoardSta
 export function isInPawnStartZone(
   piece: PieceInstance,
   color: PlayerColor,
-  dimensions: BoardDimensions
+  dimensions: BoardDimensions & { boardSize?: BoardSize }
 ): boolean {
   if (!piece.position || piece.hasMoved) return false;
+
+  // 3-player: pawns start on rank 2 of their own section and advance inwards.
+  // A pawn that has crossed the fold is never on its starting square again.
+  if ((dimensions as { boardSize?: BoardSize }).boardSize === '3player') {
+    return isHomeSection(piece.position, color) && piece.position.rank <= 2;
+  }
+
   const fi = fileToIndex(piece.position.file) + 1; // 1-indexed
   switch (color) {
     case 'white': return piece.position.rank <= 2;
@@ -617,8 +656,15 @@ export function isInPawnStartZone(
 export function isOnPromotionLine(
   pos: Position,
   color: PlayerColor,
-  dimensions: BoardDimensions
+  dimensions: BoardDimensions & { boardSize?: BoardSize }
 ): boolean {
+  // 3-player: promote on an OPPONENT's back rank, reached by crossing the fold
+  // and walking down their section. Rank 1 of your own section is where your
+  // pieces started, and is behind your pawns, not in front of them.
+  if ((dimensions as { boardSize?: BoardSize }).boardSize === '3player') {
+    return pos.rank === 1 && !isHomeSection(pos, color);
+  }
+
   const fi = fileToIndex(pos.file) + 1; // 1-indexed
   switch (color) {
     case 'white': return pos.rank === dimensions.ranks;
